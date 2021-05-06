@@ -31,6 +31,7 @@ from envinorma.parametrization import (
     condition_to_str,
     regenerate_paths,
 )
+from envinorma.parametrization.am_with_versions import AMVersions
 from envinorma.utils import AMOperation, AMStatus
 
 from back_office.am_init_edition import router as am_init_router
@@ -47,7 +48,7 @@ from back_office.config import (
     create_folder_and_generate_parametric_filename,
     get_parametric_ams_folder,
 )
-from back_office.generate_final_am import AMVersions, generate_final_am
+from back_office.generate_final_am import generate_final_am
 from back_office.pages.parametrization_edition import router as parametrization_router
 from back_office.structure_edition import router as structure_router
 from back_office.utils import (
