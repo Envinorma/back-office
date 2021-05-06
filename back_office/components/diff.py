@@ -1,18 +1,10 @@
-from typing import List, Optional, Set
+from typing import List, Set
 
 import dash_html_components as html
 from dash.development.base_component import Component
+from text_diff import AddedLine, DiffLine, Mask, ModifiedLine, RemovedLine, TextDifferences, UnchangedLine
 
 from back_office.components import surline_text
-from back_office.dash_text_components.diff import (
-    AddedLine,
-    DiffLine,
-    Mask,
-    ModifiedLine,
-    RemovedLine,
-    TextDifferences,
-    UnchangedLine,
-)
 
 
 def _positions_to_surline(mask: Mask) -> Set[int]:

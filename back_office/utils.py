@@ -13,6 +13,7 @@ from envinorma.data import ArreteMinisteriel, EnrichedString, Ints, StructuredTe
 from envinorma.structure.am_structure_extraction import transform_arrete_ministeriel
 from flask_login import current_user
 from leginorma import LegifranceClient, LegifranceText
+from text_diff import TextDifferences, text_differences
 
 from back_office.aida import parse_aida_text
 from back_office.config import (
@@ -22,7 +23,6 @@ from back_office.config import (
     LOGIN_USERNAME,
     SLACK_ENRICHMENT_NOTIFICATION_URL,
 )
-from back_office.dash_text_components.diff import TextDifferences, build_text_differences
 
 _AM = load_am_data()
 ID_TO_AM_MD = {am.cid: am for am in _AM.metadata if am.state == am.state.VIGUEUR}
@@ -193,13 +193,13 @@ def _extract_lines(am: ArreteMinisteriel) -> List[str]:
 def compute_am_diff(am_before: ArreteMinisteriel, am_after: ArreteMinisteriel) -> TextDifferences:
     lines_before = _extract_lines(am_before)
     lines_after = _extract_lines(am_after)
-    return build_text_differences(lines_before, lines_after)
+    return text_differences(lines_before, lines_after)
 
 
 def compute_text_diff(text_before: StructuredText, text_after: StructuredText) -> TextDifferences:
     lines_before = extract_text_lines(text_before)
     lines_after = extract_text_lines(text_after)
-    return build_text_differences(lines_before, lines_after)
+    return text_differences(lines_before, lines_after)
 
 
 def generate_id(filename: str, suffix: str) -> str:
