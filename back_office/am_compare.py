@@ -1,19 +1,18 @@
 from enum import Enum
-from typing import Any, Callable, Counter, Dict, List, Optional, Tuple
+from typing import Callable, Optional
 
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
 from dash.development.base_component import Component
-from envinorma.data import AMMetadata, ArreteMinisteriel
+from envinorma.data import ID_TO_AM_MD, AMMetadata, ArreteMinisteriel
 from leginorma import LegifranceRequestError
 
 from back_office.app_init import app
 from back_office.components import error_component
 from back_office.components.diff import diff_component
-from back_office.fetch_data import load_most_advanced_am
-from back_office.utils import ID_TO_AM_MD, compute_am_diff, extract_aida_am, extract_legifrance_am
+from back_office.utils import DATA_FETCHER, compute_am_diff, extract_aida_am, extract_legifrance_am
 
 _PREFIX = __file__.split('/')[-1].replace('.py', '').replace('_', '-')
 _ARGS = _PREFIX + '-args'
@@ -68,7 +67,7 @@ def _build_component(am_id: str, compare_with_str: str) -> Component:
         compare_with = CompareWith(compare_with_str)
     except ValueError:
         return error_component(f'Unhandled comparision with {compare_with_str}')
-    am = load_most_advanced_am(am_id)
+    am = DATA_FETCHER.load_most_advanced_am(am_id)
     if not am:
         return error_component(f'AM with id {am_id} not found')
     try:

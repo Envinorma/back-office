@@ -1,6 +1,6 @@
 from datetime import date, datetime
 
-from envinorma.data import ArreteMinisteriel, EnrichedString, StructuredText, Table
+from envinorma.data import ID_TO_AM_MD, ArreteMinisteriel, EnrichedString, StructuredText, Table
 from envinorma.data.text_elements import Cell, Row
 from envinorma.parametrization import (
     AlternativeSection,
@@ -23,7 +23,6 @@ from envinorma.parametrization.parametric_am import (
 )
 
 from back_office.generate_final_am import apply_parametrization
-from back_office.utils import ID_TO_AM_MD
 
 _DATE = Parameter(id='date-d-installation', type=ParameterType.DATE)
 

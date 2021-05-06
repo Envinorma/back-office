@@ -25,12 +25,12 @@ from envinorma.parametrization.conditions import (
     Range,
     ensure_mono_conditions,
 )
+from envinorma.utils import AMOperation
 
-from back_office.fetch_data import load_most_advanced_am, upsert_parameter
 from back_office.pages.parametrization_edition import page_ids
 from back_office.pages.parametrization_edition.condition_form import ConditionFormValues
 from back_office.pages.parametrization_edition.target_sections_form import TargetSectionFormValues
-from back_office.utils import AMOperation, safe_get_section
+from back_office.utils import DATA_FETCHER, safe_get_section
 
 
 class FormHandlingError(Exception):
@@ -345,7 +345,7 @@ def extract_and_upsert_new_parameter(
     target_section_form_values: TargetSectionFormValues,
     condition_form_values: ConditionFormValues,
 ) -> None:
-    am = load_most_advanced_am(am_id)
+    am = DATA_FETCHER.load_most_advanced_am(am_id)
     if not am:
         raise ValueError(f'AM with id {am_id} not found!')
     new_parameters = _extract_new_parameter_objects(am, source_str, target_section_form_values, condition_form_values)
@@ -357,4 +357,4 @@ def _upsert_parameters(am_id: str, new_parameters: List[ParameterObject], parame
     if parameter_rank != -1 and len(new_parameters) != 1:
         raise ValueError('Must have only one parameter when updating a specific parameter..')
     for parameter in new_parameters:
-        upsert_parameter(am_id, parameter, parameter_rank)
+        DATA_FETCHER.upsert_parameter(am_id, parameter, parameter_rank)

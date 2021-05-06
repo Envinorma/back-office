@@ -3,13 +3,13 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.development.base_component import Component
-from envinorma.data import ArreteMinisteriel, am_to_text
+from envinorma.data import ID_TO_AM_MD, ArreteMinisteriel, am_to_text
 from envinorma.parametrization import AlternativeSection, NonApplicationCondition, ParameterObject, Parametrization
+from envinorma.utils import AMOperation
 
 from back_office.components.am_component import am_component
-from back_office.fetch_data import load_most_advanced_am, load_parametrization
 from back_office.routing import build_am_page
-from back_office.utils import ID_TO_AM_MD, AMOperation, RouteParsingError
+from back_office.utils import DATA_FETCHER, RouteParsingError
 
 from . import page_ids
 from .form import form
@@ -70,7 +70,7 @@ def _build_page(
 
 
 def _load_am(am_id: str) -> Optional[ArreteMinisteriel]:
-    return load_most_advanced_am(am_id)
+    return DATA_FETCHER.load_most_advanced_am(am_id)
 
 
 def _parse_route(route: str) -> Tuple[str, AMOperation, Optional[int], bool]:
@@ -116,7 +116,7 @@ def router(pathname: str) -> Component:
         am_page = build_am_page(am_id)
         am_metadata = ID_TO_AM_MD.get(am_id)
         am = _load_am(am_id)
-        parametrization = load_parametrization(am_id) or Parametrization([], [])
+        parametrization = DATA_FETCHER.load_parametrization(am_id) or Parametrization([], [])
         loaded_parameter = (
             _get_parameter(parametrization, operation_id, parameter_rank) if parameter_rank is not None else None
         )

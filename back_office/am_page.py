@@ -11,7 +11,16 @@ import dash_html_components as html
 from dash.dependencies import MATCH, Input, Output, State
 from dash.development.base_component import Component
 from dash.exceptions import PreventUpdate
-from envinorma.data import AMMetadata, ArreteMinisteriel, Ints, StructuredText, Table, am_to_text, extract_text_lines
+from envinorma.data import (
+    ID_TO_AM_MD,
+    AMMetadata,
+    ArreteMinisteriel,
+    Ints,
+    StructuredText,
+    Table,
+    am_to_text,
+    extract_text_lines,
+)
 from envinorma.io.markdown import extract_markdown_text
 from envinorma.parametrization import (
     AlternativeSection,
@@ -22,6 +31,7 @@ from envinorma.parametrization import (
     condition_to_str,
     regenerate_paths,
 )
+from envinorma.utils import AMOperation, AMStatus
 
 from back_office.am_init_edition import router as am_init_router
 from back_office.am_init_tab import am_init_tab
@@ -37,23 +47,11 @@ from back_office.config import (
     create_folder_and_generate_parametric_filename,
     get_parametric_ams_folder,
 )
-from back_office.fetch_data import (
-    delete_structured_am,
-    load_am_status,
-    load_initial_am,
-    load_most_advanced_am,
-    load_parametrization,
-    load_structured_am,
-    upsert_am_status,
-    upsert_new_parametrization,
-)
 from back_office.generate_final_am import AMVersions, generate_final_am
 from back_office.pages.parametrization_edition import router as parametrization_router
 from back_office.structure_edition import router as structure_router
 from back_office.utils import (
-    ID_TO_AM_MD,
-    AMOperation,
-    AMStatus,
+    DATA_FETCHER,
     SlackChannel,
     get_traversed_titles,
     safe_get_section,
@@ -512,10 +510,10 @@ def _structure_tabs(initial_am: ArreteMinisteriel, current_am: Optional[ArreteMi
 def _get_structure_validation_diff(am_id: str, status: AMStatus) -> Component:
     if status != status.PENDING_STRUCTURE_VALIDATION:
         return html.Div()
-    initial_am = load_initial_am(am_id)
+    initial_am = DATA_FETCHER.load_initial_am(am_id)
     if not initial_am:
         return html.Div('AM introuvable.')
-    return _structure_tabs(initial_am, load_structured_am(am_id))
+    return _structure_tabs(initial_am, DATA_FETCHER.load_structured_am(am_id))
 
 
 def _create_if_inexistent(folder: str) -> None:
@@ -631,9 +629,9 @@ def _get_subpage_content(route: str, operation_id: AMOperation) -> Component:
 
 def _page(am_id: str, current_page: str) -> Component:
     am_metadata = ID_TO_AM_MD.get(am_id)
-    am_status = load_am_status(am_id)
-    am = load_most_advanced_am(am_id)  # Fetch initial AM if no parametrization ever done.
-    parametrization = load_parametrization(am_id) or Parametrization([], [])
+    am_status = DATA_FETCHER.load_am_status(am_id)
+    am = DATA_FETCHER.load_most_advanced_am(am_id)  # Fetch initial AM if no parametrization ever done.
+    parametrization = DATA_FETCHER.load_parametrization(am_id) or Parametrization([], [])
     body = html.Div(
         _get_body_component(am_id, current_page, am, am_status, parametrization), className='am_page_content'
     )
@@ -674,11 +672,11 @@ def _generate_and_dump_am_version(am_id: str) -> None:
 
 def _add_titles_sequences(am_id: str) -> None:
     try:
-        parametrization = load_parametrization(am_id)
-        am = load_most_advanced_am(am_id)
+        parametrization = DATA_FETCHER.load_parametrization(am_id)
+        am = DATA_FETCHER.load_most_advanced_am(am_id)
         if am and parametrization:
             new_parametrization = add_titles_sequences(parametrization, am)
-            upsert_new_parametrization(am_id, new_parametrization)
+            DATA_FETCHER.upsert_new_parametrization(am_id, new_parametrization)
     except Exception:
         warnings.warn(f'Error during titles sequence addition:\n{traceback.format_exc()}')
 
@@ -689,10 +687,10 @@ def _handle_validate_parametrization(am_id: str) -> None:
 
 
 def _handle_validate_structure(am_id: str) -> None:
-    parametrization = load_parametrization(am_id)
+    parametrization = DATA_FETCHER.load_parametrization(am_id)
     if not parametrization:
         return  # parametrization has no risk to be deprecated in this case
-    am = load_most_advanced_am(am_id)
+    am = DATA_FETCHER.load_most_advanced_am(am_id)
     if not am:
         warnings.warn('Should not happen, structure can be validated only for existing texts.')
         return
@@ -700,7 +698,7 @@ def _handle_validate_structure(am_id: str) -> None:
         new_parametrization = regenerate_paths(parametrization, am)
     except UndefinedTitlesSequencesError:
         return
-    upsert_new_parametrization(am_id, new_parametrization)
+    DATA_FETCHER.upsert_new_parametrization(am_id, new_parametrization)
 
 
 def _update_am_status(clicked_button: str, am_id: str) -> None:
@@ -718,11 +716,11 @@ def _update_am_status(clicked_button: str, am_id: str) -> None:
     elif clicked_button == _modal_confirm_button_id('validated'):
         new_status = AMStatus.PENDING_PARAMETRIZATION
     elif clicked_button == _modal_confirm_button_id('reset-structure'):
-        delete_structured_am(am_id)
+        DATA_FETCHER.delete_structured_am(am_id)
     else:
         raise NotImplementedError(f'Unknown button id {clicked_button}')
     if new_status:
-        upsert_am_status(am_id, new_status)
+        DATA_FETCHER.upsert_am_status(am_id, new_status)
         if ENVIRONMENT_TYPE == EnvironmentType.PROD:
             send_slack_notification(
                 f'AM {am_id} a désormais le statut {new_status.value}', SlackChannel.ENRICHMENT_NOTIFICATIONS
@@ -803,7 +801,7 @@ def router(parent_page: str, route: str) -> Component:
     am_metadata = ID_TO_AM_MD[am_id]
     current_page = parent_page + '/' + am_id
     if operation_id:
-        am_status = load_am_status(am_id)
+        am_status = DATA_FETCHER.load_am_status(am_id)
         subpage_component = _get_subpage_content(route, operation_id)
         return html.Div([_get_title_component(am_id, am_metadata, current_page, am_status), subpage_component])
     return _page_with_spinner(am_id, current_page)

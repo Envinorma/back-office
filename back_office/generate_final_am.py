@@ -14,9 +14,9 @@ from envinorma.parametrization import Combinations, Parametrization
 from envinorma.parametrization.conditions import ParameterEnum
 from envinorma.parametrization.parametric_am import generate_all_am_versions
 from envinorma.topics.topics import TOPIC_ONTOLOGY
+from envinorma.utils import AM1510_IDS
 
-from back_office.fetch_data import load_initial_am, load_parametrization, load_structured_am
-from back_office.utils import AM1510_IDS
+from back_office.utils import DATA_FETCHER
 
 AMVersions = Dict[Tuple[str, ...], ArreteMinisteriel]
 
@@ -141,10 +141,10 @@ class FinalAM:
 
 def generate_final_am(metadata: AMMetadata) -> FinalAM:
     cid = metadata.cid
-    am = load_structured_am(cid) or load_initial_am(cid)
+    am = DATA_FETCHER.load_structured_am(cid) or DATA_FETCHER.load_initial_am(cid)
     if not am:
         raise ValueError('Expecting one AM to proceed.')
     am = enrich_am(am, metadata)
-    parametrization = load_parametrization(cid) or Parametrization([], [])
+    parametrization = DATA_FETCHER.load_parametrization(cid) or Parametrization([], [])
     am_versions = apply_parametrization(cid, am, parametrization, metadata)
     return FinalAM(base_am=am, am_versions=am_versions)

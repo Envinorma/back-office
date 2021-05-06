@@ -9,7 +9,8 @@ from functools import lru_cache
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import requests
-from envinorma.data import ArreteMinisteriel, EnrichedString, Ints, StructuredText, extract_text_lines, load_am_data
+from envinorma.data import ArreteMinisteriel, EnrichedString, Ints, StructuredText, extract_text_lines
+from envinorma.data_fetcher import DataFetcher
 from envinorma.structure.am_structure_extraction import transform_arrete_ministeriel
 from flask_login import current_user
 from leginorma import LegifranceClient, LegifranceText
@@ -21,13 +22,12 @@ from back_office.config import (
     LEGIFRANCE_CLIENT_SECRET,
     LOGIN_PASSWORD,
     LOGIN_USERNAME,
+    PSQL_DSN,
     SLACK_ENRICHMENT_NOTIFICATION_URL,
 )
 
-_AM = load_am_data()
-ID_TO_AM_MD = {am.cid: am for am in _AM.metadata if am.state == am.state.VIGUEUR}
-AM1510_IDS = ('DEVP1706393A', 'JORFTEXT000034429274')
 LEGIFRANCE_CLIENT = LegifranceClient(LEGIFRANCE_CLIENT_ID, LEGIFRANCE_CLIENT_SECRET)
+DATA_FETCHER = DataFetcher(PSQL_DSN)
 
 
 @lru_cache
@@ -58,31 +58,6 @@ def assert_list(value: Any) -> List:
     if not isinstance(value, list):
         raise ValueError(f'Expecting type list, received type {type(value)}')
     return value
-
-
-class AMOperation(Enum):
-    INIT = 'init'
-    EDIT_STRUCTURE = 'edit_structure'
-    ADD_CONDITION = 'add_condition'
-    ADD_ALTERNATIVE_SECTION = 'add_alternative_section'
-
-
-class AMStatus(Enum):
-    PENDING_INITIALIZATION = 'pending-initialization'
-    PENDING_STRUCTURE_VALIDATION = 'pending-structure-validation'
-    PENDING_PARAMETRIZATION = 'pending-enrichment'
-    VALIDATED = 'validated'
-
-    def step(self) -> int:
-        if self == AMStatus.PENDING_INITIALIZATION:
-            return 0
-        if self == AMStatus.PENDING_STRUCTURE_VALIDATION:
-            return 1
-        if self == AMStatus.PENDING_PARAMETRIZATION:
-            return 2
-        if self == AMStatus.VALIDATED:
-            return 3
-        raise NotImplementedError()
 
 
 def get_subsection(path: Ints, text: StructuredText) -> StructuredText:

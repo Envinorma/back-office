@@ -1,6 +1,7 @@
 from envinorma.data import ArreteMinisteriel, EnrichedString, StructuredText
+from envinorma.utils import AMStatus
 
-from back_office.utils import AMStatus, get_section_title, get_traversed_titles, split_route
+from back_office.utils import get_section_title, get_traversed_titles, split_route
 
 
 def _get_simple_text() -> StructuredText:

@@ -6,14 +6,14 @@ import dash_html_components as html
 from dash.dependencies import Input, Output, State
 from dash.development.base_component import Component
 from envinorma.data import ArreteMinisteriel, am_to_text
+from envinorma.utils import AMOperation
 
 from back_office.app_init import app
 from back_office.components import ButtonState, link_button
 from back_office.components.am_component import am_component
 from back_office.components.summary_component import summary_component
-from back_office.fetch_data import delete_initial_am, delete_structured_am
 from back_office.routing import build_am_page
-from back_office.utils import AMOperation
+from back_office.utils import DATA_FETCHER
 
 _DELETE_BUTTON = 'am-init-tab-delete-button'
 _DELETE_OUTPUT = 'am-init-tab-delete-output'
@@ -110,7 +110,7 @@ def _toggle_modal(n1, n2, is_open):
 )
 def _confirm_deletion(nb_clicks: Optional[int], am_id: str) -> Component:
     if nb_clicks:
-        delete_initial_am(am_id)
-        delete_structured_am(am_id)  # structured AM is deprecated when initial AM is deleted
+        DATA_FETCHER.delete_initial_am(am_id)
+        DATA_FETCHER.delete_structured_am(am_id)  # structured AM is deprecated when initial AM is deleted
         return dcc.Location(href=build_am_page(am_id) + '/' + AMOperation.INIT.value, id='am-init-tab-delete-redirect')
     return html.Div()

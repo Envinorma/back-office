@@ -10,7 +10,7 @@ from dash.dependencies import ALL, MATCH, Input, Output, State
 from dash.development.base_component import Component
 from dash.exceptions import PreventUpdate
 from envinorma.am_enriching import detect_and_add_topics
-from envinorma.data import ArreteMinisteriel, Regime, StructuredText, add_metadata, random_id
+from envinorma.data import ID_TO_AM_MD, ArreteMinisteriel, Regime, StructuredText, add_metadata, random_id
 from envinorma.parametrization import Parameter, ParameterEnum, ParameterType, Parametrization
 from envinorma.parametrization.parametric_am import (
     apply_parameter_values_to_am,
@@ -22,9 +22,8 @@ from envinorma.topics.topics import TOPIC_ONTOLOGY
 from back_office import am_compare
 from back_office.components import error_component
 from back_office.components.parametric_am import parametric_am_callbacks, parametric_am_component
-from back_office.fetch_data import load_most_advanced_am, load_parametrization
 from back_office.routing import Page
-from back_office.utils import ID_TO_AM_MD, get_current_user
+from back_office.utils import DATA_FETCHER, get_current_user
 
 _PREFIX = __file__.split('/')[-1].replace('.py', '').replace('_', '-')
 _AM = _PREFIX + '-am'
@@ -138,7 +137,7 @@ def _parametrization_form(parametrization: Parametrization) -> Component:
 
 
 def _parametrization_component(am_id: str) -> Component:
-    parametrization = load_parametrization(am_id)
+    parametrization = DATA_FETCHER.load_parametrization(am_id)
     if not parametrization:
         content = html.Div('Paramétrage non défini pour cet arrêté.')
     else:
@@ -221,7 +220,7 @@ def _page(am: ArreteMinisteriel) -> Component:
 
 
 def _load_am(am_id: str) -> Optional[ArreteMinisteriel]:
-    return load_most_advanced_am(am_id)
+    return DATA_FETCHER.load_most_advanced_am(am_id)
 
 
 def _layout(am_id: str, compare_with: Optional[str] = None) -> Component:
@@ -297,7 +296,7 @@ def _callbacks(app: Dash) -> None:
         am = _load_am(am_id)
         if not am:
             raise PreventUpdate
-        parametrization = load_parametrization(am_id)
+        parametrization = DATA_FETCHER.load_parametrization(am_id)
         if not parametrization:
             raise PreventUpdate
         try:

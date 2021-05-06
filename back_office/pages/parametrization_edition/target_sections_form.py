@@ -9,11 +9,11 @@ from dash.dependencies import MATCH, Input, Output, State
 from dash.development.base_component import Component
 from envinorma.data import Ints, StructuredText, dump_path, load_path
 from envinorma.parametrization import AlternativeSection, NonApplicationCondition, ParameterObject
+from envinorma.utils import AMOperation
 
 from back_office.app_init import app
-from back_office.fetch_data import load_most_advanced_am
 from back_office.pages.parametrization_edition import page_ids
-from back_office.utils import AMOperation, get_section, safe_get_section, safe_get_subsection
+from back_office.utils import DATA_FETCHER, get_section, safe_get_section, safe_get_subsection
 
 DropdownOptions = List[Dict[str, Any]]
 
@@ -131,7 +131,7 @@ def _new_section_form_from_default(
 def _build_new_text_component(str_path: Optional[str], am_id: str, operation: AMOperation, rank: int) -> Component:
     if operation != AMOperation.ADD_ALTERNATIVE_SECTION or not str_path:
         return _new_section_form('', '', rank, operation)
-    am = load_most_advanced_am(am_id)
+    am = DATA_FETCHER.load_most_advanced_am(am_id)
     if not am:
         return _new_section_form('', '', rank, operation)
     path = load_path(str_path)
@@ -153,7 +153,7 @@ def _build_targeted_alineas_options(section_dict: Dict[str, Any], operation: AMO
 def _store_target_section(str_path: Optional[str], am_id: str) -> Dict[str, Any]:
     if not str_path:
         return {}
-    am = load_most_advanced_am(am_id)
+    am = DATA_FETCHER.load_most_advanced_am(am_id)
     if not am:
         return {}
     path = load_path(str_path)

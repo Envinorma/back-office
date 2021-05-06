@@ -4,12 +4,12 @@ from typing import Any, Dict, List, Optional, Union
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.development.base_component import Component
-from envinorma.data import AMMetadata, Classement
+from envinorma.data import ID_TO_AM_MD, AMMetadata, Classement
+from envinorma.utils import AMStatus
 
 from back_office.components import replace_line_breaks
-from back_office.fetch_data import load_all_am_statuses
 from back_office.routing import Page
-from back_office.utils import AM_ID_TO_NB_CLASSEMENTS, ID_TO_AM_MD, AMStatus
+from back_office.utils import AM_ID_TO_NB_CLASSEMENTS, DATA_FETCHER
 
 
 def _class_name_from_bool(bool_: bool) -> str:
@@ -142,7 +142,7 @@ def _make_index_component(
 
 
 def _layout() -> Component:
-    id_to_state = load_all_am_statuses()
+    id_to_state = DATA_FETCHER.load_all_am_statuses()
     return _make_index_component(id_to_state, ID_TO_AM_MD, AM_ID_TO_NB_CLASSEMENTS)
 
 

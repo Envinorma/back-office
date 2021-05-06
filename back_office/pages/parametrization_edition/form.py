@@ -10,11 +10,11 @@ from dash.dependencies import ALL, Input, Output, State
 from dash.development.base_component import Component
 from envinorma.data import Ints, StructuredText, dump_path
 from envinorma.parametrization import ParameterObject, ParametrizationError
+from envinorma.utils import AMOperation
 
 from back_office.app_init import app
-from back_office.fetch_data import remove_parameter
 from back_office.routing import build_am_page
-from back_office.utils import AMOperation, get_truncated_str
+from back_office.utils import DATA_FETCHER, get_truncated_str
 
 from . import page_ids
 from .condition_form import ConditionFormValues, condition_form
@@ -202,7 +202,7 @@ def _handle_delete(n_clicks: int, operation_str: str, am_id: str, parameter_rank
         return html.Div()
     try:
         operation = AMOperation(operation_str)
-        remove_parameter(am_id, operation, parameter_rank)
+        DATA_FETCHER.remove_parameter(am_id, operation, parameter_rank)
     except Exception:  # pylint: disable=broad-except
         return dbc.Alert(f'Unexpected error:\n{traceback.format_exc()}', color='danger')
     return html.Div(

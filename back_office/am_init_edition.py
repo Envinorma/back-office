@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 from dash.dependencies import Input, Output, State
 from dash.development.base_component import Component
 from envinorma.data import (
+    ID_TO_AM_MD,
     AMMetadata,
     ArreteMinisteriel,
     EnrichedString,
@@ -22,13 +23,13 @@ from envinorma.data import (
 from envinorma.data.text_elements import TextElement, Title
 from envinorma.io.parse_html import extract_text_elements
 from envinorma.structure import build_structured_text, structured_text_to_text_elements
+from envinorma.utils import AMOperation
 from leginorma import LegifranceRequestError
 
 from back_office.app_init import app
 from back_office.components import error_component, success_component
-from back_office.fetch_data import load_initial_am, upsert_initial_am
 from back_office.routing import build_am_page
-from back_office.utils import ID_TO_AM_MD, AMOperation, RouteParsingError, extract_aida_am, extract_legifrance_am
+from back_office.utils import DATA_FETCHER, RouteParsingError, extract_aida_am, extract_legifrance_am
 
 _AM_TITLE = 'am-init-am-title'
 _AM_CONTENT = 'am-init-am-content'
@@ -161,13 +162,13 @@ def _build_component(am_id: str, am: Optional[ArreteMinisteriel]) -> Component:
 
 
 def _make_page(am_id: str) -> Component:
-    return html.Div([_build_component(am_id, load_initial_am(am_id)), dcc.Store(id=_AM_ID, data=am_id)])
+    return html.Div([_build_component(am_id, DATA_FETCHER.load_initial_am(am_id)), dcc.Store(id=_AM_ID, data=am_id)])
 
 
 def _save_and_get_component(am_id: str, am: ArreteMinisteriel) -> Component:
     try:
         am_metadata = ID_TO_AM_MD[am_id]
-        upsert_initial_am(am_id, add_metadata(am, am_metadata))
+        DATA_FETCHER.upsert_initial_am(am_id, add_metadata(am, am_metadata))
     except Exception:
         return error_component(f'Erreur inattendue lors de l\'enregristrement de l\'AM: \n{traceback.format_exc()}')
     return html.Div(
@@ -265,7 +266,7 @@ def _extract_structured_text(am_content: str) -> StructuredText:
 
 
 def _parse_and_save_new_am(am_id: str, am_title: str, am_content: str) -> Component:
-    previous_am = load_initial_am(am_id)
+    previous_am = DATA_FETCHER.load_initial_am(am_id)
     if not previous_am:
         return error_component('Aucun am existant trouvé. Commencez par charger un AM.')
     try:
@@ -281,7 +282,7 @@ def _parse_and_save_new_am(am_id: str, am_title: str, am_content: str) -> Compon
             title=EnrichedString(am_title),
             sections=new_sections,
         )
-        upsert_initial_am(am_id, new_am)
+        DATA_FETCHER.upsert_initial_am(am_id, new_am)
     except Exception:
         return error_component(f'Erreur inattendue:\n{traceback.format_exc()}')
     return html.Div(
