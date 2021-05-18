@@ -8,12 +8,11 @@ import dash_html_components as html
 from dash.dependencies import MATCH, Input, Output, State
 from dash.development.base_component import Component
 from envinorma.data import Ints, StructuredText, dump_path, load_path
-from envinorma.parametrization import AlternativeSection, NonApplicationCondition, ParameterObject
-from envinorma.utils import AMOperation
+from envinorma.parametrization import AlternativeSection, AMWarning, NonApplicationCondition, ParameterObject
 
 from back_office.app_init import app
 from back_office.pages.parametrization_edition import page_ids
-from back_office.utils import DATA_FETCHER, get_section, safe_get_section, safe_get_subsection
+from back_office.utils import DATA_FETCHER, AMOperation, get_section, safe_get_section, safe_get_subsection
 
 DropdownOptions = List[Dict[str, Any]]
 
@@ -22,6 +21,8 @@ def _get_target_entity(parameter: ParameterObject) -> Ints:
     if isinstance(parameter, NonApplicationCondition):
         return parameter.targeted_entity.section.path
     if isinstance(parameter, AlternativeSection):
+        return parameter.targeted_section.path
+    if isinstance(parameter, AMWarning):
         return parameter.targeted_section.path
     raise NotImplementedError(f'{type(parameter)}')
 
@@ -120,7 +121,7 @@ def _new_section_form(default_title: str, default_content: str, rank: int, opera
 def _new_section_form_from_default(
     operation: AMOperation, loaded_parameter: Optional[ParameterObject], rank: int
 ) -> Component:
-    if not loaded_parameter or operation == AMOperation.ADD_CONDITION:
+    if not loaded_parameter or operation != AMOperation.ADD_ALTERNATIVE_SECTION:
         default_title, default_content = '', ''
     else:
         parameter = _ensure_alternative_section(loaded_parameter)

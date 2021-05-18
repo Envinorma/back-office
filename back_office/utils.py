@@ -245,3 +245,11 @@ def write_json(obj: Union[Dict, List], filename: str, safe: bool = False, pretty
                 json.dump(obj, file_, indent=indent, sort_keys=True, ensure_ascii=False)
             except Exception:  # pylint: disable=broad-except
                 print(traceback.format_exc())
+
+
+class AMOperation(Enum):
+    INIT = 'init'
+    EDIT_STRUCTURE = 'edit_structure'
+    ADD_CONDITION = 'add_condition'
+    ADD_ALTERNATIVE_SECTION = 'add_alternative_section'
+    ADD_WARNING = 'ADD_WARNING'

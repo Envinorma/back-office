@@ -4,12 +4,17 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.development.base_component import Component
 from envinorma.data import ID_TO_AM_MD, ArreteMinisteriel, am_to_text
-from envinorma.parametrization import AlternativeSection, NonApplicationCondition, ParameterObject, Parametrization
-from envinorma.utils import AMOperation
+from envinorma.parametrization import (
+    AlternativeSection,
+    AMWarning,
+    NonApplicationCondition,
+    ParameterObject,
+    Parametrization,
+)
 
 from back_office.components.am_component import am_component
 from back_office.routing import build_am_page
-from back_office.utils import DATA_FETCHER, RouteParsingError
+from back_office.utils import DATA_FETCHER, AMOperation, RouteParsingError
 
 from . import page_ids
 from .form import form
@@ -96,11 +101,13 @@ def _parse_route(route: str) -> Tuple[str, AMOperation, Optional[int], bool]:
 
 
 def _get_parameter(parametrization: Parametrization, operation_id: AMOperation, parameter_rank: int) -> ParameterObject:
-    parameters: Union[List[AlternativeSection], List[NonApplicationCondition]]
+    parameters: Union[List[AlternativeSection], List[NonApplicationCondition], List[AMWarning]]
     if operation_id == operation_id.ADD_ALTERNATIVE_SECTION:
         parameters = parametrization.alternative_sections
     elif operation_id == operation_id.ADD_CONDITION:
         parameters = parametrization.application_conditions
+    elif operation_id == operation_id.ADD_WARNING:
+        parameters = parametrization.warnings
     else:
         raise NotImplementedError(f'{operation_id.value}')
     if parameter_rank >= len(parameters):
@@ -116,7 +123,7 @@ def router(pathname: str) -> Component:
         am_page = build_am_page(am_id)
         am_metadata = ID_TO_AM_MD.get(am_id)
         am = _load_am(am_id)
-        parametrization = DATA_FETCHER.load_parametrization(am_id) or Parametrization([], [])
+        parametrization = DATA_FETCHER.load_or_init_parametrization(am_id)
         loaded_parameter = (
             _get_parameter(parametrization, operation_id, parameter_rank) if parameter_rank is not None else None
         )

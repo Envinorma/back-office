@@ -1,11 +1,12 @@
 from dataclasses import dataclass
 from datetime import date, datetime
-from typing import Any, Dict, List, Optional, Type, Union, cast
+from typing import Any, Dict, List, Optional, Type, TypeVar, Union, cast
 
 from envinorma.data import ArreteMinisteriel, Regime, StructuredText, ensure_rubrique, load_path
 from envinorma.data.text_elements import EnrichedString
 from envinorma.parametrization import (
     AlternativeSection,
+    AMWarning,
     ConditionSource,
     EntityReference,
     NonApplicationCondition,
@@ -25,12 +26,11 @@ from envinorma.parametrization.conditions import (
     Range,
     ensure_mono_conditions,
 )
-from envinorma.utils import AMOperation
 
 from back_office.pages.parametrization_edition import page_ids
 from back_office.pages.parametrization_edition.condition_form import ConditionFormValues
 from back_office.pages.parametrization_edition.target_sections_form import TargetSectionFormValues
-from back_office.utils import DATA_FETCHER, safe_get_section
+from back_office.utils import DATA_FETCHER, AMOperation, safe_get_section
 
 
 class FormHandlingError(Exception):
@@ -300,29 +300,58 @@ def _build_non_application_condition(
     return NonApplicationCondition(targeted_entity=targeted_entity, condition=condition, source=source)
 
 
+T = TypeVar('T')
+
+
+def _ensure_not_none(option: Optional[T]) -> T:
+    if option is None:
+        raise ValueError('Expection non None object.')
+    return option
+
+
+def _build_am_warning(target_section: SectionReference, warning_content: str) -> AMWarning:
+    min_len = 10
+    if len(warning_content or '') <= min_len:
+        raise FormHandlingError(f'Le champ "Contenu de l\'avertissement" doit contenir au moins {min_len} caractères.')
+    return AMWarning(target_section, warning_content)
+
+
 def _build_parameter_object(
-    condition: Condition, source: ConditionSource, modification: _Modification
+    operation: AMOperation,
+    condition: Optional[Condition],
+    source: Optional[ConditionSource],
+    modification: _Modification,
+    warning_content: str,
 ) -> ParameterObject:
-    if modification.new_text:
+    if operation == AMOperation.ADD_ALTERNATIVE_SECTION:
         return AlternativeSection(
             targeted_section=modification.target_section,
-            new_text=modification.new_text,
-            condition=condition,
-            source=source,
+            new_text=_ensure_not_none(modification.new_text),
+            condition=_ensure_not_none(condition),
+            source=_ensure_not_none(source),
         )
-    return _build_non_application_condition(condition, source, modification)
+    if operation == AMOperation.ADD_CONDITION:
+        return _build_non_application_condition(_ensure_not_none(condition), _ensure_not_none(source), modification)
+    if operation == AMOperation.ADD_WARNING:
+        return _build_am_warning(modification.target_section, warning_content)
+    raise NotImplementedError(f'Not implemented for operation {operation}')
 
 
 def _extract_new_parameter_objects(
+    operation: AMOperation,
     am: ArreteMinisteriel,
     source_str: str,
     target_section_form_values: TargetSectionFormValues,
     condition_form_values: ConditionFormValues,
+    warning_content: str,
 ) -> List[ParameterObject]:
-    condition = _build_condition(condition_form_values)
+    condition = _build_condition(condition_form_values) if operation != AMOperation.ADD_WARNING else None
     target_versions = _build_target_versions(am, target_section_form_values)
-    source = _build_source(source_str)
-    return [_build_parameter_object(condition, source, target_version) for target_version in target_versions]
+    source = _build_source(source_str) if operation != AMOperation.ADD_WARNING else None
+    return [
+        _build_parameter_object(operation, condition, source, target_version, warning_content)
+        for target_version in target_versions
+    ]
 
 
 def _check_consistency(operation: AMOperation, parameters: List[ParameterObject]) -> None:
@@ -333,6 +362,8 @@ def _check_consistency(operation: AMOperation, parameters: List[ParameterObject]
             ), f'Expect NonApplicationCondition, got {type(parameter)}'
         elif operation == AMOperation.ADD_ALTERNATIVE_SECTION:
             assert isinstance(parameter, AlternativeSection), f'Expect AlternativeSection, got {type(parameter)}'
+        elif operation == AMOperation.ADD_WARNING:
+            assert isinstance(parameter, AMWarning), f'Expect AMWarning, got {type(parameter)}'
         else:
             raise ValueError(f'Unexpected operation {operation}')
 
@@ -344,11 +375,14 @@ def extract_and_upsert_new_parameter(
     source_str: str,
     target_section_form_values: TargetSectionFormValues,
     condition_form_values: ConditionFormValues,
+    warning_content: str,
 ) -> None:
     am = DATA_FETCHER.load_most_advanced_am(am_id)
     if not am:
         raise ValueError(f'AM with id {am_id} not found!')
-    new_parameters = _extract_new_parameter_objects(am, source_str, target_section_form_values, condition_form_values)
+    new_parameters = _extract_new_parameter_objects(
+        operation, am, source_str, target_section_form_values, condition_form_values, warning_content
+    )
     _check_consistency(operation, new_parameters)
     _upsert_parameters(am_id, new_parameters, parameter_rank)
 

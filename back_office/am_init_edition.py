@@ -23,13 +23,12 @@ from envinorma.data import (
 from envinorma.data.text_elements import TextElement, Title
 from envinorma.io.parse_html import extract_text_elements
 from envinorma.structure import build_structured_text, structured_text_to_text_elements
-from envinorma.utils import AMOperation
 from leginorma import LegifranceRequestError
 
 from back_office.app_init import app
 from back_office.components import error_component, success_component
 from back_office.routing import build_am_page
-from back_office.utils import DATA_FETCHER, RouteParsingError, extract_aida_am, extract_legifrance_am
+from back_office.utils import DATA_FETCHER, AMOperation, RouteParsingError, extract_aida_am, extract_legifrance_am
 
 _AM_TITLE = 'am-init-am-title'
 _AM_CONTENT = 'am-init-am-content'

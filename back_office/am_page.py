@@ -24,6 +24,7 @@ from envinorma.data import (
 from envinorma.io.markdown import extract_markdown_text
 from envinorma.parametrization import (
     AlternativeSection,
+    AMWarning,
     NonApplicationCondition,
     Parametrization,
     UndefinedTitlesSequencesError,
@@ -32,7 +33,7 @@ from envinorma.parametrization import (
     regenerate_paths,
 )
 from envinorma.parametrization.am_with_versions import AMVersions
-from envinorma.utils import AMOperation, AMStatus
+from envinorma.utils import AMStatus
 
 from back_office.am_init_edition import router as am_init_router
 from back_office.am_init_tab import am_init_tab
@@ -53,6 +54,7 @@ from back_office.pages.parametrization_edition import router as parametrization_
 from back_office.structure_edition import router as structure_router
 from back_office.utils import (
     DATA_FETCHER,
+    AMOperation,
     SlackChannel,
     get_traversed_titles,
     safe_get_section,
@@ -322,6 +324,28 @@ def _get_add_alternative_section_button(parent_page: str, status: AMStatus) -> C
     return html.Div(link_button('+ Nouveau', href, state), style={'margin-bottom': '35px'})
 
 
+def _warning_to_row(warning: AMWarning, am: ArreteMinisteriel, rank: int, current_page: str) -> List[ExtendedComponent]:
+    target_section = warning.targeted_section
+    reference_str = _get_section_title_or_error(target_section.path, am, target_section.titles_sequence)
+    href = f'{current_page}/{AMOperation.ADD_WARNING.value}/{rank}'
+    edit = link_button('Éditer', href=href, state=ButtonState.NORMAL_LINK)
+    href_copy = f'{current_page}/{AMOperation.ADD_WARNING.value}/{rank}/copy'
+    copy = link_button('Copier', href=href_copy, state=ButtonState.NORMAL_LINK)
+    return [str(rank), reference_str, warning.text, edit, copy]
+
+
+def _warnings_table(parametrization: Parametrization, am: ArreteMinisteriel, current_page: str) -> Component:
+    header = ['#', 'Paragraphe visé', 'Contenu', '', '']
+    rows = [_warning_to_row(row, am, rank, current_page) for rank, row in enumerate(parametrization.warnings)]
+    return table_component([header], rows, class_name='table-sm')
+
+
+def _add_warning_button(parent_page: str, status: AMStatus) -> Component:
+    state = ButtonState.NORMAL_LINK if status == status.PENDING_PARAMETRIZATION else ButtonState.HIDDEN
+    href = f'{parent_page}/{AMOperation.ADD_WARNING.value}'
+    return html.Div(link_button('+ Nouveau', href, state), style={'margin-bottom': '35px'})
+
+
 def _get_am_component_with_toc(am: ArreteMinisteriel) -> Component:
     return html.Div(
         [
@@ -348,6 +372,9 @@ def _get_parametrization_summary(
             html.H4('Paragraphes alternatifs'),
             _get_alternative_section_table(parametrization, am, parent_page),
             _get_add_alternative_section_button(parent_page, status),
+            html.H4('Avertissements'),
+            _warnings_table(parametrization, am, parent_page),
+            _add_warning_button(parent_page, status),
             html.H4('Texte'),
             _get_am_component_with_toc(am),
         ],
@@ -621,7 +648,7 @@ def _get_body_component(
 def _get_subpage_content(route: str, operation_id: AMOperation) -> Component:
     if operation_id == AMOperation.INIT:
         return am_init_router(route)
-    if operation_id in (AMOperation.ADD_ALTERNATIVE_SECTION, AMOperation.ADD_CONDITION):
+    if operation_id in (AMOperation.ADD_ALTERNATIVE_SECTION, AMOperation.ADD_CONDITION, AMOperation.ADD_WARNING):
         return parametrization_router(route)
     if operation_id == AMOperation.EDIT_STRUCTURE:
         return structure_router(route)
@@ -632,7 +659,7 @@ def _page(am_id: str, current_page: str) -> Component:
     am_metadata = ID_TO_AM_MD.get(am_id)
     am_status = DATA_FETCHER.load_am_status(am_id)
     am = DATA_FETCHER.load_most_advanced_am(am_id)  # Fetch initial AM if no parametrization ever done.
-    parametrization = DATA_FETCHER.load_parametrization(am_id) or Parametrization([], [])
+    parametrization = DATA_FETCHER.load_or_init_parametrization(am_id)
     body = html.Div(
         _get_body_component(am_id, current_page, am, am_status, parametrization), className='am_page_content'
     )

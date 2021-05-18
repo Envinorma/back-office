@@ -1,6 +1,6 @@
 import json
 import traceback
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from typing import List, Optional, Tuple, Type, cast
 
 import dash
 import dash_bootstrap_components as dbc
@@ -9,12 +9,19 @@ import dash_html_components as html
 from dash.dependencies import ALL, Input, Output, State
 from dash.development.base_component import Component
 from envinorma.data import Ints, StructuredText, dump_path
-from envinorma.parametrization import ParameterObject, ParametrizationError
-from envinorma.utils import AMOperation
+from envinorma.parametrization import (
+    AlternativeSection,
+    AMWarning,
+    ConditionSource,
+    NonApplicationCondition,
+    ParameterObject,
+    ParametrizationError,
+)
+from envinorma.parametrization.conditions import Condition
 
 from back_office.app_init import app
 from back_office.routing import build_am_page
-from back_office.utils import DATA_FETCHER, get_truncated_str
+from back_office.utils import DATA_FETCHER, AMOperation, get_truncated_str
 
 from . import page_ids
 from .condition_form import ConditionFormValues, condition_form
@@ -22,18 +29,20 @@ from .form_handling import FormHandlingError, extract_and_upsert_new_parameter
 from .target_sections_form import DropdownOptions, TargetSectionFormValues, target_section_form
 
 
-def _get_main_title(operation: AMOperation, is_edition: bool, rank: int) -> Component:
-    if is_edition:
-        return (
-            html.H4(f'Condition de non-application n°{rank}')
-            if operation == operation.ADD_CONDITION
-            else html.H4(f'Paragraphe alternatif n°{rank}')
-        )
-    return (
-        html.H4('Nouvelle condition de non-application')
-        if operation == operation.ADD_CONDITION
-        else html.H4('Nouveau paragraphe alternatif')
-    )
+def _title(operation: AMOperation, is_edition: bool, rank: int) -> str:
+    if operation == AMOperation.ADD_CONDITION:
+        return f'Condition de non-application n°{rank}' if is_edition else 'Nouvelle condition de non-application'
+    if operation == AMOperation.ADD_ALTERNATIVE_SECTION:
+        return f'Paragraphe alternatif n°{rank}' if is_edition else 'Nouveau paragraphe alternatif'
+    if operation == AMOperation.ADD_WARNING:
+        return f'Avertissement n°{rank}' if is_edition else 'Nouvel avertissement'
+    if operation in (AMOperation.EDIT_STRUCTURE, AMOperation.INIT):
+        raise ValueError(f'Unexpected operation {operation}')
+    raise NotImplementedError(f'Unhandled operation {operation}')
+
+
+def _main_title(operation: AMOperation, is_edition: bool, rank: int) -> Component:
+    return html.H4(_title(operation, is_edition, rank))
 
 
 def _go_back_button(parent_page: str) -> Component:
@@ -56,15 +65,25 @@ def _buttons(parent_page: str) -> Component:
     )
 
 
-def _get_source_form(options: DropdownOptions, loaded_parameter: Optional[ParameterObject]) -> Component:
-    if loaded_parameter:
-        default_value = dump_path(loaded_parameter.source.reference.section.path)
+def _extract_source(loaded_parameter: ParameterObject) -> ConditionSource:
+    if isinstance(loaded_parameter, AMWarning):
+        raise ValueError(
+            f'loaded_parameter should be of type ParameterObjectWithCondition, not {type(loaded_parameter)}'
+        )
+    return loaded_parameter.source
+
+
+def _get_source_form(
+    operation: AMOperation, options: DropdownOptions, loaded_parameter: Optional[ParameterObject]
+) -> Component:
+    if operation != AMOperation.ADD_WARNING and loaded_parameter:
+        default_value = dump_path(_extract_source(loaded_parameter).reference.section.path)
     else:
         default_value = ''
     dropdown_source = dcc.Dropdown(
         value=default_value, options=options, id=page_ids.SOURCE, style={'font-size': '0.8em'}
     )
-    return html.Div([html.H5('Source'), dropdown_source])
+    return html.Div([html.H5('Source'), dropdown_source], hidden=operation == AMOperation.ADD_WARNING)
 
 
 def _get_delete_button(is_edition: bool) -> Component:
@@ -97,6 +116,71 @@ def _get_target_section_block(
     )
 
 
+def _extract_condition(loaded_parameter: ParameterObject) -> Condition:
+    if isinstance(loaded_parameter, AMWarning):
+        raise ValueError(
+            f'loaded_parameter should be of type ParameterObjectWithCondition, not {type(loaded_parameter)}'
+        )
+    return loaded_parameter.condition
+
+
+def _condition_form(operation: AMOperation, loaded_parameter: Optional[ParameterObject]) -> Component:
+    condition = (
+        _extract_condition(loaded_parameter) if loaded_parameter and operation != AMOperation.ADD_WARNING else None
+    )
+    return html.Div(
+        [condition_form(condition)],
+        hidden=operation == AMOperation.ADD_WARNING,
+    )
+
+
+def _extract_warning_default_value(loaded_parameter: Optional[ParameterObject]) -> str:
+    if not loaded_parameter:
+        return ''
+    if isinstance(loaded_parameter, AMWarning):
+        return loaded_parameter.text
+    return ''
+
+
+def _warning_content_text_area(loaded_parameter: Optional[ParameterObject]) -> Component:
+    default_value = _extract_warning_default_value(loaded_parameter)
+    return dcc.Textarea(
+        id=page_ids.WARNING_CONTENT,
+        className='form-control',
+        value=default_value,
+        style={'min-height': '300px'},
+    )
+
+
+def _warning_content_form(operation: AMOperation, loaded_parameter: Optional[ParameterObject]) -> Component:
+    return html.Div(
+        [
+            html.Label('Contenu de l\'avertissement', className='form-label'),
+            _warning_content_text_area(loaded_parameter),
+        ],
+        hidden=operation != AMOperation.ADD_WARNING,
+    )
+
+
+def _fields(
+    text_title_options: DropdownOptions,
+    operation: AMOperation,
+    loaded_parameter: Optional[ParameterObject],
+    destination_rank: int,
+    text: StructuredText,
+) -> Component:
+    is_edition = destination_rank != -1
+    fields = [
+        _main_title(operation, is_edition=is_edition, rank=destination_rank),
+        _get_delete_button(is_edition=is_edition),
+        _get_source_form(operation, text_title_options, loaded_parameter),
+        _get_target_section_block(operation, text_title_options, loaded_parameter, text, is_edition=is_edition),
+        _warning_content_form(operation, loaded_parameter),
+        _condition_form(operation, loaded_parameter),
+    ]
+    return html.Div(fields)
+
+
 def _make_form(
     text_title_options: DropdownOptions,
     operation: AMOperation,
@@ -107,14 +191,8 @@ def _make_form(
 ) -> Component:
     return html.Div(
         [
-            _get_main_title(operation, is_edition=destination_rank != -1, rank=destination_rank),
-            _get_delete_button(is_edition=destination_rank != -1),
-            _get_source_form(text_title_options, loaded_parameter),
-            _get_target_section_block(
-                operation, text_title_options, loaded_parameter, text, is_edition=destination_rank != -1
-            ),
-            condition_form(loaded_parameter.condition if loaded_parameter else None),
-            html.Div(id='param-edition-upsert-output'),
+            _fields(text_title_options, operation, loaded_parameter, destination_rank, text),
+            html.Div(id='param-edition-upsert-output', className='mt-2'),
             html.Div(id='param-edition-delete-output'),
             dcc.Store(id=page_ids.DROPDOWN_OPTIONS, data=json.dumps(text_title_options)),
             _buttons(parent_page),
@@ -169,6 +247,7 @@ def _handle_submit(
     source_str: str,
     target_section_form_values: TargetSectionFormValues,
     condition_form_values: ConditionFormValues,
+    warning_content: str,
 ) -> Component:
     try:
         extract_and_upsert_new_parameter(
@@ -178,6 +257,7 @@ def _handle_submit(
             source_str,
             target_section_form_values,
             condition_form_values,
+            warning_content,
         )
     except FormHandlingError as exc:
         return dbc.Alert(f'Erreur dans le formulaire:\n{exc}', color='danger')
@@ -197,12 +277,22 @@ def _handle_submit(
     )
 
 
+def _deduce_parameter_object_type(operation: AMOperation) -> Type[ParameterObject]:
+    if operation == AMOperation.ADD_ALTERNATIVE_SECTION:
+        return AlternativeSection
+    if operation == AMOperation.ADD_CONDITION:
+        return NonApplicationCondition
+    if operation == AMOperation.ADD_WARNING:
+        return AMWarning
+    raise NotImplementedError()
+
+
 def _handle_delete(n_clicks: int, operation_str: str, am_id: str, parameter_rank: int) -> Component:
     if n_clicks == 0:
         return html.Div()
     try:
         operation = AMOperation(operation_str)
-        DATA_FETCHER.remove_parameter(am_id, operation, parameter_rank)
+        DATA_FETCHER.remove_parameter(am_id, _deduce_parameter_object_type(operation), parameter_rank)
     except Exception:  # pylint: disable=broad-except
         return dbc.Alert(f'Unexpected error:\n{traceback.format_exc()}', color='danger')
     return html.Div(
@@ -221,6 +311,7 @@ def _add_callbacks(app: dash.Dash):
         State(page_ids.AM_ID, 'children'),
         State(page_ids.PARAMETER_RANK, 'children'),
         State(page_ids.SOURCE, 'value'),
+        State(page_ids.WARNING_CONTENT, 'value'),
         State(page_ids.new_text_title(cast(int, ALL)), 'value'),
         State(page_ids.new_text_content(cast(int, ALL)), 'value'),
         State(page_ids.target_section(cast(int, ALL)), 'value'),
@@ -237,6 +328,7 @@ def _add_callbacks(app: dash.Dash):
         am_id,
         parameter_rank,
         source_str,
+        warning_content,
         new_texts_titles,
         new_texts_contents,
         target_sections,
@@ -259,6 +351,7 @@ def _add_callbacks(app: dash.Dash):
             source_str,
             target_section_form_values,
             condition_form_values,
+            warning_content,
         )
 
     @app.callback(

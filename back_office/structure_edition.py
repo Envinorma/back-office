@@ -14,13 +14,12 @@ from envinorma.data import ArreteMinisteriel, EnrichedString, StructuredText, Ta
 from envinorma.data.text_elements import TextElement, Title
 from envinorma.io.parse_html import extract_text_elements
 from envinorma.structure import build_structured_text, structured_text_to_text_elements
-from envinorma.utils import AMOperation
 
 from back_office.app_init import app
 from back_office.components import error_component, success_component
 from back_office.components.am_component import table_to_component
 from back_office.routing import build_am_page
-from back_office.utils import DATA_FETCHER, RouteParsingError, assert_str, get_truncated_str
+from back_office.utils import DATA_FETCHER, AMOperation, RouteParsingError, assert_str, get_truncated_str
 
 _TOC_COMPONENT = 'structure-edition-toc'
 _TEXT_AREA_COMPONENT = 'structure-edition-text-area-component'

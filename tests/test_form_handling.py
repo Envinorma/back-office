@@ -1,9 +1,19 @@
+import json
+from dataclasses import replace
 from datetime import date, datetime
+from pathlib import Path
 
 import pytest
 from envinorma.data import ArreteMinisteriel, Regime, StructuredText, dump_path
-from envinorma.data.text_elements import EnrichedString, estr
-from envinorma.parametrization import ConditionSource, EntityReference, SectionReference
+from envinorma.data.text_elements import estr
+from envinorma.parametrization import (
+    AlternativeSection,
+    AMWarning,
+    ConditionSource,
+    EntityReference,
+    NonApplicationCondition,
+    SectionReference,
+)
 from envinorma.parametrization.conditions import (
     AndCondition,
     Condition,
@@ -27,6 +37,7 @@ from back_office.pages.parametrization_edition.form_handling import (
     _build_source,
     _build_target_versions,
     _check_compatibility_and_build_range,
+    _extract_new_parameter_objects,
     _extract_parameter_to_conditions,
     _Modification,
     _NotSimplifiableError,
@@ -36,6 +47,7 @@ from back_office.pages.parametrization_edition.form_handling import (
     _try_building_range_condition,
 )
 from back_office.pages.parametrization_edition.target_sections_form import TargetSectionFormValues
+from back_office.utils import AMOperation
 
 
 def test_simplify_condition():
@@ -242,11 +254,11 @@ def test_build_target_versions():
     modif = _Modification(SectionReference((0, 0)), None, text)
     res = _build_target_versions(am, form_values)
     modif.new_text.id = res[0].new_text.id
-    assert _remove_ids(res) == _remove_ids([modif])
+    assert res == [modif]
 
     form_values = TargetSectionFormValues([], [], [dump_path((0, 0))], [[0, 1]])
     modif = _Modification(SectionReference((0, 0)), None, None)
-    assert _remove_ids(_build_target_versions(am, form_values)) == _remove_ids([modif])
+    assert _build_target_versions(am, form_values) == [modif]
 
     form_values = TargetSectionFormValues([], [], [dump_path((0, 0))], [[0]])
     modif = _Modification(SectionReference((0, 0)), [0], None)
@@ -255,21 +267,6 @@ def test_build_target_versions():
     form_values = TargetSectionFormValues([], [], [dump_path((0,))], [[0]])
     modif = _Modification(SectionReference((0,)), [0], None)
     assert _build_target_versions(am, form_values) == [modif]
-
-
-def _remove_ids(obj):
-    if isinstance(obj, list):
-        for el in obj:
-            _remove_ids(el)
-    if isinstance(obj, StructuredText):
-        _remove_ids(obj.outer_alineas)
-        _remove_ids(obj.sections)
-        _remove_ids(obj.title)
-    if isinstance(obj, EnrichedString):
-        obj.id = ''
-    if isinstance(obj, _Modification):
-        _remove_ids(obj.new_text)
-    return obj
 
 
 def test_build_new_text():
@@ -284,7 +281,7 @@ def test_build_new_text():
     with pytest.raises(FormHandlingError):
         _build_new_text(None, 'bb')
     assert _build_new_text('aa', 'bb').title.text == 'aa'
-    assert _remove_ids(_build_new_text('aa', 'bb').outer_alineas) == _remove_ids([estr('bb')])
+    assert _build_new_text('aa', 'bb').outer_alineas == [estr('bb')]
 
 
 def test_build_condition():
@@ -315,3 +312,117 @@ def test_build_section_reference():
     with pytest.raises(FormHandlingError):
         _build_section_reference('')
     assert _build_section_reference('[1, 2, 3]') == SectionReference((1, 2, 3))
+
+
+@pytest.fixture
+def data_dir() -> Path:
+    return Path(__file__).parent / 'data'
+
+
+@pytest.fixture
+def test_am(data_dir: Path) -> ArreteMinisteriel:
+    with open(data_dir / 'fake_am.json', 'r') as read_in:
+        return ArreteMinisteriel.from_dict(json.load(read_in))
+
+
+def test_extract_new_parameter_objects_alternative_section(test_am: ArreteMinisteriel):
+    operation = AMOperation.ADD_ALTERNATIVE_SECTION
+    source = '[5]'
+    target = TargetSectionFormValues(['1. Dispositions générales'], ['Lorem ipsum dolor sit amet'], ['[5, 0]'], [[]])
+    condition = ConditionFormValues(['Date de mise en service'], ['<'], ['01/01/2020'], 'and')
+    warning_content = ''
+
+    new_parameters = _extract_new_parameter_objects(operation, test_am, source, target, condition, warning_content)
+    assert len(new_parameters) == 1
+    assert isinstance(new_parameters[0], AlternativeSection)
+
+    new_parameters = _extract_new_parameter_objects(
+        operation,
+        test_am,
+        source,
+        replace(target, new_texts_titles=['1. Dispositions générales', '2. second paragraph']),
+        condition,
+        warning_content,
+    )
+    assert len(new_parameters) == 1
+    assert isinstance(new_parameters[0], AlternativeSection)
+
+    new_targets = TargetSectionFormValues(
+        ['1. Dispositions générales', '2. second paragraph'],
+        ['Lorem ipsum dolor sit amet', 'Lorem ipsum dolor sit amet'],
+        ['[5, 0]', '[5, 1]'],
+        [[], []],
+    )
+    new_parameters = _extract_new_parameter_objects(operation, test_am, source, new_targets, condition, warning_content)
+    assert len(new_parameters) == 2
+    assert isinstance(new_parameters[0], AlternativeSection)
+    assert isinstance(new_parameters[1], AlternativeSection)
+
+    with pytest.raises(FormHandlingError):
+        new_parameters = _extract_new_parameter_objects(operation, test_am, '', target, condition, warning_content)
+
+
+def test_extract_new_parameter_objects_condition(test_am: ArreteMinisteriel):
+    operation = AMOperation.ADD_CONDITION
+    source = '[5]'
+    target = TargetSectionFormValues([], [], ['[5, 0]'], [[10]])
+    condition = ConditionFormValues(['Date de mise en service'], ['<'], ['01/01/2020'], 'and')
+    warning_content = ''
+
+    new_parameters = _extract_new_parameter_objects(operation, test_am, source, target, condition, warning_content)
+    assert len(new_parameters) == 1
+    assert isinstance(new_parameters[0], NonApplicationCondition)
+
+    new_parameters = _extract_new_parameter_objects(
+        operation,
+        test_am,
+        source,
+        replace(target, target_alineas=[[10], [11]]),
+        condition,
+        warning_content,
+    )
+    assert len(new_parameters) == 1
+    assert isinstance(new_parameters[0], NonApplicationCondition)
+
+    new_targets = TargetSectionFormValues([], [], ['[5]', '[5, 1]'], [[0, 2], [0]])
+    new_parameters = _extract_new_parameter_objects(operation, test_am, source, new_targets, condition, warning_content)
+    assert len(new_parameters) == 2
+    assert isinstance(new_parameters[0], NonApplicationCondition)
+    assert isinstance(new_parameters[1], NonApplicationCondition)
+    assert new_parameters[0].targeted_entity.outer_alinea_indices == [0, 2]
+    assert new_parameters[1].targeted_entity.outer_alinea_indices == None
+
+    with pytest.raises(FormHandlingError):
+        new_parameters = _extract_new_parameter_objects(operation, test_am, '', target, condition, warning_content)
+
+
+def test_extract_new_parameter_objects_warning(test_am: ArreteMinisteriel):
+    operation = AMOperation.ADD_WARNING
+    source = ''
+    target = TargetSectionFormValues([], [], ['[5, 0]'], [])
+    condition = ConditionFormValues([], [], [], 'and')
+    warning_content = 'Content of warning.'
+
+    new_parameters = _extract_new_parameter_objects(operation, test_am, source, target, condition, warning_content)
+    assert len(new_parameters) == 1
+    assert isinstance(new_parameters[0], AMWarning)
+
+    new_parameters = _extract_new_parameter_objects(
+        operation,
+        test_am,
+        source,
+        replace(target, target_alineas=[[10], [11]]),
+        condition,
+        warning_content,
+    )
+    assert len(new_parameters) == 1
+    assert isinstance(new_parameters[0], AMWarning)
+
+    new_targets = TargetSectionFormValues([], [], ['[5]', '[5, 1]'], [])
+    new_parameters = _extract_new_parameter_objects(operation, test_am, source, new_targets, condition, warning_content)
+    assert len(new_parameters) == 2
+    assert isinstance(new_parameters[0], AMWarning)
+    assert isinstance(new_parameters[1], AMWarning)
+
+    with pytest.raises(FormHandlingError):
+        new_parameters = _extract_new_parameter_objects(operation, test_am, '', target, condition, 'too short')

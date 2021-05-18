@@ -97,8 +97,8 @@ def _li(app: Applicability, id_: str) -> Component:
     return html.Li([html.A(', '.join(app.warnings) + ' ', href=f'#{id_}'), badge])
 
 
-def _warnings_component(apps: List[_Warning]) -> Component:
-    list_ = html.Ul([_li(app, id_) for app, id_ in apps]) if apps else 'Aucune modifications.'
+def _warnings_component(warnings: List[_Warning]) -> Component:
+    list_ = html.Ul([_li(app, id_) for app, id_ in warnings]) if warnings else 'Aucune modifications.'
     return html.Div([html.H4('Modifications', style={'margin-top': '30px'}), html.Hr(), list_])
 
 
@@ -141,9 +141,10 @@ def _component(am: ArreteMinisteriel, text: StructuredText, warnings: List[_Warn
 
 def _extract_text_warnings(text: StructuredText) -> List[_Warning]:
     applicability = text.applicability or Applicability()
+    child_warnings = [warning for sec in text.sections for warning in _extract_text_warnings(sec)]
     if applicability.warnings:
-        return [(applicability, text.id)]
-    return [inap for sec in text.sections for inap in _extract_text_warnings(sec)]
+        return [(applicability, text.id)] + child_warnings
+    return child_warnings
 
 
 def _extract_warnings(am: Optional[ArreteMinisteriel]) -> List[_Warning]:

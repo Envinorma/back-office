@@ -6,3 +6,6 @@ config.ini
 backups
 *.DS_Store
 venv
+
+# misc
+.vscode
