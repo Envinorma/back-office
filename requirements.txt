@@ -1,4 +1,4 @@
-git+https://github.com/envinorma/envinorma-data.git@refacto-git-repo
+git+https://github.com/envinorma/envinorma-data.git@refacto-split-repo
 beautifulsoup4==4.9.3
 dash==1.17.0
 dash-bootstrap-components==0.11.1
