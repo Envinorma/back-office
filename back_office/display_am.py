@@ -10,7 +10,7 @@ from dash.dependencies import ALL, MATCH, Input, Output, State
 from dash.development.base_component import Component
 from dash.exceptions import PreventUpdate
 from envinorma.am_enriching import detect_and_add_topics
-from envinorma.data import ID_TO_AM_MD, ArreteMinisteriel, Regime, StructuredText, add_metadata, random_id
+from envinorma.data import ArreteMinisteriel, Regime, StructuredText, add_metadata, random_id
 from envinorma.parametrization import Parameter, ParameterEnum, ParameterType, Parametrization
 from envinorma.parametrization.parametric_am import (
     apply_parameter_values_to_am,
@@ -23,7 +23,7 @@ from back_office import am_compare
 from back_office.components import error_component
 from back_office.components.parametric_am import parametric_am_callbacks, parametric_am_component
 from back_office.routing import Page
-from back_office.utils import DATA_FETCHER, get_current_user
+from back_office.utils import DATA_FETCHER, ensure_not_none, get_current_user
 
 _PREFIX = __file__.split('/')[-1].replace('.py', '').replace('_', '-')
 _AM = _PREFIX + '-am'
@@ -48,7 +48,7 @@ def _input(parameter_id: Any) -> Dict[str, Any]:
 
 def _am_component(am: ArreteMinisteriel, topics: Optional[Set[TopicName]] = None) -> Component:
     if not am.legifrance_url:
-        am = add_metadata(am, ID_TO_AM_MD[am.id or ''])
+        am = add_metadata(am, ensure_not_none(DATA_FETCHER.load_am_metadata(am.id or '')))
     return parametric_am_component(am, _PREFIX, topics)
 
 
@@ -226,7 +226,8 @@ def _load_am(am_id: str) -> Optional[ArreteMinisteriel]:
 def _layout(am_id: str, compare_with: Optional[str] = None) -> Component:
     if compare_with:
         return am_compare.layout(am_id, compare_with)
-    if am_id not in ID_TO_AM_MD:
+    am_metadata = DATA_FETCHER.load_am_metadata(am_id)
+    if not am_metadata:
         return html.Div('404 - AM inexistant.')
     am = _load_am(am_id)
     if not am:
