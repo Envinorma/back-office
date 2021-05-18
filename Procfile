@@ -1,1 +1,1 @@
-web: gunicorn --pythonpath src src.envinorma.back_office.app:APP --preload
+web: gunicorn --pythonpath . back_office.app:APP --preload

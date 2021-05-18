@@ -8,14 +8,17 @@ from typing import Optional, Tuple
 def _config_filename() -> str:
     filename = __file__.replace('back_office/config.py', 'config.ini')
     assert 'config.ini' in filename
-    assert os.path.exists(filename)
     return filename
 
 
 @lru_cache
 def _load_config_file() -> ConfigParser:
     parser = ConfigParser()
-    parser.read(_config_filename())
+    filename = _config_filename()
+    if os.path.exists(filename):
+        parser.read(filename)
+    else:
+        print('config.ini not found, reading config from env')
     return parser
 
 
