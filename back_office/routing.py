@@ -15,6 +15,8 @@ class Endpoint(Enum):
     COMPARE = 'compare'
     AM = 'am'
     EDIT_AM = 'edit_am'
+    DELETE_AM = 'delete_am'
+    CREATE_AM = 'create_am'
     LOGIN = 'login'
     LOGOUT = 'logout'
 
@@ -35,6 +37,9 @@ ROUTER: MapAdapter = Map(
         Rule(f'/{Endpoint.AM}/<am_id>/compare/<compare_with>', endpoint=Endpoint.AM),
         Rule(f'/{Endpoint.LOGIN}', endpoint=Endpoint.LOGIN),
         Rule(f'/{Endpoint.LOGOUT}', endpoint=Endpoint.LOGOUT),
+        Rule(f'/{Endpoint.DELETE_AM}/<am_id>', endpoint=Endpoint.DELETE_AM),
+        Rule(f'/{Endpoint.CREATE_AM}', endpoint=Endpoint.CREATE_AM),
+        Rule(f'/{Endpoint.CREATE_AM}/<am_id>', endpoint=Endpoint.CREATE_AM),
         # Rule('/edit_am/id/<id>/operation/<operation>', endpoint=Endpoint.EDIT_AM),
     ]
 ).bind('')

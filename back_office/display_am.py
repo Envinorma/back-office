@@ -9,20 +9,16 @@ from dash import Dash
 from dash.dependencies import ALL, MATCH, Input, Output, State
 from dash.development.base_component import Component
 from dash.exceptions import PreventUpdate
-from envinorma.am_enriching import detect_and_add_topics
-from envinorma.data import ArreteMinisteriel, Regime, StructuredText, add_metadata, random_id
+from envinorma.data import AMMetadata, AMState, ArreteMinisteriel, Regime, StructuredText, add_metadata, random_id
 from envinorma.parametrization import Parameter, ParameterEnum, ParameterType, Parametrization
 from envinorma.parametrization.parametric_am import (
     apply_parameter_values_to_am,
     extract_parameters_from_parametrization,
 )
-from envinorma.topics.patterns import TopicName
-from envinorma.topics.topics import TOPIC_ONTOLOGY
-
 from back_office import am_compare
 from back_office.components import error_component
 from back_office.components.parametric_am import parametric_am_callbacks, parametric_am_component
-from back_office.routing import Page
+from back_office.routing import Endpoint, Page
 from back_office.utils import DATA_FETCHER, ensure_not_none, get_current_user
 
 _PREFIX = __file__.split('/')[-1].replace('.py', '').replace('_', '-')
@@ -30,12 +26,6 @@ _AM = _PREFIX + '-am'
 _SUBMIT = _PREFIX + '-submit'
 _AM_ID = _PREFIX + '-am-id'
 _FORM_OUTPUT = _PREFIX + '-form-output'
-
-
-def _topic_button_id(key: Any) -> Dict[str, Any]:
-    if not isinstance(key, str) and key not in (MATCH, ALL):
-        raise NotImplementedError(key)
-    return {'type': _PREFIX + '-topic-button', 'key': key}
 
 
 def _store(parameter_id: Any) -> Dict[str, Any]:
@@ -46,13 +36,15 @@ def _input(parameter_id: Any) -> Dict[str, Any]:
     return {'type': _PREFIX + '-input', 'key': parameter_id}
 
 
-def _am_component(am: ArreteMinisteriel, topics: Optional[Set[TopicName]] = None) -> Component:
+def _am_component(am: ArreteMinisteriel) -> Component:
     if not am.legifrance_url:
         am = add_metadata(am, ensure_not_none(DATA_FETCHER.load_am_metadata(am.id or '')))
-    return parametric_am_component(am, _PREFIX, topics)
+    return parametric_am_component(am, _PREFIX)
 
 
-def _am_component_with_toc(am: ArreteMinisteriel) -> Component:
+def _am_component_with_toc(am: Optional[ArreteMinisteriel]) -> Component:
+    if not am:
+        return dbc.Alert('404 - AM non initialisé.', color='warning', className='mb-3 mt-3')
     return html.Div(_am_component(am), id=_AM)
 
 
@@ -145,30 +137,6 @@ def _parametrization_component(am_id: str) -> Component:
     return html.Div([html.H2('Paramétrage'), content])
 
 
-def _extract_topics(text: StructuredText) -> List[TopicName]:
-    topic = ([ann.topic] if ann.topic else []) if (ann := text.annotations) else []
-    children_topics = [top for sec in text.sections for top in _extract_topics(sec)]
-    return topic + children_topics
-
-
-def _extract_topic_count(am: ArreteMinisteriel) -> Dict[TopicName, int]:
-    return Counter([topic for section in am.sections for topic in _extract_topics(section)])
-
-
-def _topic_button(topic: TopicName, count: int) -> Component:
-    text = f'{topic.value}  ({count})'
-    return html.Button(text, className='btn btn-light btn-sm', disabled=True, style={'margin': '5px'})
-
-
-def _topic_buttons(topic_count: Dict[TopicName, int]) -> Component:
-    return html.Div([_topic_button(topic, count) for topic, count in sorted(topic_count.items(), key=lambda x: -x[1])])
-
-
-def _topic_component(am: ArreteMinisteriel) -> Component:
-    topic_count = _extract_topic_count(am)
-    return html.Div([html.H2('Thêmes'), _topic_buttons(topic_count)])
-
-
 def _link(text: str, href: str) -> Component:
     return dcc.Link(html.Button(text, className='btn btn-link'), href=href)
 
@@ -183,7 +151,7 @@ def _diff_component(am_id: str) -> Component:
     )
 
 
-def _edit_component(am: ArreteMinisteriel) -> Component:
+def _edit_component(am_id: str) -> Component:
     alert = (
         dbc.Alert('Cet arrêté peut être modifié, restructuré ou paramétré par toute personne.')
         if not get_current_user().is_authenticated
@@ -193,28 +161,48 @@ def _edit_component(am: ArreteMinisteriel) -> Component:
         [
             html.H2('Éditer'),
             alert,
-            dcc.Link(dbc.Button('Éditer', color='success'), href=f'/edit_am/{am.id}'),
+            html.Div(dcc.Link(dbc.Button('Éditer le contenu de l\'arrêté', color='success'), href=f'/edit_am/{am_id}')),
+            html.Div(
+                dcc.Link(dbc.Button('Supprimer', color='danger'), href=f'/{Endpoint.DELETE_AM}/{am_id}'),
+                className='mt-2',
+            ),
         ]
     )
 
 
-def _parametrization_and_topic(am: ArreteMinisteriel) -> Component:
+def _form_header(am_id: str, am: Optional[ArreteMinisteriel]) -> Component:
     columns = [
-        html.Div(_parametrization_component(am.id or ''), className='col-4'),
-        html.Div(_diff_component(am.id or ''), className='col-4'),
-        html.Div(_edit_component(am), className='col-4'),
+        html.Div(_parametrization_component(am_id), className='col-4') if am else html.Div(),
+        html.Div(_diff_component(am_id), className='col-4') if am else html.Div(),
+        html.Div(_edit_component(am_id), className='col-4'),
     ]
     return html.Div(columns, className='row')
 
 
-def _page(am: ArreteMinisteriel) -> Component:
+def _warning(am_metadata: AMMetadata) -> Component:
+    if am_metadata.state == AMState.VIGUEUR:
+        return html.Div()
+    if am_metadata.state == AMState.ABROGE:
+        return dbc.Alert(
+            'Cet arrêté est abrogé et ne sera pas exploité dans l\'application envinorma.', color='warning'
+        )
+    if am_metadata.state == AMState.DELETED:
+        return dbc.Alert(
+            f'Cet arrêté a été supprimé et ne sera pas exploité dans l\'application envinorma. '
+            f'Raison de la suppression :\n{am_metadata.reason_deleted}',
+            color='warning',
+        )
+    raise NotImplementedError(f'Unhandled state {am_metadata.state}')
+
+
+def _page(am_metadata: AMMetadata, am: Optional[ArreteMinisteriel]) -> Component:
     style = {'height': '80vh', 'overflow-y': 'auto'}
-    am = detect_and_add_topics(am, TOPIC_ONTOLOGY)
     return html.Div(
         [
-            _parametrization_and_topic(am),
+            _warning(am_metadata),
+            _form_header(am_metadata.cid, am),
             html.Div(_am_component_with_toc(am), style=style),
-            dcc.Store(data=am.id or '', id=_AM_ID),
+            dcc.Store(data=am_metadata.cid, id=_AM_ID),
         ]
     )
 
@@ -230,9 +218,7 @@ def _layout(am_id: str, compare_with: Optional[str] = None) -> Component:
     if not am_metadata:
         return html.Div('404 - AM inexistant.')
     am = _load_am(am_id)
-    if not am:
-        return html.Div('404 - AM non initialisé.')
-    return _page(am)
+    return _page(am_metadata, am)
 
 
 class _FormError(Exception):
@@ -293,7 +279,6 @@ def _callbacks(app: Dash) -> None:
         State(_AM_ID, 'data'),
     )
     def _apply_parameters(_, parameter_ids, parameter_dates, parameter_values, am_id):
-        active_topics = None
         am = _load_am(am_id)
         if not am:
             raise PreventUpdate
@@ -307,7 +292,7 @@ def _callbacks(app: Dash) -> None:
             return html.Div(), error_component(str(exc))
         except Exception:
             return html.Div(), error_component(traceback.format_exc())
-        return _am_component(am, active_topics), html.Div()
+        return _am_component(am), html.Div()
 
     parametric_am_callbacks(app, _PREFIX)
 

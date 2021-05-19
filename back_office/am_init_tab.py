@@ -45,13 +45,11 @@ def _buttons(am_page: str) -> Component:
         'display': 'inline-block',
         'position': 'fixed',
         'bottom': '0px',
-        'left': '25%',
+        'left': '40%',
         'z-index': '10',
-        'width': '50%',
-        'text-align': 'center',
+        'width': '30%',
         'padding-bottom': '10px',
         'padding-top': '10px',
-        'margin': 'auto',
     }
     return html.Div([edit, delete], style=style)
 
