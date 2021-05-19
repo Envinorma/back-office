@@ -1,7 +1,9 @@
-import pytest
 from datetime import date
+
+import pytest
 from envinorma.data import AMMetadata, AMSource, AMState, Classement, Regime
-from back_office.pages.create_am.am_creation_form_handling import _extract_am_metadata, FormHandlingError
+
+from back_office.pages.create_am.am_creation_form_handling import FormHandlingError, _extract_am_metadata
 
 
 def test_extract_am_metadata():

@@ -7,7 +7,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 from dash.development.base_component import Component
-from envinorma.data import AMMetadata, AMState, DELETE_REASON_MIN_NB_CHARS
+from envinorma.data import DELETE_REASON_MIN_NB_CHARS, AMMetadata, AMState
 
 from back_office.pages.parametrization_edition.form_handling import FormHandlingError
 from back_office.routing import Endpoint, Page

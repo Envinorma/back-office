@@ -1,26 +1,22 @@
 from datetime import date
 from typing import Any, Dict, List, Optional, cast
 
-import dash
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
-from dash.dependencies import ALL, MATCH, Input, Output, State
 from dash.development.base_component import Component
 from envinorma.data import (
+    DELETE_REASON_MIN_NB_CHARS,
     AMMetadata,
     AMSource,
     AMState,
     Classement,
-    DELETE_REASON_MIN_NB_CHARS,
     Regime,
     extract_publication_date,
 )
-from envinorma.utils import AIDA_URL
 
 from back_office.pages.parametrization_edition.form_handling import FormHandlingError
-from back_office.routing import Endpoint, Page
-from back_office.utils import DATA_FETCHER, generate_id, get_current_user
+from back_office.utils import DATA_FETCHER
 
 from . import create_am_ids as page_ids
 

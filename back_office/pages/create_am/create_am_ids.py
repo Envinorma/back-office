@@ -1,6 +1,6 @@
 from typing import Any, Dict
-from back_office.utils import generate_id
 
+from back_office.utils import generate_id
 
 LEGIFRANCE_ID = generate_id(__file__, 'legifrance-id')
 SUBMIT_LEGIFRANCE_ID = generate_id(__file__, 'submit-legifrance-id')
