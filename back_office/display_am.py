@@ -164,7 +164,7 @@ def _edit_component(am_id: str) -> Component:
             alert,
             html.Div(dcc.Link(dbc.Button('Éditer le contenu de l\'arrêté', color='success'), href=f'/edit_am/{am_id}')),
             html.Div(
-                dcc.Link(dbc.Button('Supprimer', color='danger'), href=f'/{Endpoint.DELETE_AM}/{am_id}'),
+                dcc.Link(dbc.Button('Supprimer l\'arrêté', color='danger'), href=f'/{Endpoint.DELETE_AM}/{am_id}'),
                 className='mt-2',
             ),
         ]

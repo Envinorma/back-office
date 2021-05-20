@@ -32,10 +32,15 @@ def _legifrance_id_form(am_id: Optional[str]) -> Component:
                 style={'display': 'flex'},
             ),
             html.Button(
-                'Créer l\'AM', className='btn btn-primary', id=page_ids.SUBMIT_LEGIFRANCE_ID, hidden=am_id is not None
+                'Créer un nouvel AM',
+                className='btn btn-primary',
+                id=page_ids.SUBMIT_LEGIFRANCE_ID,
+                hidden=am_id is not None,
             ),
             dcc.Link(
-                html.Button('Éditer', className='btn btn-outline-primary', hidden=am_id is None),
+                html.Button(
+                    'Éditer l\'identifiant Légifrance', className='btn btn-outline-primary', hidden=am_id is None
+                ),
                 href=f'/{Endpoint.CREATE_AM}',
             ),
         ],
@@ -161,6 +166,13 @@ def _am_state(am_metadata: Optional[AMMetadata]) -> Component:
         [
             html.Label(f'Statut', className='form-label'),
             dcc.Dropdown(value=default_value, options=_AM_STATE_OPTIONS, id=page_ids.AM_STATE, placeholder='Statut'),
+            dbc.FormText(
+                'Choisir VIGUEUR pour que l\'AM soit exploité dans Envinorma. '
+                'Il est possible de créer un arrêté abrogé ou supprimé principalement à des fins de test. '
+                'Une fois créé, un AM n\'est jamais supprimé pour permettre une restauration éventuelle. '
+                'La suppression est indiquée par le statut DELETED. '
+                'Le statut ABROGE est réservé pour un AM qui a été en vigueur dans le passé.'
+            ),
         ]
     )
 
@@ -171,6 +183,7 @@ def _publication_date(am_metadata: Optional[AMMetadata]) -> Component:
         [
             html.Label(f'Date de publication', className='form-label'),
             dbc.Input(value=default_value, type='date', id=page_ids.PUBLICATION_DATE),
+            dbc.FormText('Doit être indentique à celui renseigné dans le titre de l\'arrêté.'),
         ]
     )
 
@@ -195,7 +208,7 @@ def _reason_deleted(am_metadata: Optional[AMMetadata]) -> Component:
         [
             html.Label(f'Raison de suppression ', className='form-label'),
             dbc.Input(value=default_value, type='text', id=page_ids.REASON_DELETED),
-            dbc.FormText('À ne renseigner que si le statut choisi est "deleted".'),
+            dbc.FormText('À ne renseigner que si le statut choisi est DELETED.'),
         ]
     )
 
