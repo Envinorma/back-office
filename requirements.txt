@@ -1,4 +1,4 @@
-git+https://github.com/envinorma/envinorma-data.git
+git+https://github.com/envinorma/envinorma-data.git@main
 beautifulsoup4==4.9.3
 dash==1.17.0
 dash-bootstrap-components==0.11.1
