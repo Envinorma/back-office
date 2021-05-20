@@ -30,7 +30,7 @@ from envinorma.parametrization.conditions import (
 from back_office.pages.parametrization_edition import page_ids
 from back_office.pages.parametrization_edition.condition_form import ConditionFormValues
 from back_office.pages.parametrization_edition.target_sections_form import TargetSectionFormValues
-from back_office.utils import DATA_FETCHER, AMOperation, safe_get_section
+from back_office.utils import DATA_FETCHER, AMOperation, ensure_not_none, safe_get_section
 
 
 class FormHandlingError(Exception):
@@ -300,15 +300,6 @@ def _build_non_application_condition(
     return NonApplicationCondition(targeted_entity=targeted_entity, condition=condition, source=source)
 
 
-T = TypeVar('T')
-
-
-def _ensure_not_none(option: Optional[T]) -> T:
-    if option is None:
-        raise ValueError('Expection non None object.')
-    return option
-
-
 def _build_am_warning(target_section: SectionReference, warning_content: str) -> AMWarning:
     min_len = 10
     if len(warning_content or '') <= min_len:
@@ -326,12 +317,12 @@ def _build_parameter_object(
     if operation == AMOperation.ADD_ALTERNATIVE_SECTION:
         return AlternativeSection(
             targeted_section=modification.target_section,
-            new_text=_ensure_not_none(modification.new_text),
-            condition=_ensure_not_none(condition),
-            source=_ensure_not_none(source),
+            new_text=ensure_not_none(modification.new_text),
+            condition=ensure_not_none(condition),
+            source=ensure_not_none(source),
         )
     if operation == AMOperation.ADD_CONDITION:
-        return _build_non_application_condition(_ensure_not_none(condition), _ensure_not_none(source), modification)
+        return _build_non_application_condition(ensure_not_none(condition), ensure_not_none(source), modification)
     if operation == AMOperation.ADD_WARNING:
         return _build_am_warning(modification.target_section, warning_content)
     raise NotImplementedError(f'Not implemented for operation {operation}')

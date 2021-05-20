@@ -10,7 +10,6 @@ from bs4 import BeautifulSoup
 from dash.dependencies import Input, Output, State
 from dash.development.base_component import Component
 from envinorma.data import (
-    ID_TO_AM_MD,
     AMMetadata,
     ArreteMinisteriel,
     EnrichedString,
@@ -28,7 +27,14 @@ from leginorma import LegifranceRequestError
 from back_office.app_init import app
 from back_office.components import error_component, success_component
 from back_office.routing import build_am_page
-from back_office.utils import DATA_FETCHER, AMOperation, RouteParsingError, extract_aida_am, extract_legifrance_am
+from back_office.utils import (
+    DATA_FETCHER,
+    AMOperation,
+    RouteParsingError,
+    ensure_not_none,
+    extract_aida_am,
+    extract_legifrance_am,
+)
 
 _AM_TITLE = 'am-init-am-title'
 _AM_CONTENT = 'am-init-am-content'
@@ -86,7 +92,7 @@ def _am_loaders(am_id: str) -> Component:
         [
             html.Div('Pas d\'arrêté pour le moment.', className='alert alert-primary'),
             html.H5('Charger depuis AIDA'),
-            _aida_form(ID_TO_AM_MD[am_id]),
+            _aida_form(ensure_not_none(DATA_FETCHER.load_am_metadata(am_id))),
             dbc.Spinner(html.Div(), id=_AIDA_FORM_OUTPUT),
             html.H5('Charger depuis Légifrance'),
             _legifrance_form(am_id),
@@ -166,7 +172,7 @@ def _make_page(am_id: str) -> Component:
 
 def _save_and_get_component(am_id: str, am: ArreteMinisteriel) -> Component:
     try:
-        am_metadata = ID_TO_AM_MD[am_id]
+        am_metadata: AMMetadata = ensure_not_none(DATA_FETCHER.load_am_metadata(am_id))
         DATA_FETCHER.upsert_initial_am(am_id, add_metadata(am, am_metadata))
     except Exception:
         return error_component(f'Erreur inattendue lors de l\'enregristrement de l\'AM: \n{traceback.format_exc()}')

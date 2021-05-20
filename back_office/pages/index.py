@@ -4,11 +4,11 @@ from typing import Any, Dict, List, Optional, Union
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.development.base_component import Component
-from envinorma.data import ID_TO_AM_MD, AMMetadata, Classement
+from envinorma.data import AMMetadata, AMState, Classement
 from envinorma.utils import AMStatus
 
 from back_office.components import replace_line_breaks
-from back_office.routing import Page
+from back_office.routing import Endpoint, Page
 from back_office.utils import AM_ID_TO_NB_CLASSEMENTS, DATA_FETCHER
 
 
@@ -126,9 +126,19 @@ def _build_recap(id_to_state: Dict[str, AMStatus], id_to_occurrences: Dict[str, 
     return html.Div(cols, className='row', style={'margin-top': '20px', 'margin-bottom': '40px'})
 
 
-def _make_index_component(
+def _add_am_button() -> Component:
+    return html.Div(
+        dcc.Link(html.Button('+ Ajouter un arrêté', className='btn btn-link'), href=f'/{Endpoint.CREATE_AM}'),
+        style={'text-align': 'right'},
+    )
+
+
+def _inforced_am_row(
     id_to_state: Dict[str, AMStatus], id_to_am_metadata: Dict[str, AMMetadata], id_to_occurrences: Dict[str, int]
 ) -> Component:
+    id_to_am_metadata = {
+        id_: metadata for id_, metadata in id_to_am_metadata.items() if metadata.state == AMState.VIGUEUR
+    }
     displayed_ids = set(list(id_to_am_metadata))
     id_to_state = {id_: state for id_, state in id_to_state.items() if id_ in displayed_ids}
     id_to_occurrences = {id_: occ for id_, occ in id_to_occurrences.items() if id_ in displayed_ids}
@@ -136,14 +146,38 @@ def _make_index_component(
         [
             html.H2('Arrêtés ministériels.'),
             _build_recap(id_to_state, id_to_occurrences),
+            _add_am_button(),
             _build_am_table(id_to_state, id_to_am_metadata, id_to_occurrences),
+        ]
+    )
+
+
+def _deleted_am_row(id_to_am_metadata: Dict[str, AMMetadata]) -> Component:
+    deleted_am = {id_: metadata for id_, metadata in id_to_am_metadata.items() if metadata.state != AMState.VIGUEUR}
+    return html.Div(
+        [
+            html.H2('Arrêtés supprimés ou abrogés.', className='mt-5'),
+            html.P('Ces arrêtés ne sont pas exploités dans l\'application envinorma.'),
+            _build_am_table({}, deleted_am, {}),
+        ]
+    )
+
+
+def _index_component(
+    id_to_state: Dict[str, AMStatus], id_to_am_metadata: Dict[str, AMMetadata], id_to_occurrences: Dict[str, int]
+) -> Component:
+    return html.Div(
+        [
+            _inforced_am_row(id_to_state, id_to_am_metadata, id_to_occurrences),
+            _deleted_am_row(id_to_am_metadata),
         ]
     )
 
 
 def _layout() -> Component:
     id_to_state = DATA_FETCHER.load_all_am_statuses()
-    return _make_index_component(id_to_state, ID_TO_AM_MD, AM_ID_TO_NB_CLASSEMENTS)
+    id_to_metadata = DATA_FETCHER.load_all_am_metadata(with_deleted_ams=True)
+    return _index_component(id_to_state, id_to_metadata, AM_ID_TO_NB_CLASSEMENTS)
 
 
 PAGE = Page(_layout, None)

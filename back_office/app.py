@@ -13,6 +13,8 @@ from back_office.app_init import app
 from back_office.compare import PAGE as compare_page
 from back_office.config import AM_DATA_FOLDER, LOGIN_SECRET_KEY
 from back_office.display_am import PAGE as display_am_page
+from back_office.pages.create_am import PAGE as create_am_page
+from back_office.pages.delete_am import PAGE as delete_am_page
 from back_office.pages.index import PAGE as index_page
 from back_office.pages.login import PAGE as login_page
 from back_office.pages.logout import PAGE as logout_page
@@ -71,6 +73,8 @@ _ENDPOINT_TO_PAGE: Dict[Endpoint, Page] = {
     Endpoint.LOGIN: login_page,
     Endpoint.LOGOUT: logout_page,
     Endpoint.INDEX: index_page,
+    Endpoint.DELETE_AM: delete_am_page,
+    Endpoint.CREATE_AM: create_am_page,
 }
 
 

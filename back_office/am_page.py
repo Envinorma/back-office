@@ -11,16 +11,7 @@ import dash_html_components as html
 from dash.dependencies import MATCH, Input, Output, State
 from dash.development.base_component import Component
 from dash.exceptions import PreventUpdate
-from envinorma.data import (
-    ID_TO_AM_MD,
-    AMMetadata,
-    ArreteMinisteriel,
-    Ints,
-    StructuredText,
-    Table,
-    am_to_text,
-    extract_text_lines,
-)
+from envinorma.data import AMMetadata, ArreteMinisteriel, Ints, StructuredText, Table, am_to_text, extract_text_lines
 from envinorma.io.markdown import extract_markdown_text
 from envinorma.parametrization import (
     AlternativeSection,
@@ -56,6 +47,7 @@ from back_office.utils import (
     DATA_FETCHER,
     AMOperation,
     SlackChannel,
+    ensure_not_none,
     get_traversed_titles,
     safe_get_section,
     send_slack_notification,
@@ -656,7 +648,7 @@ def _get_subpage_content(route: str, operation_id: AMOperation) -> Component:
 
 
 def _page(am_id: str, current_page: str) -> Component:
-    am_metadata = ID_TO_AM_MD.get(am_id)
+    am_metadata = DATA_FETCHER.load_am_metadata(am_id)
     am_status = DATA_FETCHER.load_am_status(am_id)
     am = DATA_FETCHER.load_most_advanced_am(am_id)  # Fetch initial AM if no parametrization ever done.
     parametrization = DATA_FETCHER.load_or_init_parametrization(am_id)
@@ -694,7 +686,7 @@ def _dump_am_versions(am_id: str, versions: Optional[AMVersions]) -> None:
 
 
 def _generate_and_dump_am_version(am_id: str) -> None:
-    final_am = generate_final_am(ID_TO_AM_MD[am_id])
+    final_am = generate_final_am(ensure_not_none(DATA_FETCHER.load_am_metadata(am_id)))
     _dump_am_versions(am_id, final_am.am_versions)
 
 
@@ -824,9 +816,9 @@ parametric_am_list_callbacks(app, _PREFIX)
 
 def router(parent_page: str, route: str) -> Component:
     am_id, operation_id, _ = _extract_am_id_and_operation(route)
-    if am_id not in ID_TO_AM_MD:
+    am_metadata = DATA_FETCHER.load_am_metadata(am_id)
+    if not am_metadata:
         return html.P(f'404 - Arrêté {am_id} inconnu')
-    am_metadata = ID_TO_AM_MD[am_id]
     current_page = parent_page + '/' + am_id
     if operation_id:
         am_status = DATA_FETCHER.load_am_status(am_id)

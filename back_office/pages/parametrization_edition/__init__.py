@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.development.base_component import Component
-from envinorma.data import ID_TO_AM_MD, ArreteMinisteriel, am_to_text
+from envinorma.data import ArreteMinisteriel, am_to_text
 from envinorma.parametrization import (
     AlternativeSection,
     AMWarning,
@@ -118,10 +118,10 @@ def _get_parameter(parametrization: Parametrization, operation_id: AMOperation, 
 def router(pathname: str) -> Component:
     try:
         am_id, operation_id, parameter_rank, copy = _parse_route(pathname)
-        if am_id not in ID_TO_AM_MD:
+        am_metadata = DATA_FETCHER.load_am_metadata(am_id)
+        if not am_metadata:
             return html.P('404 - Arrêté inconnu')
         am_page = build_am_page(am_id)
-        am_metadata = ID_TO_AM_MD.get(am_id)
         am = _load_am(am_id)
         parametrization = DATA_FETCHER.load_or_init_parametrization(am_id)
         loaded_parameter = (

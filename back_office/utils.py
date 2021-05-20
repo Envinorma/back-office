@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from functools import lru_cache
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, TypeVar, Union
 
 import requests
 from envinorma.data import ArreteMinisteriel, EnrichedString, Ints, StructuredText, extract_text_lines
@@ -253,3 +253,12 @@ class AMOperation(Enum):
     ADD_CONDITION = 'add_condition'
     ADD_ALTERNATIVE_SECTION = 'add_alternative_section'
     ADD_WARNING = 'ADD_WARNING'
+
+
+T = TypeVar('T')
+
+
+def ensure_not_none(option: Optional[T]) -> T:
+    if option is None:
+        raise ValueError('Expecting non None object.')
+    return option
