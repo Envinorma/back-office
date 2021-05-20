@@ -12,7 +12,7 @@ from envinorma.data import (
     AMState,
     Classement,
     Regime,
-    extract_publication_date,
+    extract_date_of_signature,
 )
 
 from back_office.pages.parametrization_edition.form_handling import FormHandlingError
@@ -43,7 +43,7 @@ def _build_aida_page(aida_page: Optional[str]) -> str:
 
 def _extract_title_date(title: Optional[str]) -> date:
     try:
-        return extract_publication_date(title or '')
+        return extract_date_of_signature(title or '')
     except ValueError:
         raise FormHandlingError(
             'Mauvais format de titre. Format attendu : "Arrêté du jj/mm/yy '
@@ -104,16 +104,8 @@ def _build_state(am_state: Optional[str]) -> AMState:
         raise FormHandlingError('Le statut de l\'AM est invalide.')
 
 
-def _build_publication_date(title: Optional[str], publication_date_str: Optional[str]) -> date:
-    extracted_date = _extract_title_date(title)
-    if not publication_date_str:
-        raise FormHandlingError('La date de publication doit être renseignée.')
-    publication_date = date.fromisoformat(publication_date_str)
-    if publication_date != extracted_date:
-        raise FormHandlingError(
-            'La date extraite du titre de l\'arrêté et la date de publication renseignée dans le formulaire sont incompatibles.'
-        )
-    return publication_date
+def _build_date_of_signature(title: Optional[str]) -> date:
+    return _extract_title_date(title)
 
 
 def _build_source(am_source: Optional[str]) -> AMSource:
@@ -129,7 +121,7 @@ def _build_nor(nor_id: Optional[str]) -> str:
     if nor_id is None:
         raise FormHandlingError('Le numéro NOR doit être défini.')
     if len(nor_id) != 12:
-        raise FormHandlingError('Le numéro NOR doit contenir 10 caractères.')
+        raise FormHandlingError('Le numéro NOR doit contenir 12 caractères.')
     return nor_id
 
 
@@ -151,7 +143,6 @@ def _extract_am_metadata(
     title: Optional[str],
     aida_page: Optional[str],
     am_state: Optional[str],
-    publication_date: Optional[str],
     am_source: Optional[str],
     nor_id: Optional[str],
     reason_deleted: Optional[str],
@@ -165,7 +156,7 @@ def _extract_am_metadata(
         _build_title(title),
         _build_classements(rubriques, regimes, alineas),
         _build_state(am_state),
-        _build_publication_date(title, publication_date),
+        _build_date_of_signature(title),
         _build_source(am_source),
         _build_nor(nor_id),
         _build_reason_deleted(am_state, reason_deleted),
@@ -177,7 +168,6 @@ def handle_form(
     title: Optional[str],
     aida_page: Optional[str],
     am_state: Optional[str],
-    publication_date: Optional[str],
     am_source: Optional[str],
     nor_id: Optional[str],
     reason_deleted: Optional[str],
@@ -191,7 +181,6 @@ def handle_form(
             title,
             aida_page,
             am_state,
-            publication_date,
             am_source,
             nor_id,
             reason_deleted,

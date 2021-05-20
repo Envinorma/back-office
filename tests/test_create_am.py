@@ -14,7 +14,7 @@ def test_extract_am_metadata():
         classements=[Classement(regime=Regime('E'), rubrique='5000', alinea='A.2')],
         cid='JORFTEXT000012345678',
         state=AMState('VIGUEUR'),
-        publication_date=date.fromisoformat('2021-02-01'),
+        date_of_signature=date.fromisoformat('2021-02-01'),
         source=AMSource('LEGIFRANCE'),
     )
     args = {
@@ -22,7 +22,6 @@ def test_extract_am_metadata():
         'title': 'Arrêté du 01/02/21 relatif aux...',
         'aida_page': '5619',
         'am_state': 'VIGUEUR',
-        'publication_date': '2021-02-01',
         'am_source': 'LEGIFRANCE',
         'nor_id': 'DEVP0123456A',
         'reason_deleted': None,
@@ -54,11 +53,6 @@ def test_extract_am_metadata():
         _extract_am_metadata(**{**args, 'am_state': 'TEST'})
     _extract_am_metadata(**{**args, 'am_state': 'ABROGE'})
     _extract_am_metadata(**{**args, 'am_state': 'VIGUEUR'})
-
-    with pytest.raises(FormHandlingError):
-        _extract_am_metadata(**{**args, 'publication_date': '2021-02-02'})
-    with pytest.raises(FormHandlingError):
-        _extract_am_metadata(**{**args, 'publication_date': None})
 
     with pytest.raises(FormHandlingError):
         _extract_am_metadata(**{**args, 'am_source': None})

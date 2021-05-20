@@ -177,17 +177,6 @@ def _am_state(am_metadata: Optional[AMMetadata]) -> Component:
     )
 
 
-def _publication_date(am_metadata: Optional[AMMetadata]) -> Component:
-    default_value = am_metadata.publication_date if am_metadata else None
-    return dbc.FormGroup(
-        [
-            html.Label(f'Date de publication', className='form-label'),
-            dbc.Input(value=default_value, type='date', id=page_ids.PUBLICATION_DATE),
-            dbc.FormText('Doit être indentique à celui renseigné dans le titre de l\'arrêté.'),
-        ]
-    )
-
-
 def _am_source(am_metadata: Optional[AMMetadata]) -> Component:
     default_value = am_metadata.source.value if am_metadata else None
     return dbc.FormGroup(
@@ -232,7 +221,6 @@ def _metadata_form(am_metadata: Optional[AMMetadata]) -> Component:
             _aida_page_form(am_metadata),
             _classements_form(am_metadata),
             _am_state(am_metadata),
-            _publication_date(am_metadata),
             _am_source(am_metadata),
             _reason_deleted(am_metadata),
             html.Div(id=page_ids.FORM_OUTPUT),
@@ -312,7 +300,6 @@ def _add_callbacks(app: dash.Dash) -> None:
         State(page_ids.TITLE, 'value'),
         State(page_ids.AIDA_PAGE, 'value'),
         State(page_ids.AM_STATE, 'value'),
-        State(page_ids.PUBLICATION_DATE, 'value'),
         State(page_ids.AM_SOURCE, 'value'),
         State(page_ids.NOR_ID, 'value'),
         State(page_ids.REASON_DELETED, 'value'),
@@ -327,7 +314,6 @@ def _add_callbacks(app: dash.Dash) -> None:
         title: Optional[str],
         aida_page: Optional[str],
         am_state: Optional[str],
-        publication_date: Optional[str],
         am_source: Optional[str],
         nor_id: Optional[str],
         reason_deleted: Optional[str],
@@ -341,7 +327,6 @@ def _add_callbacks(app: dash.Dash) -> None:
             title,
             aida_page,
             am_state,
-            publication_date,
             am_source,
             nor_id,
             reason_deleted,

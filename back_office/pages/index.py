@@ -36,7 +36,7 @@ def _get_row(rank: int, am_state: Optional[AMStatus], am_metadata: AMMetadata, o
         _normal_td(rank),
         _normal_td(dcc.Link(am_metadata.cid, href=f'/am/{am_metadata.cid}')),
         _normal_td(str(am_metadata.nor)),
-        _normal_td(am_metadata.publication_date.strftime('%d/%m/%y')),
+        _normal_td(am_metadata.date_of_signature.strftime('%d/%m/%y')),
         _normal_td(_get_str_classements(am_metadata.classements)),
         _normal_td(am_metadata.source.value),
         _normal_td(occurrences),
