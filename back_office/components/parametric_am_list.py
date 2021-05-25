@@ -50,15 +50,26 @@ def _generate_am_row(
     filename: str, am: ArreteMinisteriel, _am_modal_generator: _AMModalGenerator
 ) -> List[ExtendedComponent]:
     link = _am_modal_generator(filename, am)
-    left_date = (dt.left_date or '') if (dt := am.installation_date_criterion) else ''
-    right_date = (dt.right_date or '') if (dt := am.installation_date_criterion) else ''
-    return [link, am.id or '', left_date, right_date]
+    if not am.applicability:
+        raise ValueError('Expecting non null applicability.')
+    aed_left_date = str(am.applicability.aed_date_parameter.left_date) or ''
+    aed_right_date = str(am.applicability.aed_date_parameter.right_date) or ''
+    installation_left_date = str(am.applicability.installation_date_parameter.left_date) or ''
+    installation_right_date = str(am.applicability.installation_date_parameter.right_date) or ''
+    return [link, am.id or '', aed_left_date, aed_right_date, installation_left_date, installation_right_date]
 
 
 def _generate_am_table(
     filename_to_am: Dict[str, ArreteMinisteriel], _am_modal_generator: _AMModalGenerator
 ) -> Component:
-    header = ['filename', 'CID', 'Date d\'installation postérieure à', 'Date d\'installation antérieure à']
+    header = [
+        f'filename ({len(filename_to_am)} versions)',
+        'CID',
+        'Date d\'AED postérieure à',
+        'Date d\'AED antérieure à',
+        'Date d\'installation postérieure à',
+        'Date d\'installation antérieure à',
+    ]
     rows = [_generate_am_row(filename, am, _am_modal_generator) for filename, am in sorted(filename_to_am.items())]
     return table_component([header], rows)
 

@@ -305,14 +305,10 @@
   ],
   "visa": [],
   "date_of_signature": "1998-07-13",
-  "installation_date_criterion": null,
   "aida_url": null,
   "legifrance_url": null,
   "classements": [],
   "classements_with_alineas": [],
-  "unique_version": false,
   "summary": null,
-  "id": "FAKE_CID",
-  "active": true,
-  "warning_inactive": null
+  "id": "FAKE_CID"
 }

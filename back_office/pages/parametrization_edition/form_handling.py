@@ -51,9 +51,9 @@ def _extract_parameter(parameter: str) -> Parameter:
     return page_ids.CONDITION_VARIABLES[parameter].value
 
 
-def _parse_dmy(date_str: str) -> datetime:
+def _parse_dmy(date_str: str) -> date:
     try:
-        return datetime.strptime(date_str, '%d/%m/%Y')
+        return datetime.strptime(date_str, '%d/%m/%Y').date()
     except ValueError:
         raise FormHandlingError(f'Date mal formattée. Format attendu JJ/MM/AAAA. Reçu: "{date_str}"')
 

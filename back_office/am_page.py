@@ -42,6 +42,7 @@ from back_office.config import (
 )
 from back_office.generate_final_am import generate_final_am
 from back_office.pages.parametrization_edition import router as parametrization_router
+from back_office.routing import Endpoint
 from back_office.structure_edition import router as structure_router
 from back_office.utils import (
     DATA_FETCHER,
@@ -565,8 +566,12 @@ def _list_parametric_texts(am_id: str, am_status: AMStatus) -> Component:
     return parametric_am_list_component(filename_to_am, _PREFIX)
 
 
+def _link_to_am(am_id: str) -> Component:
+    return html.Div(dcc.Link('< Retour à l\'AM', href=f'/{Endpoint.AM}/{am_id}'), className='mb-3')
+
+
 def _final_parametric_texts_component(am_id: str, am_status: AMStatus) -> Component:
-    return html.Div([html.H3('Versions finales'), _list_parametric_texts(am_id, am_status)])
+    return html.Div([_link_to_am(am_id), html.H3('Versions finales'), _list_parametric_texts(am_id, am_status)])
 
 
 def _get_final_parametric_texts_component(am_id: str, am_status: AMStatus) -> Component:
