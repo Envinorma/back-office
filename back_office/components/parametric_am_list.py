@@ -50,12 +50,12 @@ def _generate_am_row(
     filename: str, am: ArreteMinisteriel, _am_modal_generator: _AMModalGenerator
 ) -> List[ExtendedComponent]:
     link = _am_modal_generator(filename, am)
-    if not am.applicability:
-        raise ValueError('Expecting non null applicability.')
-    aed_left_date = str(am.applicability.aed_date_parameter.left_date) or ''
-    aed_right_date = str(am.applicability.aed_date_parameter.right_date) or ''
-    installation_left_date = str(am.applicability.installation_date_parameter.left_date) or ''
-    installation_right_date = str(am.applicability.installation_date_parameter.right_date) or ''
+    if not am.version:
+        raise ValueError('Expecting non null version descriptor.')
+    aed_left_date = str(am.version.aed_date_parameter.left_date) or ''
+    aed_right_date = str(am.version.aed_date_parameter.right_date) or ''
+    installation_left_date = str(am.version.installation_date_parameter.left_date) or ''
+    installation_right_date = str(am.version.installation_date_parameter.right_date) or ''
     return [link, am.id or '', aed_left_date, aed_right_date, installation_left_date, installation_right_date]
 
 
