@@ -16,12 +16,11 @@ from envinorma.parametrization.parametric_am import (
     extract_parameters_from_parametrization,
 )
 
-from back_office.pages.am import am_compare
 from back_office.components import error_component
 from back_office.components.parametric_am import parametric_am_callbacks, parametric_am_component
+from back_office.pages.am import am_compare
 from back_office.routing import Endpoint, Page
 from back_office.utils import DATA_FETCHER, ensure_not_none, get_current_user
-
 
 _PREFIX = 'display-am'
 _AM = _PREFIX + '-am'

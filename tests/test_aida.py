@@ -1,4 +1,4 @@
-from back_office.aida import extract_anchors, extract_hyperlinks
+from back_office.helpers.aida import extract_anchors, extract_hyperlinks
 
 
 def test_hyperlinks_extraction():

@@ -16,7 +16,6 @@ from flask_login import current_user
 from leginorma import LegifranceClient, LegifranceText
 from text_diff import TextDifferences, text_differences
 
-from back_office.aida import parse_aida_text
 from back_office.config import (
     LEGIFRANCE_CLIENT_ID,
     LEGIFRANCE_CLIENT_SECRET,
@@ -25,6 +24,7 @@ from back_office.config import (
     PSQL_DSN,
     SLACK_ENRICHMENT_NOTIFICATION_URL,
 )
+from back_office.helpers.aida import parse_aida_text
 
 LEGIFRANCE_CLIENT = LegifranceClient(LEGIFRANCE_CLIENT_ID, LEGIFRANCE_CLIENT_SECRET)
 DATA_FETCHER = DataFetcher(PSQL_DSN)
