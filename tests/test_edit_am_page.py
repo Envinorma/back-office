@@ -1,6 +1,6 @@
 import dash_html_components as html
 
-from back_office.am_page import _diff_to_component, _diffline_is_special, _extract_char_positions
+from back_office.pages.edit_am.edit_am import _diff_to_component, _diffline_is_special, _extract_char_positions
 
 
 def test_diff_to_component():

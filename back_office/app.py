@@ -8,13 +8,13 @@ from dash.development.base_component import Component
 from flask_login import LoginManager
 from werkzeug.exceptions import NotFound
 
-from back_office.am_page import router as edit_am_page_router
 from back_office.app_init import app
-from back_office.compare import PAGE as compare_page
 from back_office.config import AM_DATA_FOLDER, LOGIN_SECRET_KEY
-from back_office.display_am import PAGE as display_am_page
+from back_office.pages.am import PAGE as am_page
+from back_office.pages.compare import PAGE as compare_page
 from back_office.pages.create_am import PAGE as create_am_page
 from back_office.pages.delete_am import PAGE as delete_am_page
+from back_office.pages.edit_am.edit_am import router as edit_am_page_router
 from back_office.pages.index import PAGE as index_page
 from back_office.pages.login import PAGE as login_page
 from back_office.pages.logout import PAGE as logout_page
@@ -69,7 +69,7 @@ def _get_page_heading() -> Component:
 
 _ENDPOINT_TO_PAGE: Dict[Endpoint, Page] = {
     Endpoint.COMPARE: compare_page,
-    Endpoint.AM: display_am_page,
+    Endpoint.AM: am_page,
     Endpoint.LOGIN: login_page,
     Endpoint.LOGOUT: logout_page,
     Endpoint.INDEX: index_page,

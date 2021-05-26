@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from envinorma.data import StructuredText
 from envinorma.data.text_elements import EnrichedString, Table, Title
 
-from back_office.structure_edition import (
+from back_office.pages.edit_am.structure_edition import (
     _TABLE_MARK,
     _count_prefix_hashtags,
     _extract_element_words,

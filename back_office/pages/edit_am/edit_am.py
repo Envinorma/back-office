@@ -26,8 +26,8 @@ from envinorma.parametrization import (
 from envinorma.parametrization.am_with_versions import AMVersions
 from envinorma.utils import AMStatus
 
-from back_office.am_init_edition import router as am_init_router
-from back_office.am_init_tab import am_init_tab
+from back_office.pages.edit_am.am_init_edition import router as am_init_router
+from back_office.pages.edit_am.am_init_tab import am_init_tab
 from back_office.app_init import app
 from back_office.components import ButtonState, button, error_component, link_button, surline_text
 from back_office.components.am_component import am_component
@@ -43,7 +43,7 @@ from back_office.config import (
 from back_office.generate_final_am import generate_final_am
 from back_office.pages.parametrization_edition import router as parametrization_router
 from back_office.routing import Endpoint
-from back_office.structure_edition import router as structure_router
+from back_office.pages.edit_am.structure_edition import router as structure_router
 from back_office.utils import (
     DATA_FETCHER,
     AMOperation,

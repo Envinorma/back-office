@@ -46,10 +46,8 @@ def _get_am_modal_generator(page_id: str) -> _AMModalGenerator:
     return _am_modal
 
 
-def _generate_am_row(
-    filename: str, am: ArreteMinisteriel, _am_modal_generator: _AMModalGenerator
-) -> List[ExtendedComponent]:
-    link = _am_modal_generator(filename, am)
+def _generate_am_row(am: ArreteMinisteriel, _am_modal_generator: _AMModalGenerator) -> List[ExtendedComponent]:
+    link = _am_modal_generator('Consulter', am)
     if not am.version:
         raise ValueError('Expecting non null version descriptor.')
     aed_left_date = str(am.version.aed_date_parameter.left_date) or ''
@@ -63,14 +61,14 @@ def _generate_am_table(
     filename_to_am: Dict[str, ArreteMinisteriel], _am_modal_generator: _AMModalGenerator
 ) -> Component:
     header = [
-        f'filename ({len(filename_to_am)} versions)',
+        f'{len(filename_to_am)} versions',
         'CID',
         'Date d\'AED postérieure à',
         'Date d\'AED antérieure à',
         'Date d\'installation postérieure à',
         'Date d\'installation antérieure à',
     ]
-    rows = [_generate_am_row(filename, am, _am_modal_generator) for filename, am in sorted(filename_to_am.items())]
+    rows = [_generate_am_row(am, _am_modal_generator) for _, am in sorted(filename_to_am.items())]
     return table_component([header], rows)
 
 

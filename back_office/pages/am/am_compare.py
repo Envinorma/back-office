@@ -1,5 +1,6 @@
 from enum import Enum
 from typing import Callable, Optional
+from dash.dash import Dash
 
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
@@ -87,6 +88,7 @@ def layout(am_id: str, compare_with_str: str) -> Component:
     )
 
 
-@app.callback(Output(_SPINNER, 'children'), Input(_ARGS, 'data'))
-def _define_diff_component(args):
-    return _build_component(*args)
+def add_callbacks(app: Dash) -> None:
+    @app.callback(Output(_SPINNER, 'children'), Input(_ARGS, 'data'))
+    def _define_diff_component(args):
+        return _build_component(*args)
