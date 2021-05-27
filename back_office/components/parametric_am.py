@@ -114,13 +114,21 @@ def _external_links(am: ArreteMinisteriel) -> Component:
     return html.Div()
 
 
+def _applicability_warnings(am: ArreteMinisteriel) -> Component:
+    if not am:
+        return html.Div()
+    if am.version_descriptor:
+        color = 'danger' if not am.version_descriptor.applicable else 'warning'
+        return html.Div([dbc.Alert(warning, color=color) for warning in am.version_descriptor.applicability_warnings])
+    return html.Div()
+
+
 def _main_component(am: ArreteMinisteriel, text: StructuredText, warnings: List[_Warning], page_id: str) -> Component:
-    if not am.active:
-        return html.P('L\'arrêté n\'est pas applicable.')
     return html.Div(
         [
             html.P(html.I(am.title.text)),
             _external_links(am),
+            _applicability_warnings(am),
             _warnings_component(warnings),
             _text_component(text, 0, page_id),
         ]

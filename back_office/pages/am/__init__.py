@@ -16,13 +16,13 @@ from envinorma.parametrization.parametric_am import (
     extract_parameters_from_parametrization,
 )
 
-from back_office import am_compare
 from back_office.components import error_component
 from back_office.components.parametric_am import parametric_am_callbacks, parametric_am_component
+from back_office.pages.am import am_compare
 from back_office.routing import Endpoint, Page
 from back_office.utils import DATA_FETCHER, ensure_not_none, get_current_user
 
-_PREFIX = __file__.split('/')[-1].replace('.py', '').replace('_', '-')
+_PREFIX = 'display-am'
 _AM = _PREFIX + '-am'
 _SUBMIT = _PREFIX + '-submit'
 _AM_ID = _PREFIX + '-am-id'
@@ -296,6 +296,7 @@ def _callbacks(app: Dash) -> None:
         return _am_component(am), html.Div()
 
     parametric_am_callbacks(app, _PREFIX)
+    am_compare.add_callbacks(app)
 
 
 PAGE = Page(_layout, _callbacks)

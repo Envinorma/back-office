@@ -1,6 +1,6 @@
 import json
 from dataclasses import replace
-from datetime import date, datetime
+from datetime import date
 from pathlib import Path
 
 import pytest
@@ -288,14 +288,14 @@ def test_build_condition():
     with pytest.raises(FormHandlingError):
         assert _build_condition(ConditionFormValues([], [], [], _AND_ID))
 
-    res = Equal(ParameterEnum.DATE_DECLARATION.value, datetime(2020, 1, 1))
+    res = Equal(ParameterEnum.DATE_DECLARATION.value, date(2020, 1, 1))
     assert _build_condition(ConditionFormValues(['Date de déclaration'], ['='], ['01/01/2020'], _AND_ID)) == res
 
-    res = Range(ParameterEnum.DATE_DECLARATION.value, datetime(2020, 1, 1), datetime(2020, 1, 31))
+    res = Range(ParameterEnum.DATE_DECLARATION.value, date(2020, 1, 1), date(2020, 1, 31))
     form_values = ConditionFormValues(['Date de déclaration'] * 2, ['>=', '<'], ['01/01/2020', '31/01/2020'], _AND_ID)
     assert _build_condition(form_values) == res
 
-    cd_1 = Equal(ParameterEnum.DATE_DECLARATION.value, datetime(2020, 1, 1))
+    cd_1 = Equal(ParameterEnum.DATE_DECLARATION.value, date(2020, 1, 1))
     cd_2 = Equal(ParameterEnum.REGIME.value, Regime.A)
     res = AndCondition([cd_1, cd_2])
     form_values = ConditionFormValues(['Date de déclaration', 'Régime'], ['=', '='], ['01/01/2020', 'A'], _AND_ID)

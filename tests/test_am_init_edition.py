@@ -1,6 +1,6 @@
 from envinorma.data.text_elements import Table, Title
 
-from back_office.am_init_edition import _extract_elements, _extract_structured_text
+from back_office.pages.edit_am.am_init_edition import _extract_elements, _extract_structured_text
 
 
 def test_extract_elements():

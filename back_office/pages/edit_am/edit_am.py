@@ -26,8 +26,6 @@ from envinorma.parametrization import (
 from envinorma.parametrization.am_with_versions import AMVersions
 from envinorma.utils import AMStatus
 
-from back_office.am_init_edition import router as am_init_router
-from back_office.am_init_tab import am_init_tab
 from back_office.app_init import app
 from back_office.components import ButtonState, button, error_component, link_button, surline_text
 from back_office.components.am_component import am_component
@@ -40,9 +38,12 @@ from back_office.config import (
     create_folder_and_generate_parametric_filename,
     get_parametric_ams_folder,
 )
-from back_office.generate_final_am import generate_final_am
+from back_office.helpers.generate_final_am import generate_final_am
+from back_office.pages.edit_am.am_init_edition import router as am_init_router
+from back_office.pages.edit_am.am_init_tab import am_init_tab
+from back_office.pages.edit_am.structure_edition import router as structure_router
 from back_office.pages.parametrization_edition import router as parametrization_router
-from back_office.structure_edition import router as structure_router
+from back_office.routing import Endpoint
 from back_office.utils import (
     DATA_FETCHER,
     AMOperation,
@@ -565,8 +566,12 @@ def _list_parametric_texts(am_id: str, am_status: AMStatus) -> Component:
     return parametric_am_list_component(filename_to_am, _PREFIX)
 
 
+def _link_to_am(am_id: str) -> Component:
+    return html.Div(dcc.Link('< Retour à l\'AM', href=f'/{Endpoint.AM}/{am_id}'), className='mb-3')
+
+
 def _final_parametric_texts_component(am_id: str, am_status: AMStatus) -> Component:
-    return html.Div([html.H3('Versions finales'), _list_parametric_texts(am_id, am_status)])
+    return html.Div([_link_to_am(am_id), html.H3('Versions finales'), _list_parametric_texts(am_id, am_status)])
 
 
 def _get_final_parametric_texts_component(am_id: str, am_status: AMStatus) -> Component:

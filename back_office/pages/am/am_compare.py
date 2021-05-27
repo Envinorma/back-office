@@ -4,6 +4,7 @@ from typing import Callable, Optional
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
+from dash.dash import Dash
 from dash.dependencies import Input, Output
 from dash.development.base_component import Component
 from envinorma.data import AMMetadata, ArreteMinisteriel
@@ -87,6 +88,7 @@ def layout(am_id: str, compare_with_str: str) -> Component:
     )
 
 
-@app.callback(Output(_SPINNER, 'children'), Input(_ARGS, 'data'))
-def _define_diff_component(args):
-    return _build_component(*args)
+def add_callbacks(app: Dash) -> None:
+    @app.callback(Output(_SPINNER, 'children'), Input(_ARGS, 'data'))
+    def _define_diff_component(args):
+        return _build_component(*args)

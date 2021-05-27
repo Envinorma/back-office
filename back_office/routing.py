@@ -19,6 +19,7 @@ class Endpoint(Enum):
     CREATE_AM = 'create_am'
     LOGIN = 'login'
     LOGOUT = 'logout'
+    REGULATION_ENGINE = 'regulation_engine'
 
     def __repr__(self):
         return self.value
@@ -40,6 +41,7 @@ ROUTER: MapAdapter = Map(
         Rule(f'/{Endpoint.DELETE_AM}/<am_id>', endpoint=Endpoint.DELETE_AM),
         Rule(f'/{Endpoint.CREATE_AM}', endpoint=Endpoint.CREATE_AM),
         Rule(f'/{Endpoint.CREATE_AM}/<am_id>', endpoint=Endpoint.CREATE_AM),
+        Rule(f'/{Endpoint.REGULATION_ENGINE}', endpoint=Endpoint.REGULATION_ENGINE),
         # Rule('/edit_am/id/<id>/operation/<operation>', endpoint=Endpoint.EDIT_AM),
     ]
 ).bind('')

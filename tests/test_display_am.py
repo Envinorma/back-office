@@ -1,6 +1,6 @@
 from envinorma.parametrization.conditions import ParameterEnum
 
-from back_office.display_am import _build_parameter_input, _extract_name, _extract_parameter_and_value
+from back_office.pages.am import _build_parameter_input, _extract_name, _extract_parameter_and_value
 
 
 def test_extract_name():
