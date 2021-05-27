@@ -3,7 +3,7 @@ import os
 import random
 import traceback
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, date
 from enum import Enum
 from functools import lru_cache
 from typing import Any, Dict, List, Optional, Tuple, TypeVar, Union
@@ -154,9 +154,10 @@ def extract_aida_am(page_id: str, am_id: str) -> Optional[ArreteMinisteriel]:
     )
 
 
-def extract_legifrance_am(am_id: str, date: Optional[datetime] = None) -> ArreteMinisteriel:
-    date = date or datetime.now()
-    legifrance_current_version = LegifranceText.from_dict(LEGIFRANCE_CLIENT.consult_law_decree(am_id, date))
+def extract_legifrance_am(am_id: str, date_: Optional[date] = None) -> ArreteMinisteriel:
+    date_ = date_ or date.today()
+    datetime_ = datetime(date_.year, date_.month, date_.day)
+    legifrance_current_version = LegifranceText.from_dict(LEGIFRANCE_CLIENT.consult_law_decree(am_id, datetime_))
     random.seed(legifrance_current_version.title)
     return transform_arrete_ministeriel(legifrance_current_version, am_id=am_id)
 

@@ -15,4 +15,4 @@ def test_build_parameter_input():
 
 def test_extract_parameter_and_value():
     for value in ParameterEnum:
-        _extract_parameter_and_value(value.value.id, None, None)
+        _extract_parameter_and_value(value.value.id, None)

@@ -1,12 +1,12 @@
 import traceback
-from datetime import datetime
+from datetime import date
 from typing import List, Optional, Set, Tuple
 
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
 from dash import Dash
-from dash.dependencies import ALL, Input, Output, State
+from dash.dependencies import Input, Output, State
 from dash.development.base_component import Component
 from dash.exceptions import PreventUpdate
 from leginorma import LegifranceRequestError
@@ -29,33 +29,18 @@ class _FormError(Exception):
     pass
 
 
-def _extract_date(date_: str) -> datetime:
-    return datetime.strptime(date_, '%Y-%m-%d')
+def _date_picker(id_: str, initial_date: Optional[date]) -> Component:
+    return dbc.Input(id=id_, type='date', className='form-control', value=initial_date)
 
 
-def _date_to_str(date_: datetime) -> str:
-    return date_.strftime('%Y-%m-%d')
-
-
-def _date_picker(id_: str, initial_date: Optional[datetime]) -> Component:
-    initial_value = _date_to_str(initial_date) if initial_date else None
-    return dcc.DatePickerSingle(
-        style={'padding': '0px', 'width': '100%'},
-        id=id_,
-        date=initial_value,
-        display_format='DD/MM/YYYY',
-        placeholder=None,
-    )
-
-
-def _before_date(date: Optional[datetime]) -> Component:
+def _before_date(date: Optional[date]) -> Component:
     return html.Div(
         [html.Label('Date de la version de référence', htmlFor=_DATE_BEFORE), _date_picker(_DATE_BEFORE, date)],
         className='col-md-12',
     )
 
 
-def _after_date(date: Optional[datetime]) -> Component:
+def _after_date(date: Optional[date]) -> Component:
     return html.Div(
         [html.Label('Date de la version à comparer', htmlFor=_DATE_AFTER), _date_picker(_DATE_AFTER, date)],
         className='col-md-12',
@@ -72,7 +57,7 @@ def _am_id(am_id: Optional[str]) -> Component:
     )
 
 
-def _diff(am_id: str, date_before: datetime, date_after: datetime) -> Component:
+def _diff(am_id: str, date_before: date, date_after: date) -> Component:
     am_before = extract_legifrance_am(am_id, date_before)
     am_after = extract_legifrance_am(am_id, date_after)
     diff = compute_am_diff(am_before, am_after)
@@ -80,8 +65,8 @@ def _diff(am_id: str, date_before: datetime, date_after: datetime) -> Component:
 
 
 def _form(am_id: Optional[str], date_before_str: Optional[str], date_after_str: Optional[str]) -> Component:
-    date_before = _extract_date(date_before_str) if date_before_str else None
-    date_after = _extract_date(date_after_str) if date_after_str else None
+    date_before = date.fromisoformat(date_before_str) if date_before_str else None
+    date_after = date.fromisoformat(date_after_str) if date_after_str else None
     margin = {'margin-top': '10px', 'margin-bottom': '10px'}
     return html.Div(
         [
@@ -100,7 +85,7 @@ def _safe_handle_submit(am_id: Optional[str], date_before: Optional[str], date_a
         raise _FormError('Les deux dates doivent être définies.')
     if not am_id:
         raise _FormError('Le CID de l\'arrêté doit être renseigné.')
-    return _diff(am_id, _extract_date(date_before), _extract_date(date_after))
+    return _diff(am_id, date.fromisoformat(date_before), date.fromisoformat(date_after))
 
 
 def _callbacks(app: Dash) -> None:
@@ -109,8 +94,8 @@ def _callbacks(app: Dash) -> None:
         Output(_DIFF, 'children'),
         Input(_SUBMIT, 'n_clicks'),
         State(_AM_ID, 'value'),
-        State(_DATE_BEFORE, 'date'),
-        State(_DATE_AFTER, 'date'),
+        State(_DATE_BEFORE, 'value'),
+        State(_DATE_AFTER, 'value'),
     )
     def _handle_sumbit(n_clicks, am_id, date_before, date_after) -> Tuple[Component, Component]:
         if not n_clicks:

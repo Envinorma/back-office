@@ -1,5 +1,5 @@
 import traceback
-from datetime import datetime
+from datetime import date
 from typing import Any, Counter, Dict, List, Optional, Set, Tuple
 
 import dash_bootstrap_components as dbc
@@ -9,7 +9,7 @@ from dash import Dash
 from dash.dependencies import ALL, MATCH, Input, Output, State
 from dash.development.base_component import Component
 from dash.exceptions import PreventUpdate
-from envinorma.data import AMMetadata, AMState, ArreteMinisteriel, Regime, StructuredText, add_metadata, random_id
+from envinorma.data import AMMetadata, AMState, ArreteMinisteriel, Regime, add_metadata, random_id
 from envinorma.parametrization import Parameter, ParameterEnum, ParameterType, Parametrization
 from envinorma.parametrization.parametric_am import (
     apply_parameter_values_to_am,
@@ -73,9 +73,7 @@ def _build_input(id_: str, parameter_type: ParameterType) -> Component:
     if parameter_type == ParameterType.BOOLEAN:
         return dbc.Checklist(options=[{'label': '', 'value': 1}], switch=True, value=1, id=_input(id_))
     if parameter_type == ParameterType.DATE:
-        return dcc.DatePickerSingle(
-            style={'padding': '0px', 'width': '100%'}, id=_input(id_), placeholder=None, display_format='DD/MM/YYYY'
-        )
+        return dbc.Input(id=_input(id_), className='form-control', type='date')
     if parameter_type == ParameterType.REGIME:
         options = [{'value': reg.value, 'label': reg.value} for reg in Regime]
         return dcc.Dropdown(options=options, id=_input(id_))
@@ -226,10 +224,6 @@ class _FormError(Exception):
     pass
 
 
-def _extract_date(date_: str) -> datetime:
-    return datetime.strptime(date_, '%Y-%m-%d')
-
-
 def _extract_float(value_str: Optional[str]) -> Optional[float]:
     if not value_str:
         return None
@@ -239,7 +233,7 @@ def _extract_float(value_str: Optional[str]) -> Optional[float]:
         raise _FormError(f'Erreur dans le formulaire : nombre attendu,  {value_str} reçu')
 
 
-def _extract_parameter_and_value(id_: str, date: Optional[str], value: Optional[str]) -> Tuple[Parameter, Any]:
+def _extract_parameter_and_value(id_: str, value: Optional[str]) -> Tuple[Parameter, Any]:
     date_params = (
         ParameterEnum.DATE_AUTORISATION,
         ParameterEnum.DATE_ENREGISTREMENT,
@@ -248,7 +242,7 @@ def _extract_parameter_and_value(id_: str, date: Optional[str], value: Optional[
     )
     for param in date_params:
         if id_ == param.value.id:
-            return (param.value, _extract_date(date) if date else None)
+            return (param.value, date.fromisoformat(value) if value else None)
     if id_ == ParameterEnum.REGIME.value.id:
         return (ParameterEnum.REGIME.value, Regime(value) if value else None)
     if id_ == ParameterEnum.RUBRIQUE_QUANTITY.value.id:
@@ -260,12 +254,8 @@ def _extract_parameter_and_value(id_: str, date: Optional[str], value: Optional[
     raise NotImplementedError()
 
 
-def _extract_parameter_values(
-    ids: List[str], dates: List[Optional[str]], values: List[Optional[str]]
-) -> Dict[Parameter, Any]:
-    values_with_none = dict(
-        _extract_parameter_and_value(id_, date, value) for id_, date, value in zip(ids, dates, values)
-    )
+def _extract_parameter_values(ids: List[str], values: List[Optional[str]]) -> Dict[Parameter, Any]:
+    values_with_none = dict(_extract_parameter_and_value(id_, value) for id_, value in zip(ids, values))
     return {key: value for key, value in values_with_none.items() if value is not None}
 
 
@@ -275,11 +265,10 @@ def _callbacks(app: Dash) -> None:
         Output(_FORM_OUTPUT, 'children'),
         Input(_SUBMIT, 'n_clicks'),
         State(_store(ALL), 'data'),
-        State(_input(ALL), 'date'),
         State(_input(ALL), 'value'),
         State(_AM_ID, 'data'),
     )
-    def _apply_parameters(_, parameter_ids, parameter_dates, parameter_values, am_id):
+    def _apply_parameters(_, parameter_ids, parameter_values, am_id):
         am = _load_am(am_id)
         if not am:
             raise PreventUpdate
@@ -287,7 +276,7 @@ def _callbacks(app: Dash) -> None:
         if not parametrization:
             raise PreventUpdate
         try:
-            parameter_values = _extract_parameter_values(parameter_ids, parameter_dates, parameter_values)
+            parameter_values = _extract_parameter_values(parameter_ids, parameter_values)
             am = apply_parameter_values_to_am(am, parametrization, parameter_values)
         except _FormError as exc:
             return html.Div(), error_component(str(exc))
