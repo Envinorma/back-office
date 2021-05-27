@@ -9,7 +9,7 @@ import dash_bootstrap_components as dbc
 import dash_html_components as html
 from dash import Dash
 from dash.development.base_component import Component
-from envinorma.data import ArreteMinisteriel, Regime, UsedDateParameter
+from envinorma.data import ArreteMinisteriel, Regime, UsedDateParameter, VersionDescriptor
 from envinorma.data.classement import DetailedClassement
 
 from back_office.components import replace_line_breaks
@@ -29,7 +29,7 @@ def _fetch_all_ams() -> List[ArreteMinisteriel]:
 
 
 def _is_default(am: ArreteMinisteriel) -> bool:
-    version_descriptor = ensure_not_none(am.version)
+    version_descriptor: VersionDescriptor = ensure_not_none(am.version)
     return (
         not version_descriptor.aed_date_parameter.applicable_when_value_is_known
         and not version_descriptor.installation_date_parameter.applicable_when_value_is_known
@@ -51,7 +51,7 @@ def _date_match(parameter: UsedDateParameter, date_: Optional[date]) -> bool:
 
 
 def _dates_match(am: ArreteMinisteriel, aed_date: Optional[date], installation_date: Optional[date]) -> bool:
-    version = ensure_not_none(am.version)
+    version: VersionDescriptor = ensure_not_none(am.version)
     return _date_match(version.aed_date_parameter, aed_date) and _date_match(
         version.installation_date_parameter, installation_date
     )
@@ -87,7 +87,7 @@ def _deduce_applicable_versions(
 def _group_by_id(ams: List[ArreteMinisteriel]) -> Dict[str, List[ArreteMinisteriel]]:
     result: Dict[str, List[ArreteMinisteriel]] = {}
     for am in ams:
-        am_id = ensure_not_none(am.id)
+        am_id: str = ensure_not_none(am.id)
         if am_id not in result:
             result[am_id] = []
         result[am_id].append(am)
@@ -127,7 +127,7 @@ def _compute_arrete_list(
     classements: List[DetailedClassement],
 ) -> List[Tuple[ArreteMinisteriel, List[DetailedClassement]]]:
     all_ams = _fetch_all_ams()
-    default_ams = {ensure_not_none(am.id): am for am in all_ams if _is_default(am)}
+    default_ams: Dict[str, ArreteMinisteriel] = {ensure_not_none(am.id): am for am in all_ams if _is_default(am)}
     am_versions = _group_by_id(all_ams)
     return _deduce_applicable_versions(_get_am_id_to_classements(classements, default_ams), default_ams, am_versions)
 
