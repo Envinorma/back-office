@@ -18,6 +18,7 @@ from back_office.pages.edit_am.edit_am import router as edit_am_page_router
 from back_office.pages.index import PAGE as index_page
 from back_office.pages.login import PAGE as login_page
 from back_office.pages.logout import PAGE as logout_page
+from back_office.pages.regulation_engine import PAGE as regulation_engine_page
 from back_office.routing import ROUTER, Endpoint, Page
 from back_office.utils import UNIQUE_USER, get_current_user, split_route
 
@@ -75,6 +76,7 @@ _ENDPOINT_TO_PAGE: Dict[Endpoint, Page] = {
     Endpoint.INDEX: index_page,
     Endpoint.DELETE_AM: delete_am_page,
     Endpoint.CREATE_AM: create_am_page,
+    Endpoint.REGULATION_ENGINE: regulation_engine_page,
 }
 
 
