@@ -9,14 +9,13 @@ import dash_bootstrap_components as dbc
 import dash_html_components as html
 from dash import Dash
 from dash.development.base_component import Component
-from envinorma.data import ArreteMinisteriel, Regime, UsedDateParameter, VersionDescriptor
+from envinorma.data import ArreteMinisteriel, DateParameterDescriptor, Regime, VersionDescriptor
 from envinorma.data.classement import DetailedClassement
 
 from back_office.components import replace_line_breaks
 from back_office.components.table import ExtendedComponent, table_component
 from back_office.routing import Page
 from back_office.utils import ensure_not_none
-
 
 _FOLDER = '/Users/remidelbouys/EnviNorma/envinorma-web/db/seeds/enriched_arretes'
 _CLASSEMENTS_FILENAME = '/Users/remidelbouys/EnviNorma/envinorma-web/db/seeds/classements_idf.csv'
@@ -29,38 +28,33 @@ def _fetch_all_ams() -> List[ArreteMinisteriel]:
 
 
 def _is_default(am: ArreteMinisteriel) -> bool:
-    version_descriptor: VersionDescriptor = ensure_not_none(am.version)
-    return (
-        not version_descriptor.aed_date_parameter.applicable_when_value_is_known
-        and not version_descriptor.installation_date_parameter.applicable_when_value_is_known
-    )
+    version_descriptor: VersionDescriptor = ensure_not_none(am.version_descriptor)
+    return not version_descriptor.aed_date.known_value and not version_descriptor.installation_date.known_value
 
 
-def _date_match(parameter: UsedDateParameter, date_: Optional[date]) -> bool:
-    if not parameter.parameter_is_used:
+def _date_match(parameter: DateParameterDescriptor, date_: Optional[date]) -> bool:
+    if not parameter.is_used:
         return True
-    if date_ and not parameter.applicable_when_value_is_known:
+    if date_ and not parameter.known_value:
         return False
     if not date_:
-        if parameter.applicable_when_value_is_known:
+        if parameter.known_value:
             return False
         return True
-    left_value = parameter.left_date.toordinal() if parameter.left_date else -math.inf
-    right_value = parameter.right_date.toordinal() if parameter.right_date else math.inf
+    left_value = parameter.left_value.toordinal() if parameter.left_value else -math.inf
+    right_value = parameter.right_value.toordinal() if parameter.right_value else math.inf
     return left_value <= date_.toordinal() < right_value
 
 
 def _dates_match(am: ArreteMinisteriel, aed_date: Optional[date], installation_date: Optional[date]) -> bool:
-    version: VersionDescriptor = ensure_not_none(am.version)
-    return _date_match(version.aed_date_parameter, aed_date) and _date_match(
-        version.installation_date_parameter, installation_date
-    )
+    version: VersionDescriptor = ensure_not_none(am.version_descriptor)
+    return _date_match(version.aed_date, aed_date) and _date_match(version.installation_date, installation_date)
 
 
 def _choose_correct_version(classement: DetailedClassement, am_versions: List[ArreteMinisteriel]) -> ArreteMinisteriel:
     if len(am_versions) == 1:
-        assert not am_versions[0].version.aed_date_parameter.parameter_is_used
-        assert not am_versions[0].version.installation_date_parameter.parameter_is_used
+        assert not am_versions[0].version_descriptor.aed_date.is_used
+        assert not am_versions[0].version_descriptor.installation_date.is_used
     aed_date = classement.date_autorisation
     installation_date = classement.date_mise_en_service
     matches = [am for am in am_versions if _dates_match(am, aed_date, installation_date)]
@@ -203,11 +197,11 @@ def _arrete_li(rank: int, arrete: ArreteMinisteriel, classements: List[DetailedC
     to_append = html.Span(' - '.join(classement_hints), style={'color': 'grey'})
     return html.Li(
         [
-            dbc.Checkbox(checked=arrete.version.applicable),
+            dbc.Checkbox(checked=arrete.version_descriptor.applicable),
             html.Span(' '),
             arrete.short_title + ' - ',
             to_append,
-            _tooltip(rank, arrete.version.applicability_warnings),
+            _tooltip(rank, arrete.version_descriptor.applicability_warnings),
         ]
     )
 
@@ -235,7 +229,7 @@ def _regime_score(regime: Regime) -> int:
 
 
 def _am_sort_score(am: ArreteMinisteriel) -> Tuple:
-    return -am.version.applicable, -_regime_score(am.classements[0].regime), am.short_title
+    return -am.version_descriptor.applicable, -_regime_score(am.classements[0].regime), am.short_title
 
 
 def _ams_list(arretes: List[Tuple[ArreteMinisteriel, List[DetailedClassement]]]) -> Component:

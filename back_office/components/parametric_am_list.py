@@ -48,12 +48,12 @@ def _get_am_modal_generator(page_id: str) -> _AMModalGenerator:
 
 def _generate_am_row(am: ArreteMinisteriel, _am_modal_generator: _AMModalGenerator) -> List[ExtendedComponent]:
     link = _am_modal_generator('Consulter', am)
-    if not am.version:
+    if not am.version_descriptor:
         raise ValueError('Expecting non null version descriptor.')
-    aed_left_date = str(am.version.aed_date_parameter.left_date) or ''
-    aed_right_date = str(am.version.aed_date_parameter.right_date) or ''
-    installation_left_date = str(am.version.installation_date_parameter.left_date) or ''
-    installation_right_date = str(am.version.installation_date_parameter.right_date) or ''
+    aed_left_date = str(am.version_descriptor.aed_date.left_value) or ''
+    aed_right_date = str(am.version_descriptor.aed_date.right_value) or ''
+    installation_left_date = str(am.version_descriptor.installation_date.left_value) or ''
+    installation_right_date = str(am.version_descriptor.installation_date.right_value) or ''
     return [link, am.id or '', aed_left_date, aed_right_date, installation_left_date, installation_right_date]
 
 
