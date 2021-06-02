@@ -10,7 +10,8 @@ from dash.dependencies import ALL, MATCH, Input, Output, State
 from dash.development.base_component import Component
 from dash.exceptions import PreventUpdate
 from envinorma.data import AMMetadata, AMState, ArreteMinisteriel, Regime, add_metadata, random_id
-from envinorma.parametrization import Parameter, ParameterEnum, ParameterType, Parametrization
+from envinorma.parametrization import Parameter, ParameterType, Parametrization
+from envinorma.parametrization.conditions import ParameterEnum
 from envinorma.parametrization.parametric_am import (
     apply_parameter_values_to_am,
     extract_parameters_from_parametrization,

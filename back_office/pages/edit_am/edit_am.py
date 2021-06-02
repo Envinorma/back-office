@@ -20,10 +20,10 @@ from envinorma.parametrization import (
     Parametrization,
     UndefinedTitlesSequencesError,
     add_titles_sequences,
-    condition_to_str,
     regenerate_paths,
 )
 from envinorma.parametrization.am_with_versions import AMVersions
+from envinorma.parametrization.conditions import condition_to_str
 from envinorma.utils import AMStatus
 
 from back_office.app_init import app

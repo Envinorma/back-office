@@ -29,16 +29,19 @@ def _fetch_all_ams() -> List[ArreteMinisteriel]:
 
 def _is_default(am: ArreteMinisteriel) -> bool:
     version_descriptor: VersionDescriptor = ensure_not_none(am.version_descriptor)
-    return not version_descriptor.aed_date.known_value and not version_descriptor.installation_date.known_value
+    return (
+        not version_descriptor.aed_date.unknown_classement_date_version
+        and not version_descriptor.date_de_mise_en_service.unknown_classement_date_version
+    )
 
 
 def _date_match(parameter: DateParameterDescriptor, date_: Optional[date]) -> bool:
-    if not parameter.is_used:
+    if not parameter.is_used_in_parametrization:
         return True
-    if date_ and not parameter.known_value:
+    if date_ and parameter.unknown_classement_date_version:
         return False
     if not date_:
-        if parameter.known_value:
+        if not parameter.unknown_classement_date_version:
             return False
         return True
     left_value = parameter.left_value.toordinal() if parameter.left_value else -math.inf
@@ -48,13 +51,13 @@ def _date_match(parameter: DateParameterDescriptor, date_: Optional[date]) -> bo
 
 def _dates_match(am: ArreteMinisteriel, aed_date: Optional[date], installation_date: Optional[date]) -> bool:
     version: VersionDescriptor = ensure_not_none(am.version_descriptor)
-    return _date_match(version.aed_date, aed_date) and _date_match(version.installation_date, installation_date)
+    return _date_match(version.aed_date, aed_date) and _date_match(version.date_de_mise_en_service, installation_date)
 
 
 def _choose_correct_version(classement: DetailedClassement, am_versions: List[ArreteMinisteriel]) -> ArreteMinisteriel:
     if len(am_versions) == 1:
-        assert not am_versions[0].version_descriptor.aed_date.is_used
-        assert not am_versions[0].version_descriptor.installation_date.is_used
+        assert not am_versions[0].version_descriptor.aed_date.is_used_in_parametrization
+        assert not am_versions[0].version_descriptor.date_de_mise_en_service.is_used_in_parametrization
     aed_date = classement.date_autorisation
     installation_date = classement.date_mise_en_service
     matches = [am for am in am_versions if _dates_match(am, aed_date, installation_date)]

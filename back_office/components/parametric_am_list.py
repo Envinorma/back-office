@@ -52,8 +52,8 @@ def _generate_am_row(am: ArreteMinisteriel, _am_modal_generator: _AMModalGenerat
         raise ValueError('Expecting non null version descriptor.')
     aed_left_date = str(am.version_descriptor.aed_date.left_value) or ''
     aed_right_date = str(am.version_descriptor.aed_date.right_value) or ''
-    installation_left_date = str(am.version_descriptor.installation_date.left_value) or ''
-    installation_right_date = str(am.version_descriptor.installation_date.right_value) or ''
+    installation_left_date = str(am.version_descriptor.date_de_mise_en_service.left_value) or ''
+    installation_right_date = str(am.version_descriptor.date_de_mise_en_service.right_value) or ''
     return [link, am.id or '', aed_left_date, aed_right_date, installation_left_date, installation_right_date]
 
 
