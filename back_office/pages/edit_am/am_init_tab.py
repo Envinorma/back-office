@@ -1,11 +1,11 @@
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 from dash.development.base_component import Component
-from envinorma.data import ArreteMinisteriel, am_to_text
+from envinorma.models import ArreteMinisteriel
 
 from back_office.app_init import app
 from back_office.components import ButtonState, link_button
@@ -57,7 +57,7 @@ def _buttons(am_page: str) -> Component:
 def _get_am_row(am: ArreteMinisteriel) -> Component:
     am_row = html.Div(
         [
-            html.Div([summary_component(am_to_text(am), False)], className='col-3'),
+            html.Div([summary_component(am.to_text(), False)], className='col-3'),
             html.Div(am_component(am, [], 3), className='col-9'),
         ],
         className='row',

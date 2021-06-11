@@ -5,7 +5,7 @@ import dash_bootstrap_components as dbc
 import dash_html_components as html
 from dash.dependencies import MATCH, Input, Output, State
 from dash.development.base_component import Component
-from envinorma.data import ArreteMinisteriel
+from envinorma.models import ArreteMinisteriel
 
 from back_office.components.parametric_am import parametric_am_callbacks, parametric_am_component
 from back_office.components.table import ExtendedComponent, table_component
@@ -23,31 +23,32 @@ def _modal_trigger_id(page_id: str, key: Optional[str]) -> Dict[str, Any]:
     return {'type': f'{page_id}-param-am-modal-trigger', 'key': key or MATCH}
 
 
-_AMModalGenerator = Callable[[str, ArreteMinisteriel], Component]
+_AMModalGenerator = Callable[[str, str, ArreteMinisteriel], Component]
 
 
 def _get_am_modal_generator(page_id: str) -> _AMModalGenerator:
-    def _am_modal(filename: str, am: ArreteMinisteriel) -> Component:
+    def _am_modal(button_content: str, id_: str, am: ArreteMinisteriel) -> Component:
         modal = dbc.Modal(
             [
-                dbc.ModalHeader(filename),
                 dbc.ModalBody(parametric_am_component(am, page_id)),
                 dbc.ModalFooter(
-                    [html.Button('Fermer', id=_close_modal_button_id(page_id, filename), className='btn btn-light')]
+                    [html.Button('Fermer', id=_close_modal_button_id(page_id, id_), className='btn btn-light')]
                 ),
             ],
             size='xl',
-            id=_modal_id(page_id, filename),
+            id=_modal_id(page_id, id_),
             scrollable=True,
         )
-        link = html.Button(filename, id=_modal_trigger_id(page_id, filename), className='btn btn-link')
+        link = html.Button(button_content, id=_modal_trigger_id(page_id, id_), className='btn btn-link')
         return html.Span([link, modal])
 
     return _am_modal
 
 
-def _generate_am_row(am: ArreteMinisteriel, _am_modal_generator: _AMModalGenerator) -> List[ExtendedComponent]:
-    link = _am_modal_generator('Consulter', am)
+def _generate_am_row(
+    am: ArreteMinisteriel, _am_modal_generator: _AMModalGenerator, rank: int
+) -> List[ExtendedComponent]:
+    link = _am_modal_generator('Consulter', f'am-{rank}', am)
     if not am.version_descriptor:
         raise ValueError('Expecting non null version descriptor.')
     aed_left_date = str(am.version_descriptor.aed_date.left_value) or ''
@@ -68,7 +69,7 @@ def _generate_am_table(
         'Date d\'installation postérieure à',
         'Date d\'installation antérieure à',
     ]
-    rows = [_generate_am_row(am, _am_modal_generator) for _, am in sorted(filename_to_am.items())]
+    rows = [_generate_am_row(am, _am_modal_generator, i) for i, (_, am) in enumerate(sorted(filename_to_am.items()))]
     return table_component([header], rows)
 
 

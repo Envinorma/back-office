@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 from datetime import date, datetime
-from typing import Any, Dict, List, Optional, Type, TypeVar, Union, cast
+from typing import Any, Dict, List, Optional, Type, Union
 
-from envinorma.data import ArreteMinisteriel, Regime, StructuredText, ensure_rubrique, load_path
-from envinorma.data.text_elements import EnrichedString
+from envinorma.models import ArreteMinisteriel, Regime, StructuredText, ensure_rubrique, load_path
+from envinorma.models.text_elements import EnrichedString
 from envinorma.parametrization import (
     AlternativeSection,
     AMWarning,
@@ -242,9 +242,9 @@ def _build_new_text(new_text_title: Optional[str], new_text_content: Optional[st
     if not new_text_title and not new_text_content:
         return None
     if new_text_title and not new_text_content:
-        raise FormHandlingError(f'Le champ "Contenu du paragraphe" doit être défini.')
+        raise FormHandlingError('Le champ "Contenu du paragraphe" doit être défini.')
     if new_text_content and not new_text_title:
-        raise FormHandlingError(f'Le champ "Titre" doit être défini.')
+        raise FormHandlingError('Le champ "Titre" doit être défini.')
     return _check_and_build_new_text(new_text_title or '', new_text_content or '')
 
 
@@ -263,7 +263,7 @@ def _simplify_alineas(
 
 def _build_section_reference(target_section: str) -> SectionReference:
     if not target_section:
-        raise FormHandlingError(f'Le champ "Titre" des "Paragraphes visés" doit être renseigné.')
+        raise FormHandlingError('Le champ "Titre" des "Paragraphes visés" doit être renseigné.')
     return SectionReference(load_path(target_section))
 
 

@@ -1,7 +1,7 @@
 import re
 import traceback
 from dataclasses import replace
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
@@ -10,9 +10,9 @@ import dash_html_components as html
 from bs4 import BeautifulSoup
 from dash.dependencies import Input, Output, State
 from dash.development.base_component import Component
-from envinorma.data import ArreteMinisteriel, EnrichedString, StructuredText, Table, am_to_text
-from envinorma.data.text_elements import TextElement, Title
 from envinorma.io.parse_html import extract_text_elements
+from envinorma.models import ArreteMinisteriel, EnrichedString, StructuredText, Table
+from envinorma.models.text_elements import TextElement, Title
 from envinorma.structure import build_structured_text, structured_text_to_text_elements
 
 from back_office.app_init import app
@@ -131,7 +131,7 @@ def _get_main_row(text: StructuredText) -> Component:
 def _make_am_structure_edition_component(pathname: str, am_id: str, am: ArreteMinisteriel) -> Component:
     components = [
         html.Div(className='row', children=_get_instructions()),
-        _get_main_row(am_to_text(am)),
+        _get_main_row(am.to_text()),
         _fixed_footer(build_am_page(am_id)),
         dcc.Store(data=am_id, id=_AM_ID),
         dcc.Store(data=pathname, id=_PATHNAME),
@@ -335,7 +335,7 @@ def _structure_text(am_id: str, new_am: str) -> ArreteMinisteriel:
     previous_am_version = DATA_FETCHER.load_most_advanced_am(am_id)
     if not previous_am_version:
         raise _FormHandlingError(f'am with id {am_id} not found, which should not happen')
-    previous_text = am_to_text(previous_am_version)
+    previous_text = previous_am_version.to_text()
     new_text = _create_new_text(previous_text, new_am)
     return replace(previous_am_version, sections=new_text.sections)
 
@@ -343,7 +343,7 @@ def _structure_text(am_id: str, new_am: str) -> ArreteMinisteriel:
 def _parse_text_and_save_message(am_id: str, new_am: str) -> str:
     text = _structure_text(am_id, new_am)
     DATA_FETCHER.upsert_structured_am(am_id, text)
-    return f'Enregistrement réussi.'
+    return 'Enregistrement réussi.'
 
 
 def _extract_form_value_and_save_text(

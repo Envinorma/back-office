@@ -1,7 +1,7 @@
 from datetime import date
 
 import pytest
-from envinorma.data import AMMetadata, AMSource, AMState, Classement, Regime
+from envinorma.models import AMMetadata, AMSource, AMState, Classement, Regime
 
 from back_office.pages.create_am.am_creation_form_handling import FormHandlingError, _extract_am_metadata
 

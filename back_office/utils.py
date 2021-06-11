@@ -9,9 +9,9 @@ from functools import lru_cache
 from typing import Any, Dict, List, Optional, Tuple, TypeVar, Union
 
 import requests
-from envinorma.data import ArreteMinisteriel, EnrichedString, Ints, StructuredText, extract_text_lines
 from envinorma.data_fetcher import DataFetcher
-from envinorma.structure.am_structure_extraction import transform_arrete_ministeriel
+from envinorma.from_legifrance import legifrance_to_am
+from envinorma.models import ArreteMinisteriel, EnrichedString, Ints, StructuredText
 from flask_login import current_user
 from leginorma import LegifranceClient, LegifranceText
 from text_diff import TextDifferences, text_differences
@@ -159,11 +159,11 @@ def extract_legifrance_am(am_id: str, date_: Optional[date] = None) -> ArreteMin
     datetime_ = datetime(date_.year, date_.month, date_.day)
     legifrance_current_version = LegifranceText.from_dict(LEGIFRANCE_CLIENT.consult_law_decree(am_id, datetime_))
     random.seed(legifrance_current_version.title)
-    return transform_arrete_ministeriel(legifrance_current_version, am_id=am_id)
+    return legifrance_to_am(legifrance_current_version, am_id=am_id)
 
 
 def _extract_lines(am: ArreteMinisteriel) -> List[str]:
-    return [line for section in am.sections for line in extract_text_lines(section, 0)]
+    return [line for section in am.sections for line in section.text_lines(0)]
 
 
 def compute_am_diff(am_before: ArreteMinisteriel, am_after: ArreteMinisteriel) -> TextDifferences:
@@ -173,8 +173,8 @@ def compute_am_diff(am_before: ArreteMinisteriel, am_after: ArreteMinisteriel) -
 
 
 def compute_text_diff(text_before: StructuredText, text_after: StructuredText) -> TextDifferences:
-    lines_before = extract_text_lines(text_before)
-    lines_after = extract_text_lines(text_after)
+    lines_before = text_before.text_lines()
+    lines_after = text_after.text_lines()
     return text_differences(lines_before, lines_after)
 
 

@@ -1,9 +1,8 @@
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
-import dash_core_components as dcc
 import dash_html_components as html
 from dash.development.base_component import Component
-from envinorma.data import ArreteMinisteriel, am_to_text
+from envinorma.models import ArreteMinisteriel
 from envinorma.parametrization import (
     AlternativeSection,
     AMWarning,
@@ -39,7 +38,7 @@ def _get_main_component(
     destination_rank: int,
     loaded_parameter: Optional[ParameterObject],
 ) -> Component:
-    text = am_to_text(am)
+    text = am.to_text()
     border_style = {'padding': '10px', 'border': '1px solid rgba(0,0,0,.1)', 'border-radius': '5px'}
     am_component_ = am_component(am, emphasized_words=_EMPHASIZED_WORDS, first_level=3)
     cols = [

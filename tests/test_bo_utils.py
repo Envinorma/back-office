@@ -1,4 +1,4 @@
-from envinorma.data import ArreteMinisteriel, EnrichedString, StructuredText
+from envinorma.models import ArreteMinisteriel, EnrichedString, StructuredText
 from envinorma.utils import AMStatus
 
 from back_office.utils import get_section_title, get_traversed_titles, split_route
@@ -20,7 +20,7 @@ def test_get_section_title():
     assert get_section_title((0, 0), am) == 'Section 1'
     assert get_section_title((0, 1), am) == 'Section 2'
     assert get_section_title((0, 0, 0), am) == 'Section 1.1'
-    assert get_section_title((0, 0, 0, 1, 1), am) == None
+    assert get_section_title((0, 0, 0, 1, 1), am) is None
 
 
 def test_get_traversed_titles():
@@ -31,7 +31,7 @@ def test_get_traversed_titles():
     assert get_traversed_titles((0, 1), am) == ['All sections', 'Section 2']
     assert get_traversed_titles((0, 2), am) is None
     assert get_traversed_titles((0, 0, 0), am) == ['All sections', 'Section 1', 'Section 1.1']
-    assert get_traversed_titles((0, 0, 0, 1, 1), am) == None
+    assert get_traversed_titles((0, 0, 0, 1, 1), am) is None
 
 
 def test_split_route():

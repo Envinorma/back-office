@@ -11,8 +11,8 @@ import dash_html_components as html
 from dash.dependencies import MATCH, Input, Output, State
 from dash.development.base_component import Component
 from dash.exceptions import PreventUpdate
-from envinorma.data import AMMetadata, ArreteMinisteriel, Ints, StructuredText, Table, am_to_text, extract_text_lines
 from envinorma.io.markdown import extract_markdown_text
+from envinorma.models import AMMetadata, ArreteMinisteriel, Ints, StructuredText, Table
 from envinorma.parametrization import (
     AlternativeSection,
     AMWarning,
@@ -342,7 +342,7 @@ def _add_warning_button(parent_page: str, status: AMStatus) -> Component:
 def _get_am_component_with_toc(am: ArreteMinisteriel) -> Component:
     return html.Div(
         [
-            html.Div([summary_component(am_to_text(am), True)], className='col-3'),
+            html.Div([summary_component(am.to_text(), True)], className='col-3'),
             html.Div(am_component(am, [], 5), className='col-9'),
         ],
         className='row',
@@ -474,9 +474,7 @@ def _build_difference_in_tables_component(initial_am: ArreteMinisteriel, current
 
 def _build_am_diff_component(initial_am: ArreteMinisteriel, current_am: ArreteMinisteriel) -> Component:
     diff_tables = _build_difference_in_tables_component(initial_am, current_am)
-    diff_lines = _build_diff_component(
-        extract_text_lines(am_to_text(initial_am)), extract_text_lines(am_to_text(current_am))
-    )
+    diff_lines = _build_diff_component(initial_am.to_text().text_lines(), current_am.to_text().text_lines())
     return html.Div([diff_tables, diff_lines])
 
 

@@ -8,7 +8,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import ALL, Input, Output, State
 from dash.development.base_component import Component
-from envinorma.data import Ints, StructuredText, dump_path
+from envinorma.models import Ints, StructuredText, dump_path
 from envinorma.parametrization import (
     AlternativeSection,
     AMWarning,
@@ -271,7 +271,7 @@ def _handle_submit(
         return dbc.Alert(f'Unexpected error:\n{traceback.format_exc()}', color='danger')
     return html.Div(
         [
-            dbc.Alert(f'Enregistrement réussi.', color='success'),
+            dbc.Alert('Enregistrement réussi.', color='success'),
             dcc.Location(pathname=build_am_page(am_id), id='param-edition-success-redirect'),
         ]
     )
@@ -297,7 +297,7 @@ def _handle_delete(n_clicks: int, operation_str: str, am_id: str, parameter_rank
         return dbc.Alert(f'Unexpected error:\n{traceback.format_exc()}', color='danger')
     return html.Div(
         [
-            dbc.Alert(f'Suppression réussie.', color='success'),
+            dbc.Alert('Suppression réussie.', color='success'),
             dcc.Location(pathname=build_am_page(am_id), id='param-edition-success-redirect'),
         ]
     )

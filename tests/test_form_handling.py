@@ -4,8 +4,8 @@ from datetime import date
 from pathlib import Path
 
 import pytest
-from envinorma.data import ArreteMinisteriel, Regime, StructuredText, dump_path
-from envinorma.data.text_elements import estr
+from envinorma.models import ArreteMinisteriel, Regime, StructuredText, dump_path
+from envinorma.models.text_elements import estr
 from envinorma.parametrization import (
     AlternativeSection,
     AMWarning,
@@ -16,7 +16,6 @@ from envinorma.parametrization import (
 )
 from envinorma.parametrization.conditions import (
     AndCondition,
-    Condition,
     Equal,
     Greater,
     Littler,
@@ -390,7 +389,7 @@ def test_extract_new_parameter_objects_condition(test_am: ArreteMinisteriel):
     assert isinstance(new_parameters[0], NonApplicationCondition)
     assert isinstance(new_parameters[1], NonApplicationCondition)
     assert new_parameters[0].targeted_entity.outer_alinea_indices == [0, 2]
-    assert new_parameters[1].targeted_entity.outer_alinea_indices == None
+    assert new_parameters[1].targeted_entity.outer_alinea_indices is None
 
     with pytest.raises(FormHandlingError):
         new_parameters = _extract_new_parameter_objects(operation, test_am, '', target, condition, warning_content)

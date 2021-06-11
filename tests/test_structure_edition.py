@@ -1,8 +1,8 @@
 from typing import List
 
 from bs4 import BeautifulSoup
-from envinorma.data import StructuredText
-from envinorma.data.text_elements import EnrichedString, Table, Title
+from envinorma.models import StructuredText
+from envinorma.models.text_elements import EnrichedString, Table, Title
 
 from back_office.pages.edit_am.structure_edition import (
     _TABLE_MARK,
@@ -69,7 +69,7 @@ def test_extract_text_area_words():
     assert func('<br/>') == []
     assert func('<p>foo<br/>bar</p>') == ['foo', 'bar']
     assert func('<p>foo<br/>bar...</p>') == ['foo', 'bar']
-    assert func(f'<p>foo<br/>bar...<table><tr><td>unique cell</td></tr></table></p>') == ['foo', 'bar', _TABLE_MARK]
+    assert func('<p>foo<br/>bar...<table><tr><td>unique cell</td></tr></table></p>') == ['foo', 'bar', _TABLE_MARK]
 
 
 def test_extract_first_different_word():
@@ -95,9 +95,9 @@ def test_extract_element_words():
     assert _extract_element_words(['foo\nbar...']) == ['foo', 'bar']
     assert _extract_element_words(['foo\nbar...']) == ['foo', 'bar']
     assert _extract_element_words(['foo\nbar...', Title('foo\nbar...', 1)]) == ['foo', 'bar', 'foo', 'bar']
-    assert _extract_element_words([f'foo\nbar...', Table([])]) == ['foo', 'bar', _TABLE_MARK]
+    assert _extract_element_words(['foo\nbar...', Table([])]) == ['foo', 'bar', _TABLE_MARK]
     expected = ['foo', 'bar', _TABLE_MARK, 'test', _TABLE_MARK, 'test']
-    assert _extract_element_words([f'foo\nbar...', Table([]), 'test', Table([]), 'test']) == expected
+    assert _extract_element_words(['foo\nbar...', Table([]), 'test', Table([]), 'test']) == expected
 
 
 def test_replace_tables():
