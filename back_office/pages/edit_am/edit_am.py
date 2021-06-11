@@ -13,17 +13,9 @@ from dash.development.base_component import Component
 from dash.exceptions import PreventUpdate
 from envinorma.io.markdown import extract_markdown_text
 from envinorma.models import AMMetadata, ArreteMinisteriel, Ints, StructuredText, Table
-from envinorma.parametrization import (
-    AlternativeSection,
-    AMWarning,
-    NonApplicationCondition,
-    Parametrization,
-    UndefinedTitlesSequencesError,
-    add_titles_sequences,
-    regenerate_paths,
-)
+from envinorma.parametrization import AlternativeSection, AMWarning, NonApplicationCondition, Parametrization
 from envinorma.parametrization.am_with_versions import AMVersions
-from envinorma.parametrization.conditions import condition_to_str
+from envinorma.parametrization.resync import UndefinedTitlesSequencesError, add_titles_sequences, regenerate_paths
 from envinorma.utils import AMStatus
 
 from back_office.app_init import app
@@ -205,7 +197,7 @@ def _application_condition_to_row(
     target_section = non_application_condition.targeted_entity.section
     reference_str = _get_section_title_or_error(target_section.path, am, target_section.titles_sequence)
     alineas = _human_alinea_tuple(non_application_condition.targeted_entity.outer_alinea_indices)
-    condition = _small(condition_to_str(non_application_condition.condition))
+    condition = _small(non_application_condition.condition.to_str())
     source_section = non_application_condition.source.reference.section
     source = _get_section_title_or_error(source_section.path, am, source_section.titles_sequence)
     href = f'{current_page}/{AMOperation.ADD_CONDITION.value}/{rank}'
@@ -283,7 +275,7 @@ def _alternative_section_to_row(
 ) -> List[ExtendedComponent]:
     target_section = alternative_section.targeted_section
     reference_str = _get_section_title_or_error(target_section.path, am, target_section.titles_sequence)
-    condition = _small(condition_to_str(alternative_section.condition))
+    condition = _small(alternative_section.condition.to_str())
     source_section = alternative_section.source.reference.section
     source = _get_section_title_or_error(source_section.path, am, source_section.titles_sequence)
     new_version = _constrain(_wrap_in_paragraphs(extract_markdown_text(alternative_section.new_text, level=1)))

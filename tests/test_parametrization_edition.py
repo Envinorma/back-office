@@ -1,15 +1,7 @@
 from datetime import date
 
 import pytest
-from envinorma.parametrization.conditions import (
-    AndCondition,
-    Equal,
-    Greater,
-    Littler,
-    OrCondition,
-    ParameterEnum,
-    Range,
-)
+from envinorma.parametrization import AndCondition, Equal, Greater, Littler, OrCondition, ParameterEnum, Range
 
 from back_office.pages.parametrization_edition.condition_form import (
     _AND_ID,

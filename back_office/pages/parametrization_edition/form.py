@@ -12,12 +12,12 @@ from envinorma.models import Ints, StructuredText, dump_path
 from envinorma.parametrization import (
     AlternativeSection,
     AMWarning,
+    Condition,
     ConditionSource,
     NonApplicationCondition,
     ParameterObject,
-    ParametrizationError,
 )
-from envinorma.parametrization.conditions import Condition
+from envinorma.parametrization.exceptions import ParametrizationError
 
 from back_office.app_init import app
 from back_office.routing import build_am_page

@@ -10,12 +10,8 @@ from dash.dependencies import ALL, Input, Output, State
 from dash.development.base_component import Component
 from dash.exceptions import PreventUpdate
 from envinorma.models import AMMetadata, AMState, ArreteMinisteriel, Regime, add_metadata
-from envinorma.parametrization import Parameter, ParameterType, Parametrization
-from envinorma.parametrization.conditions import ParameterEnum
-from envinorma.parametrization.parametric_am import (
-    apply_parameter_values_to_am,
-    extract_parameters_from_parametrization,
-)
+from envinorma.parametrization import Parameter, ParameterEnum, ParameterType, Parametrization
+from envinorma.parametrization.apply_parameter_values import apply_parameter_values_to_am
 from envinorma.utils import random_id
 
 from back_office.components import error_component
@@ -101,7 +97,7 @@ def _build_parameter_input(parameter: Parameter) -> Component:
 
 
 def _parametrization_form(parametrization: Parametrization) -> Component:
-    parameters = extract_parameters_from_parametrization(parametrization)
+    parameters = parametrization.extract_parameters()
     if not parameters:
         return html.P(
             [

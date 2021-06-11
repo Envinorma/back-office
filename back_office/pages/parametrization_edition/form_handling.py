@@ -7,23 +7,21 @@ from envinorma.models.text_elements import EnrichedString
 from envinorma.parametrization import (
     AlternativeSection,
     AMWarning,
-    ConditionSource,
-    EntityReference,
-    NonApplicationCondition,
-    ParameterObject,
-    SectionReference,
-)
-from envinorma.parametrization.conditions import (
     AndCondition,
     Condition,
+    ConditionSource,
+    EntityReference,
     Equal,
     Greater,
     Littler,
     MonoCondition,
+    NonApplicationCondition,
     OrCondition,
     Parameter,
+    ParameterObject,
     ParameterType,
     Range,
+    SectionReference,
     ensure_mono_conditions,
 )
 

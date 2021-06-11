@@ -9,7 +9,7 @@ import dash_html_components as html
 from dash.dependencies import ALL, MATCH, Input, Output, State
 from dash.development.base_component import Component
 from envinorma.models import Regime, ensure_rubrique
-from envinorma.parametrization.conditions import (
+from envinorma.parametrization import (
     AndCondition,
     Condition,
     Equal,

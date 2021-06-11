@@ -9,19 +9,17 @@ from envinorma.models.text_elements import estr
 from envinorma.parametrization import (
     AlternativeSection,
     AMWarning,
+    AndCondition,
     ConditionSource,
     EntityReference,
-    NonApplicationCondition,
-    SectionReference,
-)
-from envinorma.parametrization.conditions import (
-    AndCondition,
     Equal,
     Greater,
     Littler,
+    NonApplicationCondition,
     OrCondition,
     ParameterEnum,
     Range,
+    SectionReference,
 )
 
 from back_office.pages.parametrization_edition import page_ids
