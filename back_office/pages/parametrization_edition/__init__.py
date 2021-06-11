@@ -6,7 +6,7 @@ from envinorma.models import ArreteMinisteriel
 from envinorma.parametrization import (
     AlternativeSection,
     AMWarning,
-    NonApplicationCondition,
+    InapplicableSection,
     ParameterObject,
     Parametrization,
 )
@@ -100,11 +100,11 @@ def _parse_route(route: str) -> Tuple[str, AMOperation, Optional[int], bool]:
 
 
 def _get_parameter(parametrization: Parametrization, operation_id: AMOperation, parameter_rank: int) -> ParameterObject:
-    parameters: Union[List[AlternativeSection], List[NonApplicationCondition], List[AMWarning]]
+    parameters: Union[List[AlternativeSection], List[InapplicableSection], List[AMWarning]]
     if operation_id == operation_id.ADD_ALTERNATIVE_SECTION:
         parameters = parametrization.alternative_sections
     elif operation_id == operation_id.ADD_CONDITION:
-        parameters = parametrization.application_conditions
+        parameters = parametrization.alternative_sections
     elif operation_id == operation_id.ADD_WARNING:
         parameters = parametrization.warnings
     else:

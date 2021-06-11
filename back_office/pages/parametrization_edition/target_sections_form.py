@@ -8,7 +8,7 @@ import dash_html_components as html
 from dash.dependencies import MATCH, Input, Output, State
 from dash.development.base_component import Component
 from envinorma.models import Ints, StructuredText, dump_path, load_path
-from envinorma.parametrization import AlternativeSection, AMWarning, NonApplicationCondition, ParameterObject
+from envinorma.parametrization import AlternativeSection, AMWarning, InapplicableSection, ParameterObject
 
 from back_office.app_init import app
 from back_office.pages.parametrization_edition import page_ids
@@ -18,7 +18,7 @@ DropdownOptions = List[Dict[str, Any]]
 
 
 def _get_target_entity(parameter: ParameterObject) -> Ints:
-    if isinstance(parameter, NonApplicationCondition):
+    if isinstance(parameter, InapplicableSection):
         return parameter.targeted_entity.section.path
     if isinstance(parameter, AlternativeSection):
         return parameter.targeted_section.path
@@ -39,11 +39,11 @@ def _target_section_form(options: DropdownOptions, loaded_parameter: Optional[Pa
     return html.Div([html.H6('Titre'), dropdown_target])
 
 
-def _ensure_optional_condition(parameter: Optional[ParameterObject]) -> Optional[NonApplicationCondition]:
+def _ensure_optional_condition(parameter: Optional[ParameterObject]) -> Optional[InapplicableSection]:
     if not parameter:
         return None
-    if not isinstance(parameter, NonApplicationCondition):
-        raise ValueError(f'Expection NonApplicationCondition, not {type(parameter)}')
+    if not isinstance(parameter, InapplicableSection):
+        raise ValueError(f'Expection InapplicableSection, not {type(parameter)}')
     return parameter
 
 

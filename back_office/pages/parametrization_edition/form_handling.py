@@ -13,9 +13,9 @@ from envinorma.parametrization import (
     EntityReference,
     Equal,
     Greater,
+    InapplicableSection,
     Littler,
     MonoCondition,
-    NonApplicationCondition,
     OrCondition,
     Parameter,
     ParameterObject,
@@ -291,11 +291,11 @@ def _build_target_versions(am: ArreteMinisteriel, form_values: TargetSectionForm
     ]
 
 
-def _build_non_application_condition(
+def _build_inapplicable_section(
     condition: Condition, source: ConditionSource, modification: _Modification
-) -> NonApplicationCondition:
+) -> InapplicableSection:
     targeted_entity = EntityReference(modification.target_section, outer_alinea_indices=modification.target_alineas)
-    return NonApplicationCondition(targeted_entity=targeted_entity, condition=condition, source=source)
+    return InapplicableSection(targeted_entity=targeted_entity, condition=condition, source=source)
 
 
 def _build_am_warning(target_section: SectionReference, warning_content: str) -> AMWarning:
@@ -320,7 +320,7 @@ def _build_parameter_object(
             source=ensure_not_none(source),
         )
     if operation == AMOperation.ADD_CONDITION:
-        return _build_non_application_condition(ensure_not_none(condition), ensure_not_none(source), modification)
+        return _build_inapplicable_section(ensure_not_none(condition), ensure_not_none(source), modification)
     if operation == AMOperation.ADD_WARNING:
         return _build_am_warning(modification.target_section, warning_content)
     raise NotImplementedError(f'Not implemented for operation {operation}')
@@ -346,9 +346,7 @@ def _extract_new_parameter_objects(
 def _check_consistency(operation: AMOperation, parameters: List[ParameterObject]) -> None:
     for parameter in parameters:
         if operation == AMOperation.ADD_CONDITION:
-            assert isinstance(
-                parameter, NonApplicationCondition
-            ), f'Expect NonApplicationCondition, got {type(parameter)}'
+            assert isinstance(parameter, InapplicableSection), f'Expect InapplicableSection, got {type(parameter)}'
         elif operation == AMOperation.ADD_ALTERNATIVE_SECTION:
             assert isinstance(parameter, AlternativeSection), f'Expect AlternativeSection, got {type(parameter)}'
         elif operation == AMOperation.ADD_WARNING:

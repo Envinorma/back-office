@@ -14,8 +14,8 @@ from envinorma.parametrization import (
     EntityReference,
     Equal,
     Greater,
+    InapplicableSection,
     Littler,
-    NonApplicationCondition,
     OrCondition,
     ParameterEnum,
     Range,
@@ -368,7 +368,7 @@ def test_extract_new_parameter_objects_condition(test_am: ArreteMinisteriel):
 
     new_parameters = _extract_new_parameter_objects(operation, test_am, source, target, condition, warning_content)
     assert len(new_parameters) == 1
-    assert isinstance(new_parameters[0], NonApplicationCondition)
+    assert isinstance(new_parameters[0], InapplicableSection)
 
     new_parameters = _extract_new_parameter_objects(
         operation,
@@ -379,13 +379,13 @@ def test_extract_new_parameter_objects_condition(test_am: ArreteMinisteriel):
         warning_content,
     )
     assert len(new_parameters) == 1
-    assert isinstance(new_parameters[0], NonApplicationCondition)
+    assert isinstance(new_parameters[0], InapplicableSection)
 
     new_targets = TargetSectionFormValues([], [], ['[5]', '[5, 1]'], [[0, 2], [0]])
     new_parameters = _extract_new_parameter_objects(operation, test_am, source, new_targets, condition, warning_content)
     assert len(new_parameters) == 2
-    assert isinstance(new_parameters[0], NonApplicationCondition)
-    assert isinstance(new_parameters[1], NonApplicationCondition)
+    assert isinstance(new_parameters[0], InapplicableSection)
+    assert isinstance(new_parameters[1], InapplicableSection)
     assert new_parameters[0].targeted_entity.outer_alinea_indices == [0, 2]
     assert new_parameters[1].targeted_entity.outer_alinea_indices is None
 

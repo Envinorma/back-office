@@ -13,7 +13,7 @@ from dash.development.base_component import Component
 from dash.exceptions import PreventUpdate
 from envinorma.io.markdown import extract_markdown_text
 from envinorma.models import AMMetadata, ArreteMinisteriel, Ints, StructuredText, Table
-from envinorma.parametrization import AlternativeSection, AMWarning, NonApplicationCondition, Parametrization
+from envinorma.parametrization import AlternativeSection, AMWarning, InapplicableSection, Parametrization
 from envinorma.parametrization.am_with_versions import AMVersions
 from envinorma.parametrization.resync import UndefinedTitlesSequencesError, add_titles_sequences, regenerate_paths
 from envinorma.utils import AMStatus
@@ -192,13 +192,13 @@ def _human_alinea_tuple(ints: Optional[List[int]]) -> str:
 
 
 def _application_condition_to_row(
-    non_application_condition: NonApplicationCondition, am: ArreteMinisteriel, rank: int, current_page: str
+    inapplicable_section: InapplicableSection, am: ArreteMinisteriel, rank: int, current_page: str
 ) -> List[ExtendedComponent]:
-    target_section = non_application_condition.targeted_entity.section
+    target_section = inapplicable_section.targeted_entity.section
     reference_str = _get_section_title_or_error(target_section.path, am, target_section.titles_sequence)
-    alineas = _human_alinea_tuple(non_application_condition.targeted_entity.outer_alinea_indices)
-    condition = _small(non_application_condition.condition.to_str())
-    source_section = non_application_condition.source.reference.section
+    alineas = _human_alinea_tuple(inapplicable_section.targeted_entity.outer_alinea_indices)
+    condition = _small(inapplicable_section.condition.to_str())
+    source_section = inapplicable_section.source.reference.section
     source = _get_section_title_or_error(source_section.path, am, source_section.titles_sequence)
     href = f'{current_page}/{AMOperation.ADD_CONDITION.value}/{rank}'
     edit = link_button('Éditer', href=href, state=ButtonState.NORMAL_LINK)
@@ -207,11 +207,13 @@ def _application_condition_to_row(
     return [str(rank), reference_str, alineas, condition, source, edit, copy]
 
 
-def _get_non_application_table(parametrization: Parametrization, am: ArreteMinisteriel, current_page: str) -> Component:
+def _get_inapplicable_sections_table(
+    parametrization: Parametrization, am: ArreteMinisteriel, current_page: str
+) -> Component:
     header = ['#', 'Paragraphe visé', 'Alineas visés', 'Condition', 'Source', '', '']
     rows = [
         _application_condition_to_row(row, am, rank, current_page)
-        for rank, row in enumerate(parametrization.application_conditions)
+        for rank, row in enumerate(parametrization.alternative_sections)
     ]
     return table_component([header], rows, 'table-sm')
 
@@ -351,8 +353,8 @@ def _get_parametrization_summary(
         return error_component('AM introuvable, impossible d\'afficher les paramètres.')
     return html.Div(
         [
-            html.H4('Conditions de non-application'),
-            _get_non_application_table(parametrization, am, parent_page),
+            html.H4('Sections potentiellement inapplicables'),
+            _get_inapplicable_sections_table(parametrization, am, parent_page),
             _get_add_condition_button(parent_page, status),
             html.H4('Paragraphes alternatifs'),
             _get_alternative_section_table(parametrization, am, parent_page),

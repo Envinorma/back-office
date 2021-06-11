@@ -14,7 +14,7 @@ from envinorma.parametrization import (
     AMWarning,
     Condition,
     ConditionSource,
-    NonApplicationCondition,
+    InapplicableSection,
     ParameterObject,
 )
 from envinorma.parametrization.exceptions import ParametrizationError
@@ -281,7 +281,7 @@ def _deduce_parameter_object_type(operation: AMOperation) -> Type[ParameterObjec
     if operation == AMOperation.ADD_ALTERNATIVE_SECTION:
         return AlternativeSection
     if operation == AMOperation.ADD_CONDITION:
-        return NonApplicationCondition
+        return InapplicableSection
     if operation == AMOperation.ADD_WARNING:
         return AMWarning
     raise NotImplementedError()
