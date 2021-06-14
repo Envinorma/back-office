@@ -104,7 +104,7 @@ def _get_parameter(parametrization: Parametrization, operation_id: AMOperation, 
     if operation_id == operation_id.ADD_ALTERNATIVE_SECTION:
         parameters = parametrization.alternative_sections
     elif operation_id == operation_id.ADD_CONDITION:
-        parameters = parametrization.alternative_sections
+        parameters = parametrization.inapplicable_sections
     elif operation_id == operation_id.ADD_WARNING:
         parameters = parametrization.warnings
     else:

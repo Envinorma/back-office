@@ -213,7 +213,7 @@ def _get_inapplicable_sections_table(
     header = ['#', 'Paragraphe visé', 'Alineas visés', 'Condition', 'Source', '', '']
     rows = [
         _application_condition_to_row(row, am, rank, current_page)
-        for rank, row in enumerate(parametrization.alternative_sections)
+        for rank, row in enumerate(parametrization.inapplicable_sections)
     ]
     return table_component([header], rows, 'table-sm')
 

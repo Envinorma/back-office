@@ -43,7 +43,7 @@ def _ensure_optional_condition(parameter: Optional[ParameterObject]) -> Optional
     if not parameter:
         return None
     if not isinstance(parameter, InapplicableSection):
-        raise ValueError(f'Expection InapplicableSection, not {type(parameter)}')
+        raise ValueError(f'Expecting InapplicableSection, not {type(parameter)}')
     return parameter
 
 
@@ -86,7 +86,7 @@ def _is_condition(operation: AMOperation) -> bool:
 
 def _ensure_alternative_section(parameter: ParameterObject) -> AlternativeSection:
     if not isinstance(parameter, AlternativeSection):
-        raise ValueError(f'Expection AlternativeSection, not {type(parameter)}')
+        raise ValueError(f'Expecting AlternativeSection, not {type(parameter)}')
     return parameter
 
 
