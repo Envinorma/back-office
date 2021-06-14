@@ -302,7 +302,7 @@ def test_build_condition():
 def test_build_source():
     with pytest.raises(FormHandlingError):
         _build_source('')
-    assert _build_source('[1, 2]') == ConditionSource('', EntityReference(SectionReference((1, 2)), None))
+    assert _build_source('[1, 2]') == ConditionSource(EntityReference(SectionReference((1, 2)), None))
 
 
 def test_build_section_reference():

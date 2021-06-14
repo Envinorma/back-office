@@ -68,15 +68,15 @@ def _get_page_heading() -> Component:
     return html.Div(html.Div([dcc.Link(img, href='/'), _get_nav()], className='container'), style=sticky_style)
 
 
-_ENDPOINT_TO_PAGE: Dict[Endpoint, Page] = {
-    Endpoint.COMPARE: compare_page,
-    Endpoint.AM: am_page,
-    Endpoint.LOGIN: login_page,
-    Endpoint.LOGOUT: logout_page,
-    Endpoint.INDEX: index_page,
-    Endpoint.DELETE_AM: delete_am_page,
-    Endpoint.CREATE_AM: create_am_page,
-    Endpoint.REGULATION_ENGINE: regulation_engine_page,
+_ENDPOINT_TO_PAGE: Dict[str, Page] = {
+    Endpoint.COMPARE.value: compare_page,
+    Endpoint.AM.value: am_page,
+    Endpoint.LOGIN.value: login_page,
+    Endpoint.LOGOUT.value: logout_page,
+    Endpoint.INDEX.value: index_page,
+    Endpoint.DELETE_AM.value: delete_am_page,
+    Endpoint.CREATE_AM.value: create_am_page,
+    Endpoint.REGULATION_ENGINE.value: regulation_engine_page,
 }
 
 

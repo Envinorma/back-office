@@ -30,18 +30,18 @@ class Endpoint(Enum):
 
 ROUTER: MapAdapter = Map(
     [
-        Rule(f'/{Endpoint.INDEX}', endpoint=Endpoint.INDEX),
-        Rule(f'/{Endpoint.COMPARE}', endpoint=Endpoint.COMPARE),
-        Rule(f'/{Endpoint.COMPARE}/id/<am_id>', endpoint=Endpoint.COMPARE),
-        Rule(f'/{Endpoint.COMPARE}/id/<am_id>/<date_before>/<date_after>', endpoint=Endpoint.COMPARE),
-        Rule(f'/{Endpoint.AM}/<am_id>', endpoint=Endpoint.AM),
-        Rule(f'/{Endpoint.AM}/<am_id>/compare/<compare_with>', endpoint=Endpoint.AM),
-        Rule(f'/{Endpoint.LOGIN}', endpoint=Endpoint.LOGIN),
-        Rule(f'/{Endpoint.LOGOUT}', endpoint=Endpoint.LOGOUT),
-        Rule(f'/{Endpoint.DELETE_AM}/<am_id>', endpoint=Endpoint.DELETE_AM),
-        Rule(f'/{Endpoint.CREATE_AM}', endpoint=Endpoint.CREATE_AM),
-        Rule(f'/{Endpoint.CREATE_AM}/<am_id>', endpoint=Endpoint.CREATE_AM),
-        Rule(f'/{Endpoint.REGULATION_ENGINE}', endpoint=Endpoint.REGULATION_ENGINE),
+        Rule(f'/{Endpoint.INDEX}', endpoint=Endpoint.INDEX.value),
+        Rule(f'/{Endpoint.COMPARE}', endpoint=Endpoint.COMPARE.value),
+        Rule(f'/{Endpoint.COMPARE}/id/<am_id>', endpoint=Endpoint.COMPARE.value),
+        Rule(f'/{Endpoint.COMPARE}/id/<am_id>/<date_before>/<date_after>', endpoint=Endpoint.COMPARE.value),
+        Rule(f'/{Endpoint.AM}/<am_id>', endpoint=Endpoint.AM.value),
+        Rule(f'/{Endpoint.AM}/<am_id>/compare/<compare_with>', endpoint=Endpoint.AM.value),
+        Rule(f'/{Endpoint.LOGIN}', endpoint=Endpoint.LOGIN.value),
+        Rule(f'/{Endpoint.LOGOUT}', endpoint=Endpoint.LOGOUT.value),
+        Rule(f'/{Endpoint.DELETE_AM}/<am_id>', endpoint=Endpoint.DELETE_AM.value),
+        Rule(f'/{Endpoint.CREATE_AM}', endpoint=Endpoint.CREATE_AM.value),
+        Rule(f'/{Endpoint.CREATE_AM}/<am_id>', endpoint=Endpoint.CREATE_AM.value),
+        Rule(f'/{Endpoint.REGULATION_ENGINE}', endpoint=Endpoint.REGULATION_ENGINE.value),
         # Rule('/edit_am/id/<id>/operation/<operation>', endpoint=Endpoint.EDIT_AM),
     ]
 ).bind('')

@@ -200,7 +200,7 @@ def _simplify_condition(condition: Condition) -> Condition:
 def _build_source(source_str: str) -> ConditionSource:
     if not source_str:
         raise FormHandlingError('Le champ source doit être renseigné.')
-    return ConditionSource('', EntityReference(SectionReference(load_path(source_str)), None))
+    return ConditionSource(EntityReference(SectionReference(load_path(source_str)), None))
 
 
 def _build_condition(condition_form_values: ConditionFormValues) -> Condition:
