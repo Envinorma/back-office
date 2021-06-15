@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional, Tuple, TypeVar, Union
 
 import requests
 from envinorma.data_fetcher import DataFetcher
-from envinorma.from_legifrance import legifrance_to_am
+from envinorma.from_legifrance.legifrance_to_am import legifrance_to_arrete_ministeriel
 from envinorma.models import ArreteMinisteriel, EnrichedString, Ints, StructuredText
 from flask_login import current_user
 from leginorma import LegifranceClient, LegifranceText
@@ -159,7 +159,7 @@ def extract_legifrance_am(am_id: str, date_: Optional[date] = None) -> ArreteMin
     datetime_ = datetime(date_.year, date_.month, date_.day)
     legifrance_current_version = LegifranceText.from_dict(LEGIFRANCE_CLIENT.consult_law_decree(am_id, datetime_))
     random.seed(legifrance_current_version.title)
-    return legifrance_to_am(legifrance_current_version, am_id=am_id)
+    return legifrance_to_arrete_ministeriel(legifrance_current_version, am_id=am_id)
 
 
 def _extract_lines(am: ArreteMinisteriel) -> List[str]:
