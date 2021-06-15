@@ -6,3 +6,9 @@ test-and-lint:
 
 start:
 	python3 back_office/app.py
+
+heroku-deploy:
+	git push heroku main:master
+
+heroku-add-remote:
+	heroku git:remote -a envinorma-back-office
