@@ -1,4 +1,4 @@
-from envinorma.data import AMMetadata
+from envinorma.models import AMMetadata
 from envinorma.parametrization.am_with_versions import AMWithVersions, generate_am_with_versions
 
 from back_office.utils import DATA_FETCHER

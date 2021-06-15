@@ -1,11 +1,11 @@
 from datetime import date
-from typing import Any, Dict, List, Optional, cast
+from typing import List, Optional
 
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.development.base_component import Component
-from envinorma.data import (
+from envinorma.models import (
     DELETE_REASON_MIN_NB_CHARS,
     AMMetadata,
     AMSource,
@@ -58,11 +58,11 @@ def _build_title(title: Optional[str]) -> str:
 
 def _ensure_rubrique(candidate: str) -> str:
     if len(candidate) != 4 or candidate[0] not in '12345':
-        raise FormHandlingError(f'Rubrique invalide. Format attendu : 1XXX, 2XXX, 3XXX ou 4XXX')
+        raise FormHandlingError('Rubrique invalide. Format attendu : 1XXX, 2XXX, 3XXX ou 4XXX')
     try:
         int(candidate)
     except FormHandlingError:
-        raise FormHandlingError(f'Rubrique invalide. Format attendu : 1XXX, 2XXX, 3XXX ou 4XXX')
+        raise FormHandlingError('Rubrique invalide. Format attendu : 1XXX, 2XXX, 3XXX ou 4XXX')
     return candidate
 
 
@@ -133,7 +133,7 @@ def _build_reason_deleted(am_state: Optional[str], reason_deleted: Optional[str]
         )
     if state != AMState.DELETED and reason_deleted:
         raise FormHandlingError(
-            f'La raison de suppression ne doit être renseignée que si le statut choisi est différent de DELETED.'
+            'La raison de suppression ne doit être renseignée que si le statut choisi est différent de DELETED.'
         )
     return reason_deleted
 
@@ -194,5 +194,5 @@ def handle_form(
     except Exception as exc:
         return dbc.Alert(f'Erreur inattendue :\n{exc}', color='danger')
     return html.Div(
-        [dbc.Alert(f'Enregistrement réussi.', color='success'), dcc.Location(href='/', id=page_ids.SUCCESS_REDIRECT)]
+        [dbc.Alert('Enregistrement réussi.', color='success'), dcc.Location(href='/', id=page_ids.SUCCESS_REDIRECT)]
     )

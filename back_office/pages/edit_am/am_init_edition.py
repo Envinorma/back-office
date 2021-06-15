@@ -9,18 +9,9 @@ import dash_html_components as html
 from bs4 import BeautifulSoup
 from dash.dependencies import Input, Output, State
 from dash.development.base_component import Component
-from envinorma.data import (
-    AMMetadata,
-    ArreteMinisteriel,
-    EnrichedString,
-    StructuredText,
-    Table,
-    add_metadata,
-    am_to_text,
-    table_to_html,
-)
-from envinorma.data.text_elements import TextElement, Title
 from envinorma.io.parse_html import extract_text_elements
+from envinorma.models import AMMetadata, ArreteMinisteriel, EnrichedString, StructuredText, Table, add_metadata
+from envinorma.models.text_elements import TextElement, Title
 from envinorma.structure import build_structured_text, structured_text_to_text_elements
 from leginorma import LegifranceRequestError
 
@@ -112,7 +103,7 @@ def _element_to_str(element: TextElement) -> str:
     if isinstance(element, str):
         return element
     if isinstance(element, Table):
-        return table_to_html(element)
+        return element.to_html()
     raise NotImplementedError(f'Not implemented for type {type(element)}')
 
 
@@ -121,7 +112,7 @@ def _prepare_text_area_value(elements: List[TextElement]) -> str:
 
 
 def _extract_default_form_values(am: ArreteMinisteriel) -> Tuple[str, str]:
-    elements_with_title = _text_to_elements(am_to_text(am))
+    elements_with_title = _text_to_elements(am.to_text())
     elements = elements_with_title[1:]
     return am.title.text, _prepare_text_area_value(elements)
 
@@ -190,7 +181,7 @@ def _parse_aida_page_and_save_am(page_id: str, am_id: str) -> Component:
     except Exception:
         return error_component(f'Erreur inattendue: \n{traceback.format_exc()}')
     if not am:
-        return error_component(f'Aucun AM trouvé sur cette page.')
+        return error_component('Aucun AM trouvé sur cette page.')
     return _save_and_get_component(am_id, am)
 
 

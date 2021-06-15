@@ -9,8 +9,7 @@ import dash_bootstrap_components as dbc
 import dash_html_components as html
 from dash import Dash
 from dash.development.base_component import Component
-from envinorma.data import ArreteMinisteriel, DateParameterDescriptor, Regime, VersionDescriptor
-from envinorma.data.classement import DetailedClassement
+from envinorma.models import ArreteMinisteriel, DateParameterDescriptor, DetailedClassement, Regime, VersionDescriptor
 
 from back_office.components import replace_line_breaks
 from back_office.components.table import ExtendedComponent, table_component
@@ -29,10 +28,9 @@ def _fetch_all_ams() -> List[ArreteMinisteriel]:
 
 def _is_default(am: ArreteMinisteriel) -> bool:
     version_descriptor: VersionDescriptor = ensure_not_none(am.version_descriptor)
-    return (
-        not version_descriptor.aed_date.unknown_classement_date_version
-        and not version_descriptor.date_de_mise_en_service.unknown_classement_date_version
-    )
+    unknown_date_1 = not version_descriptor.aed_date.unknown_classement_date_version
+    unknown_date_2 = not version_descriptor.date_de_mise_en_service.unknown_classement_date_version
+    return unknown_date_1 and unknown_date_2
 
 
 def _date_match(parameter: DateParameterDescriptor, date_: Optional[date]) -> bool:
@@ -253,7 +251,7 @@ def layout() -> Component:
     classements = random.sample(all_classements, k=15)
     arretes = _compute_arrete_list(classements)
     return html.Div(
-        [html.H3(f'Moteur de réglementation.'), _classements_component(classements), _arretes_component(arretes)]
+        [html.H3('Moteur de réglementation.'), _classements_component(classements), _arretes_component(arretes)]
     )
 
 

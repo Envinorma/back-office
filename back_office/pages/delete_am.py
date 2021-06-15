@@ -7,7 +7,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 from dash.development.base_component import Component
-from envinorma.data import DELETE_REASON_MIN_NB_CHARS, AMMetadata, AMState
+from envinorma.models import DELETE_REASON_MIN_NB_CHARS, AMMetadata, AMState
 
 from back_office.pages.parametrization_edition.form_handling import FormHandlingError
 from back_office.routing import Endpoint, Page
@@ -83,7 +83,7 @@ def _handle_submit_deletion(am_id: str, delete_reason: str) -> Component:
         return dbc.Alert(f'Erreur dans le formulaire: {exc}', color='danger', dismissable=True, className='mt-2 mb-2')
     return html.Div(
         [
-            dbc.Alert(f'Suppression réussie.', color='success', dismissable=True, className='mt-2 mb-2'),
+            dbc.Alert('Suppression réussie.', color='success', dismissable=True, className='mt-2 mb-2'),
             dcc.Location(pathname=f'/{Endpoint.AM}/{am_id}', id=_SUCCESS_REDIRECT),
         ]
     )

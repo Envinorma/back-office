@@ -1,6 +1,6 @@
 from typing import Any, Dict
 
-from envinorma.parametrization.conditions import ParameterEnum
+from envinorma.parametrization import ParameterEnum
 
 
 def new_text(rank: int) -> Dict[str, Any]:

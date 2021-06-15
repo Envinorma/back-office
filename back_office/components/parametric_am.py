@@ -6,7 +6,7 @@ import dash_bootstrap_components as dbc
 import dash_html_components as html
 from dash.dependencies import MATCH, Input, Output, State
 from dash.development.base_component import Component
-from envinorma.data import Applicability, ArreteMinisteriel, EnrichedString, StructuredText
+from envinorma.models import Applicability, ArreteMinisteriel, EnrichedString, StructuredText
 from envinorma.topics.patterns import TopicName
 
 from back_office.components.am_component import table_to_component

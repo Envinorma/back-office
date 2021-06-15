@@ -2,12 +2,12 @@ import json
 import re
 from collections import defaultdict
 from dataclasses import asdict, dataclass
-from typing import Any, DefaultDict, Dict, List, Optional, Set, Tuple
+from typing import Any, DefaultDict, Dict, List, Optional, Set
 
 import requests
 from bs4 import BeautifulSoup, Tag
-from envinorma.data import StructuredText
 from envinorma.io.parse_html import extract_text_elements
+from envinorma.models import StructuredText
 from envinorma.structure import build_structured_text
 from tqdm import tqdm
 
@@ -168,7 +168,7 @@ def extract_all_anchors_from_aida(document_id: str) -> List[Anchor]:
 
 
 def scrap_all_anchors() -> None:
-    arretes_ministeriels = json.load(open(f'data/arretes_ministeriels.json'))
+    arretes_ministeriels = json.load(open('data/arretes_ministeriels.json'))
     page_ids = [am['aida_page'] for am in arretes_ministeriels]
     page_id_to_anchors_json: Dict[str, List[Dict[str, Any]]] = {}
     for page_id in tqdm(page_ids):

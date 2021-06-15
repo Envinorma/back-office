@@ -2,9 +2,9 @@ from typing import Union
 
 import dash_html_components as html
 from dash.development.base_component import Component
-from envinorma.data import Table
-from envinorma.data.text_elements import Cell, Row, estr
 from envinorma.io.parse_html import extract_table
+from envinorma.models import Table
+from envinorma.models.text_elements import Cell, Row, estr
 
 from back_office.components.am_component import (
     _get_html_heading_classname,

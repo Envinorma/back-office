@@ -1,4 +1,4 @@
-from envinorma.parametrization.conditions import ParameterEnum
+from envinorma.parametrization import ParameterEnum
 
 from back_office.pages.am import _build_parameter_input, _extract_name, _extract_parameter_and_value
 

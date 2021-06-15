@@ -2,8 +2,8 @@ from typing import List, Optional, Tuple
 
 import dash_html_components as html
 from dash.development.base_component import Component
-from envinorma.data import ArreteMinisteriel, StructuredText, Table, am_to_text
-from envinorma.data.text_elements import Cell, Row, TextElement, Title
+from envinorma.models import ArreteMinisteriel, StructuredText, Table
+from envinorma.models.text_elements import Cell, Row, TextElement, Title
 from envinorma.structure import structured_text_to_text_elements
 from envinorma.topics.topics import TopicOntology
 
@@ -90,8 +90,7 @@ def structured_text_component(text: StructuredText, emphasized_words: List[str],
 
 
 def am_component(am: ArreteMinisteriel, emphasized_words: List[str], first_level: int = 1) -> Component:
-    text = am_to_text(am)
-    return structured_text_component(text, emphasized_words, first_level)
+    return structured_text_component(am.to_text(), emphasized_words, first_level)
 
 
 def summary_and_content(content: Component, summary: Component, height: int = 75) -> Component:
@@ -103,4 +102,4 @@ def summary_and_content(content: Component, summary: Component, height: int = 75
 
 
 def am_with_summary_component(am: ArreteMinisteriel, height: int = 75, first_level: int = 1) -> Component:
-    return summary_and_content(am_component(am, [], first_level), summary_component(am_to_text(am), True), height)
+    return summary_and_content(am_component(am, [], first_level), summary_component(am.to_text(), True), height)

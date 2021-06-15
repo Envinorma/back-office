@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, cast
+from typing import List, Optional, cast
 
 import dash
 import dash_bootstrap_components as dbc
@@ -6,7 +6,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import ALL, MATCH, Input, Output, State
 from dash.development.base_component import Component
-from envinorma.data import AMMetadata, AMSource, AMState, Classement, Regime
+from envinorma.models import AMMetadata, AMSource, AMState, Classement, Regime
 from envinorma.utils import AIDA_URL
 
 from back_office.routing import Endpoint, Page
@@ -48,7 +48,7 @@ def _legifrance_id_form(am_id: Optional[str]) -> Component:
     )
     return dbc.FormGroup(
         [
-            html.Label(f'Identifiant Légifrance', className='form-label'),
+            html.Label('Identifiant Légifrance', className='form-label'),
             input_,
             html.Div(id=page_ids.SUBMIT_LEGIFRANCE_OUTPUT),
         ]
@@ -58,7 +58,7 @@ def _legifrance_id_form(am_id: Optional[str]) -> Component:
 def _nor_form(am_metadata: Optional[AMMetadata]) -> Component:
     return dbc.FormGroup(
         [
-            html.Label(f'Numéro NOR', className='form-label'),
+            html.Label('Numéro NOR', className='form-label'),
             dcc.Input(
                 value=am_metadata.nor if am_metadata else '',
                 placeholder='ex: DEVP0123456A',
@@ -72,7 +72,7 @@ def _nor_form(am_metadata: Optional[AMMetadata]) -> Component:
 def _title(am_metadata: Optional[AMMetadata]) -> Component:
     return dbc.FormGroup(
         [
-            html.Label(f'Titre', className='form-label'),
+            html.Label('Titre', className='form-label'),
             dcc.Textarea(
                 value=am_metadata.title if am_metadata else '',
                 placeholder='ex: Arrêté du 03/08/18 relatif aux prescriptions générales applicables aux...',
@@ -88,10 +88,7 @@ def _aida_page_form(am_metadata: Optional[AMMetadata]) -> Component:
     default_value = am_metadata.aida_page if am_metadata else ''
     return dbc.FormGroup(
         [
-            html.Label(
-                f'Page AIDA',
-                className='form-label',
-            ),
+            html.Label('Page AIDA', className='form-label'),
             dcc.Input(value=default_value, placeholder='ex: 1234', id=page_ids.AIDA_PAGE, className='form-control'),
             dbc.FormText(f'Il s\'agit des derniers chiffres de l\'url, par exemple, 1234 pour {AIDA_URL}1234'),
         ]
@@ -148,7 +145,7 @@ def _classements_form(am_metadata: Optional[AMMetadata]) -> Component:
     classements = am_metadata.classements if am_metadata else [None]
     return dbc.FormGroup(
         [
-            html.Label(f'Classements', className='form-label'),
+            html.Label('Classements', className='form-label'),
             html.Div(
                 [_classement_row(classement, rank) for rank, classement in enumerate(classements)],
                 id=page_ids.CLASSEMENTS,
@@ -164,7 +161,7 @@ def _am_state(am_metadata: Optional[AMMetadata]) -> Component:
     default_value = am_metadata.state.value if am_metadata else None
     return dbc.FormGroup(
         [
-            html.Label(f'Statut', className='form-label'),
+            html.Label('Statut', className='form-label'),
             dcc.Dropdown(value=default_value, options=_AM_STATE_OPTIONS, id=page_ids.AM_STATE, placeholder='Statut'),
             dbc.FormText(
                 'Choisir VIGUEUR pour que l\'AM soit exploité dans Envinorma. '
@@ -181,7 +178,7 @@ def _am_source(am_metadata: Optional[AMMetadata]) -> Component:
     default_value = am_metadata.source.value if am_metadata else None
     return dbc.FormGroup(
         [
-            html.Label(f'Source', className='form-label'),
+            html.Label('Source', className='form-label'),
             dcc.Dropdown(value=default_value, options=_AM_SOURCE_OPTIONS, id=page_ids.AM_SOURCE, placeholder='Source'),
             dbc.FormText(
                 'La source qui sera utilisée pour initialiser l\'arrêté. Choisir Légifrance '
@@ -195,7 +192,7 @@ def _reason_deleted(am_metadata: Optional[AMMetadata]) -> Component:
     default_value = am_metadata.reason_deleted if am_metadata else None
     return dbc.FormGroup(
         [
-            html.Label(f'Raison de suppression ', className='form-label'),
+            html.Label('Raison de suppression ', className='form-label'),
             dbc.Input(value=default_value, type='text', id=page_ids.REASON_DELETED),
             dbc.FormText('À ne renseigner que si le statut choisi est DELETED.'),
         ]
@@ -246,7 +243,7 @@ def _form(am_id: Optional[str]) -> Component:
 
 
 def _page_if_logged(am_id: Optional[str]) -> Component:
-    return html.Div([html.H2(f'Nouvel arrêté ministériel.'), _form(am_id)])
+    return html.Div([html.H2('Nouvel arrêté ministériel.'), _form(am_id)])
 
 
 def _page(am_id: Optional[str] = None) -> Component:

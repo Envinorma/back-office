@@ -1,29 +1,27 @@
 from dataclasses import dataclass
 from datetime import date, datetime
-from typing import Any, Dict, List, Optional, Type, TypeVar, Union, cast
+from typing import Any, Dict, List, Optional, Type, Union
 
-from envinorma.data import ArreteMinisteriel, Regime, StructuredText, ensure_rubrique, load_path
-from envinorma.data.text_elements import EnrichedString
+from envinorma.models import ArreteMinisteriel, Regime, StructuredText, ensure_rubrique, load_path
+from envinorma.models.text_elements import EnrichedString
 from envinorma.parametrization import (
     AlternativeSection,
     AMWarning,
-    ConditionSource,
-    EntityReference,
-    NonApplicationCondition,
-    ParameterObject,
-    SectionReference,
-)
-from envinorma.parametrization.conditions import (
     AndCondition,
     Condition,
+    ConditionSource,
+    EntityReference,
     Equal,
     Greater,
+    InapplicableSection,
     Littler,
     MonoCondition,
     OrCondition,
     Parameter,
+    ParameterObject,
     ParameterType,
     Range,
+    SectionReference,
     ensure_mono_conditions,
 )
 
@@ -202,7 +200,7 @@ def _simplify_condition(condition: Condition) -> Condition:
 def _build_source(source_str: str) -> ConditionSource:
     if not source_str:
         raise FormHandlingError('Le champ source doit être renseigné.')
-    return ConditionSource('', EntityReference(SectionReference(load_path(source_str)), None))
+    return ConditionSource(EntityReference(SectionReference(load_path(source_str)), None))
 
 
 def _build_condition(condition_form_values: ConditionFormValues) -> Condition:
@@ -242,9 +240,9 @@ def _build_new_text(new_text_title: Optional[str], new_text_content: Optional[st
     if not new_text_title and not new_text_content:
         return None
     if new_text_title and not new_text_content:
-        raise FormHandlingError(f'Le champ "Contenu du paragraphe" doit être défini.')
+        raise FormHandlingError('Le champ "Contenu du paragraphe" doit être défini.')
     if new_text_content and not new_text_title:
-        raise FormHandlingError(f'Le champ "Titre" doit être défini.')
+        raise FormHandlingError('Le champ "Titre" doit être défini.')
     return _check_and_build_new_text(new_text_title or '', new_text_content or '')
 
 
@@ -263,7 +261,7 @@ def _simplify_alineas(
 
 def _build_section_reference(target_section: str) -> SectionReference:
     if not target_section:
-        raise FormHandlingError(f'Le champ "Titre" des "Paragraphes visés" doit être renseigné.')
+        raise FormHandlingError('Le champ "Titre" des "Paragraphes visés" doit être renseigné.')
     return SectionReference(load_path(target_section))
 
 
@@ -293,11 +291,11 @@ def _build_target_versions(am: ArreteMinisteriel, form_values: TargetSectionForm
     ]
 
 
-def _build_non_application_condition(
+def _build_inapplicable_section(
     condition: Condition, source: ConditionSource, modification: _Modification
-) -> NonApplicationCondition:
+) -> InapplicableSection:
     targeted_entity = EntityReference(modification.target_section, outer_alinea_indices=modification.target_alineas)
-    return NonApplicationCondition(targeted_entity=targeted_entity, condition=condition, source=source)
+    return InapplicableSection(targeted_entity=targeted_entity, condition=condition, source=source)
 
 
 def _build_am_warning(target_section: SectionReference, warning_content: str) -> AMWarning:
@@ -322,7 +320,7 @@ def _build_parameter_object(
             source=ensure_not_none(source),
         )
     if operation == AMOperation.ADD_CONDITION:
-        return _build_non_application_condition(ensure_not_none(condition), ensure_not_none(source), modification)
+        return _build_inapplicable_section(ensure_not_none(condition), ensure_not_none(source), modification)
     if operation == AMOperation.ADD_WARNING:
         return _build_am_warning(modification.target_section, warning_content)
     raise NotImplementedError(f'Not implemented for operation {operation}')
@@ -348,9 +346,7 @@ def _extract_new_parameter_objects(
 def _check_consistency(operation: AMOperation, parameters: List[ParameterObject]) -> None:
     for parameter in parameters:
         if operation == AMOperation.ADD_CONDITION:
-            assert isinstance(
-                parameter, NonApplicationCondition
-            ), f'Expect NonApplicationCondition, got {type(parameter)}'
+            assert isinstance(parameter, InapplicableSection), f'Expect InapplicableSection, got {type(parameter)}'
         elif operation == AMOperation.ADD_ALTERNATIVE_SECTION:
             assert isinstance(parameter, AlternativeSection), f'Expect AlternativeSection, got {type(parameter)}'
         elif operation == AMOperation.ADD_WARNING:

@@ -1,8 +1,8 @@
 from dataclasses import replace
 from typing import List, Optional
 
-from envinorma.data import Applicability, StructuredText
-from envinorma.data.text_elements import estr
+from envinorma.models import Applicability, StructuredText
+from envinorma.models.text_elements import estr
 
 from back_office.components.parametric_am import _extract_text_warnings
 

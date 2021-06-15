@@ -11,19 +11,11 @@ import dash_html_components as html
 from dash.dependencies import MATCH, Input, Output, State
 from dash.development.base_component import Component
 from dash.exceptions import PreventUpdate
-from envinorma.data import AMMetadata, ArreteMinisteriel, Ints, StructuredText, Table, am_to_text, extract_text_lines
 from envinorma.io.markdown import extract_markdown_text
-from envinorma.parametrization import (
-    AlternativeSection,
-    AMWarning,
-    NonApplicationCondition,
-    Parametrization,
-    UndefinedTitlesSequencesError,
-    add_titles_sequences,
-    regenerate_paths,
-)
+from envinorma.models import AMMetadata, ArreteMinisteriel, Ints, StructuredText, Table
+from envinorma.parametrization import AlternativeSection, AMWarning, InapplicableSection, Parametrization
 from envinorma.parametrization.am_with_versions import AMVersions
-from envinorma.parametrization.conditions import condition_to_str
+from envinorma.parametrization.resync import UndefinedTitlesSequencesError, add_titles_sequences, regenerate_paths
 from envinorma.utils import AMStatus
 
 from back_office.app_init import app
@@ -200,13 +192,13 @@ def _human_alinea_tuple(ints: Optional[List[int]]) -> str:
 
 
 def _application_condition_to_row(
-    non_application_condition: NonApplicationCondition, am: ArreteMinisteriel, rank: int, current_page: str
+    inapplicable_section: InapplicableSection, am: ArreteMinisteriel, rank: int, current_page: str
 ) -> List[ExtendedComponent]:
-    target_section = non_application_condition.targeted_entity.section
+    target_section = inapplicable_section.targeted_entity.section
     reference_str = _get_section_title_or_error(target_section.path, am, target_section.titles_sequence)
-    alineas = _human_alinea_tuple(non_application_condition.targeted_entity.outer_alinea_indices)
-    condition = _small(condition_to_str(non_application_condition.condition))
-    source_section = non_application_condition.source.reference.section
+    alineas = _human_alinea_tuple(inapplicable_section.targeted_entity.outer_alinea_indices)
+    condition = _small(inapplicable_section.condition.to_str())
+    source_section = inapplicable_section.source.reference.section
     source = _get_section_title_or_error(source_section.path, am, source_section.titles_sequence)
     href = f'{current_page}/{AMOperation.ADD_CONDITION.value}/{rank}'
     edit = link_button('Éditer', href=href, state=ButtonState.NORMAL_LINK)
@@ -215,11 +207,13 @@ def _application_condition_to_row(
     return [str(rank), reference_str, alineas, condition, source, edit, copy]
 
 
-def _get_non_application_table(parametrization: Parametrization, am: ArreteMinisteriel, current_page: str) -> Component:
+def _get_inapplicable_sections_table(
+    parametrization: Parametrization, am: ArreteMinisteriel, current_page: str
+) -> Component:
     header = ['#', 'Paragraphe visé', 'Alineas visés', 'Condition', 'Source', '', '']
     rows = [
         _application_condition_to_row(row, am, rank, current_page)
-        for rank, row in enumerate(parametrization.application_conditions)
+        for rank, row in enumerate(parametrization.inapplicable_sections)
     ]
     return table_component([header], rows, 'table-sm')
 
@@ -283,7 +277,7 @@ def _alternative_section_to_row(
 ) -> List[ExtendedComponent]:
     target_section = alternative_section.targeted_section
     reference_str = _get_section_title_or_error(target_section.path, am, target_section.titles_sequence)
-    condition = _small(condition_to_str(alternative_section.condition))
+    condition = _small(alternative_section.condition.to_str())
     source_section = alternative_section.source.reference.section
     source = _get_section_title_or_error(source_section.path, am, source_section.titles_sequence)
     new_version = _constrain(_wrap_in_paragraphs(extract_markdown_text(alternative_section.new_text, level=1)))
@@ -342,7 +336,7 @@ def _add_warning_button(parent_page: str, status: AMStatus) -> Component:
 def _get_am_component_with_toc(am: ArreteMinisteriel) -> Component:
     return html.Div(
         [
-            html.Div([summary_component(am_to_text(am), True)], className='col-3'),
+            html.Div([summary_component(am.to_text(), True)], className='col-3'),
             html.Div(am_component(am, [], 5), className='col-9'),
         ],
         className='row',
@@ -359,8 +353,8 @@ def _get_parametrization_summary(
         return error_component('AM introuvable, impossible d\'afficher les paramètres.')
     return html.Div(
         [
-            html.H4('Conditions de non-application'),
-            _get_non_application_table(parametrization, am, parent_page),
+            html.H4('Sections potentiellement inapplicables'),
+            _get_inapplicable_sections_table(parametrization, am, parent_page),
             _get_add_condition_button(parent_page, status),
             html.H4('Paragraphes alternatifs'),
             _get_alternative_section_table(parametrization, am, parent_page),
@@ -474,9 +468,7 @@ def _build_difference_in_tables_component(initial_am: ArreteMinisteriel, current
 
 def _build_am_diff_component(initial_am: ArreteMinisteriel, current_am: ArreteMinisteriel) -> Component:
     diff_tables = _build_difference_in_tables_component(initial_am, current_am)
-    diff_lines = _build_diff_component(
-        extract_text_lines(am_to_text(initial_am)), extract_text_lines(am_to_text(current_am))
-    )
+    diff_lines = _build_diff_component(initial_am.to_text().text_lines(), current_am.to_text().text_lines())
     return html.Div([diff_tables, diff_lines])
 
 
