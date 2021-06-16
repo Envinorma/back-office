@@ -2,7 +2,7 @@
 
 # Envinorma back-office
 
-Back office du projet Envinorma. Permet la gestion de la base de données des arrêtés ministériels.
+Back office du projet Envinorma. Permet la gestion de la base de données des arrêtés ministériels. L'instance principale est accessible [ici](https://envinorma-back-office.herokuapp.com).
 
 ![back_office](./back_office/assets/screenshot.png)
 
