@@ -5,6 +5,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
 from dash.development.base_component import Component
+from flask.app import Flask
 from flask_login import LoginManager
 from werkzeug.exceptions import NotFound
 
@@ -19,8 +20,9 @@ from back_office.pages.index import PAGE as index_page
 from back_office.pages.login import PAGE as login_page
 from back_office.pages.logout import PAGE as logout_page
 from back_office.pages.regulation_engine import PAGE as regulation_engine_page
+from back_office.pages.topic_detector import PAGE as topic_detector_page
 from back_office.routing import ROUTER, Endpoint, Page
-from back_office.utils import UNIQUE_USER, get_current_user, split_route
+from back_office.utils import UNIQUE_USER, ensure_not_none, get_current_user, split_route
 
 
 def _create_tmp_am_folder():
@@ -77,6 +79,7 @@ _ENDPOINT_TO_PAGE: Dict[str, Page] = {
     Endpoint.DELETE_AM.value: delete_am_page,
     Endpoint.CREATE_AM.value: create_am_page,
     Endpoint.REGULATION_ENGINE.value: regulation_engine_page,
+    Endpoint.TOPIC_DETECTOR.value: topic_detector_page,
 }
 
 
@@ -111,7 +114,10 @@ for _page in _ENDPOINT_TO_PAGE.values():
 login_manager = LoginManager()
 login_manager.init_app(app.server)
 login_manager.login_view = '/login'  # type: ignore
-app.server.secret_key = LOGIN_SECRET_KEY
+
+APP: Flask = ensure_not_none(app.server)  # for gunicorn deployment
+
+APP.secret_key = LOGIN_SECRET_KEY
 
 
 @login_manager.user_loader
@@ -119,12 +125,8 @@ def load_user(_):
     return UNIQUE_USER
 
 
-app.layout = html.Div(
-    [dcc.Location(id='url', refresh=False), html.Div(id='page-content')],
-    id='layout',
-)
+app.layout = html.Div([dcc.Location(id='url', refresh=False), html.Div(id='page-content')], id='layout')
 
-APP = app.server  # for gunicorn deployment
 
 if __name__ == '__main__':
     app.run_server(debug=True)
