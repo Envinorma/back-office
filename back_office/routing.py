@@ -12,8 +12,10 @@ def build_am_page(am_id: str) -> str:
 
 class Endpoint(Enum):
     INDEX = ''
-    COMPARE = 'compare'
     AM = 'am'
+    AM_OLD = 'am_old'
+    AM_COMPARE = 'am_compare'
+    LEGIFRANCE_COMPARE = 'compare'
     EDIT_AM = 'edit_am'
     DELETE_AM = 'delete_am'
     CREATE_AM = 'create_am'
@@ -32,11 +34,15 @@ class Endpoint(Enum):
 ROUTER: MapAdapter = Map(
     [
         Rule(f'/{Endpoint.INDEX}', endpoint=Endpoint.INDEX.value),
-        Rule(f'/{Endpoint.COMPARE}', endpoint=Endpoint.COMPARE.value),
-        Rule(f'/{Endpoint.COMPARE}/id/<am_id>', endpoint=Endpoint.COMPARE.value),
-        Rule(f'/{Endpoint.COMPARE}/id/<am_id>/<date_before>/<date_after>', endpoint=Endpoint.COMPARE.value),
+        Rule(f'/{Endpoint.LEGIFRANCE_COMPARE}', endpoint=Endpoint.LEGIFRANCE_COMPARE.value),
+        Rule(f'/{Endpoint.LEGIFRANCE_COMPARE}/id/<am_id>', endpoint=Endpoint.LEGIFRANCE_COMPARE.value),
+        Rule(
+            f'/{Endpoint.LEGIFRANCE_COMPARE}/id/<am_id>/<date_before>/<date_after>',
+            endpoint=Endpoint.LEGIFRANCE_COMPARE.value,
+        ),
+        Rule(f'/{Endpoint.AM_OLD}/<am_id>', endpoint=Endpoint.AM_OLD.value),
         Rule(f'/{Endpoint.AM}/<am_id>', endpoint=Endpoint.AM.value),
-        Rule(f'/{Endpoint.AM}/<am_id>/compare/<compare_with>', endpoint=Endpoint.AM.value),
+        Rule(f'/{Endpoint.AM_COMPARE}/<am_id>/<compare_with>', endpoint=Endpoint.AM_COMPARE.value),
         Rule(f'/{Endpoint.LOGIN}', endpoint=Endpoint.LOGIN.value),
         Rule(f'/{Endpoint.LOGOUT}', endpoint=Endpoint.LOGOUT.value),
         Rule(f'/{Endpoint.DELETE_AM}/<am_id>', endpoint=Endpoint.DELETE_AM.value),

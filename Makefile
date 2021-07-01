@@ -12,3 +12,6 @@ heroku-deploy:
 
 heroku-add-remote:
 	heroku git:remote -a envinorma-back-office
+
+heroku-logs:
+	heroku logs --tail
