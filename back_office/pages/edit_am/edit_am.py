@@ -1,6 +1,4 @@
 import difflib
-import json
-import os
 import traceback
 import warnings
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
@@ -14,7 +12,6 @@ from dash.exceptions import PreventUpdate
 from envinorma.io.markdown import extract_markdown_text
 from envinorma.models import AMMetadata, ArreteMinisteriel, Ints, StructuredText, Table
 from envinorma.parametrization import AlternativeSection, AMWarning, InapplicableSection, Parametrization
-from envinorma.parametrization.am_with_versions import AMVersions
 from envinorma.parametrization.resync import UndefinedTitlesSequencesError, add_titles_sequences, regenerate_paths
 from envinorma.utils import AMStatus
 
@@ -24,13 +21,8 @@ from back_office.components.am_component import am_component
 from back_office.components.parametric_am_list import parametric_am_list_callbacks, parametric_am_list_component
 from back_office.components.summary_component import summary_component
 from back_office.components.table import ExtendedComponent, table_component
-from back_office.config import (
-    ENVIRONMENT_TYPE,
-    EnvironmentType,
-    create_folder_and_generate_parametric_filename,
-    get_parametric_ams_folder,
-)
-from back_office.helpers.generate_final_am import generate_final_am
+from back_office.config import ENVIRONMENT_TYPE, EnvironmentType
+from back_office.helpers.generate_final_am import generate_and_dump_am_version, load_am_versions
 from back_office.pages.edit_am.am_init_edition import router as am_init_router
 from back_office.pages.edit_am.am_init_tab import am_init_tab
 from back_office.pages.edit_am.structure_edition import router as structure_router
@@ -40,11 +32,9 @@ from back_office.utils import (
     DATA_FETCHER,
     AMOperation,
     SlackChannel,
-    ensure_not_none,
     get_traversed_titles,
     safe_get_section,
     send_slack_notification,
-    write_json,
 )
 
 _PREFIX = __file__.split('/')[-1].replace('.py', '').replace('_', '-')
@@ -529,33 +519,10 @@ def _get_structure_validation_diff(am_id: str, status: AMStatus) -> Component:
     return _structure_tabs(initial_am, DATA_FETCHER.load_structured_am(am_id))
 
 
-def _create_if_inexistent(folder: str) -> None:
-    if not os.path.exists(folder):
-        os.mkdir(folder)
-
-
-def _load_am(path: str) -> ArreteMinisteriel:
-    return ArreteMinisteriel.from_dict(json.load(open(path)))
-
-
-def _load_parametric_ams(folder: str) -> Dict[str, ArreteMinisteriel]:
-    return {file_: _load_am(os.path.join(folder, file_)) for file_ in os.listdir(folder)}
-
-
-def _generate_versions_if_empty(am_id: str, folder: str) -> None:
-    if os.listdir(folder):
-        return
-    _generate_and_dump_am_version(am_id)
-
-
 def _list_parametric_texts(am_id: str, am_status: AMStatus) -> Component:
     if am_status != AMStatus.VALIDATED:
         return html.Div()
-    folder = get_parametric_ams_folder(am_id)
-    _create_if_inexistent(folder)
-    _generate_versions_if_empty(am_id, folder)
-    filename_to_am = _load_parametric_ams(folder)
-    return parametric_am_list_component(filename_to_am, _PREFIX)
+    return parametric_am_list_component(load_am_versions(am_id), _PREFIX)
 
 
 def _link_to_am(am_id: str) -> Component:
@@ -666,27 +633,6 @@ def _page_with_spinner(am_id: str, current_page: str) -> Component:
     return dbc.Spinner(html.Div(_page(am_id, current_page), id=_LOADER))
 
 
-def _flush_folder(am_id: str) -> None:
-    folder = get_parametric_ams_folder(am_id)
-    if os.path.exists(folder):
-        for file_ in os.listdir(folder):
-            os.remove(os.path.join(folder, file_))
-
-
-def _dump_am_versions(am_id: str, versions: Optional[AMVersions]) -> None:
-    if not versions:
-        return
-    _flush_folder(am_id)
-    for version_desc, version in versions.items():
-        filename = create_folder_and_generate_parametric_filename(am_id, version_desc)
-        write_json(version.to_dict(), filename)
-
-
-def _generate_and_dump_am_version(am_id: str) -> None:
-    final_am = generate_final_am(ensure_not_none(DATA_FETCHER.load_am_metadata(am_id)))
-    _dump_am_versions(am_id, final_am.am_versions)
-
-
 def _add_titles_sequences(am_id: str) -> None:
     try:
         parametrization = DATA_FETCHER.load_parametrization(am_id)
@@ -699,7 +645,7 @@ def _add_titles_sequences(am_id: str) -> None:
 
 
 def _handle_validate_parametrization(am_id: str) -> None:
-    _generate_and_dump_am_version(am_id)
+    generate_and_dump_am_version(am_id)
     _add_titles_sequences(am_id)
 
 

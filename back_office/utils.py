@@ -1,8 +1,8 @@
 import json
+import logging
 import os
 import random
 import traceback
-from dataclasses import dataclass
 from datetime import date, datetime
 from enum import Enum
 from functools import lru_cache
@@ -12,15 +12,12 @@ import requests
 from envinorma.data_fetcher import DataFetcher
 from envinorma.from_legifrance.legifrance_to_am import legifrance_to_arrete_ministeriel
 from envinorma.models import ArreteMinisteriel, EnrichedString, Ints, StructuredText
-from flask_login import current_user
 from leginorma import LegifranceClient, LegifranceText
 from text_diff import TextDifferences, text_differences
 
 from back_office.config import (
     LEGIFRANCE_CLIENT_ID,
     LEGIFRANCE_CLIENT_SECRET,
-    LOGIN_PASSWORD,
-    LOGIN_USERNAME,
     PSQL_DSN,
     SLACK_ENRICHMENT_NOTIFICATION_URL,
 )
@@ -183,42 +180,6 @@ def generate_id(filename: str, suffix: str) -> str:
     return prefix + '-' + suffix
 
 
-@dataclass
-class User:
-    username: str
-    password: str
-    active: bool = True
-    authenticated: bool = True
-    anonymous: bool = False
-
-    def get_id(self) -> str:
-        return self.username
-
-    @property
-    def is_active(self):
-        return self.active
-
-    @property
-    def is_authenticated(self):
-        return self.authenticated
-
-    @property
-    def is_anonymous(self):
-        return self.anonymous
-
-
-UNIQUE_USER = User(LOGIN_USERNAME, LOGIN_PASSWORD)
-ANONYMOUS_USER = User('anonymous', '', False, False, True)
-
-
-def _assert_user_or_none(candidate: Any) -> Optional[User]:
-    return candidate  # hack for typing
-
-
-def get_current_user() -> User:
-    return _assert_user_or_none(current_user) or ANONYMOUS_USER
-
-
 class SlackChannel(Enum):
     ENRICHMENT_NOTIFICATIONS = 'ENRICHMENT_NOTIFICATIONS'
 
@@ -232,8 +193,8 @@ def send_slack_notification(message: str, channel: SlackChannel) -> None:
     url = channel.slack_url()
     answer = requests.post(url, json={'text': message})
     if not (200 <= answer.status_code < 300):
-        print('Error with status code', answer.status_code)
-        print(answer.content.decode())
+        logging.error('Error with status code', answer.status_code)
+        logging.error(answer.content.decode())
 
 
 def write_json(obj: Union[Dict, List], filename: str, safe: bool = False, pretty: bool = True) -> None:

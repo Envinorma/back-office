@@ -24,7 +24,7 @@ def _page_index(value: Any) -> Dict[str, Any]:
     return {'type': generate_id(__file__, 'page'), 'key': value}
 
 
-def _topic_name(section) -> Optional[str]:
+def _topic_name(section: StructuredText) -> Optional[str]:
     topic = section.annotations.topic if section.annotations else None
     return topic.name if topic else None
 
