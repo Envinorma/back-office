@@ -67,7 +67,7 @@ def _page_button(index: int, active_index: int) -> Component:
 def _nav(active_batch_index: int) -> Component:
     nb_batches = int(math.ceil(len(DATA_FETCHER.load_all_am_metadata()) / _BATCH_SIZE))
     pages = [
-        dbc.Button('Page', disabled=True),
+        dbc.Button('Batch n°', disabled=True),
         *[_page_button(batch_index, active_batch_index) for batch_index in range(nb_batches)],
     ]
     return dbc.ButtonGroup(pages, className='pagination mb-3')
@@ -84,8 +84,12 @@ def _topics() -> Component:
     return dbc.Spinner(_topics_tabs(0), id=_BATCH, fullscreen=True)
 
 
+def _intro() -> Component:
+    return html.Div('Thèmes associés par le détecteur de thèmes à chaque AM de la base.', className='mb-3')
+
+
 def layout() -> Component:
-    return html.Div([html.H3('Détecteur de thèmes.'), _topics()])
+    return html.Div([html.H3('Détecteur de thèmes.'), _intro(), _topics()])
 
 
 def _callbacks(app: Dash) -> None:
