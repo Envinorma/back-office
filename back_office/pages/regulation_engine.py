@@ -54,8 +54,9 @@ def _dates_match(am: ArreteMinisteriel, aed_date: Optional[date], installation_d
 
 def _choose_correct_version(classement: DetailedClassement, am_versions: List[ArreteMinisteriel]) -> ArreteMinisteriel:
     if len(am_versions) == 1:
-        assert not am_versions[0].version_descriptor.aed_date.is_used_in_parametrization
-        assert not am_versions[0].version_descriptor.date_de_mise_en_service.is_used_in_parametrization
+        version: VersionDescriptor = ensure_not_none(am_versions[0].version_descriptor)
+        assert not version.aed_date.is_used_in_parametrization
+        assert not version.date_de_mise_en_service.is_used_in_parametrization
     aed_date = classement.date_autorisation
     installation_date = classement.date_mise_en_service
     matches = [am for am in am_versions if _dates_match(am, aed_date, installation_date)]
@@ -196,13 +197,14 @@ def _tooltip(rank: int, warnings: List[str]) -> Component:
 def _arrete_li(rank: int, arrete: ArreteMinisteriel, classements: List[DetailedClassement]) -> Component:
     classement_hints = {f'{cl.rubrique} {cl.regime.value}' for cl in classements}
     to_append = html.Span(' - '.join(classement_hints), style={'color': 'grey'})
+    version: VersionDescriptor = ensure_not_none(arrete.version_descriptor)
     return html.Li(
         [
-            dbc.Checkbox(checked=arrete.version_descriptor.applicable),
+            dbc.Checkbox(checked=version.applicable),
             html.Span(' '),
             arrete.short_title + ' - ',
             to_append,
-            _tooltip(rank, arrete.version_descriptor.applicability_warnings),
+            _tooltip(rank, version.applicability_warnings),
         ]
     )
 
@@ -230,7 +232,8 @@ def _regime_score(regime: Regime) -> int:
 
 
 def _am_sort_score(am: ArreteMinisteriel) -> Tuple:
-    return -am.version_descriptor.applicable, -_regime_score(am.classements[0].regime), am.short_title
+    version: VersionDescriptor = ensure_not_none(am.version_descriptor)
+    return -version.applicable, -_regime_score(am.classements[0].regime), am.short_title
 
 
 def _ams_list(arretes: List[Tuple[ArreteMinisteriel, List[DetailedClassement]]]) -> Component:
