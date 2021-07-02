@@ -1,10 +1,12 @@
 from typing import Optional
 
+import dash_core_components as dcc
 import dash_html_components as html
 from dash import Dash
 from dash.development.base_component import Component
 from envinorma.models import AMMetadata, ArreteMinisteriel, StructuredText
 
+from back_office.routing import Endpoint
 from back_office.utils import DATA_FETCHER
 
 
@@ -33,10 +35,17 @@ def _am_topics(am: Optional[ArreteMinisteriel]) -> Component:
     return html.Div([_section_topics(section) for section in am.sections])
 
 
+def _edit_button(am_id: str) -> Component:
+    return dcc.Link(
+        html.Button('Éditer les thèmes', className='btn btn-link'), href=f'/{Endpoint.EDIT_TOPICS}/am/{am_id}'
+    )
+
+
 def _layout(am: AMMetadata) -> Component:
     return html.Div(
         [
             html.H4('Thèmes', className='row, mb-3'),
+            _edit_button(am.cid),
             html.Div(className='row', children=_am_topics(DATA_FETCHER.load_most_advanced_am(am.cid))),
         ]
     )

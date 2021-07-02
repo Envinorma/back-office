@@ -16,13 +16,13 @@ _OUTPUT = f'{_PREFIX}-output'
 
 
 def _versions(am_id: str) -> Component:
-    return parametric_am_list_component(load_am_versions(am_id), _PREFIX)
+    return parametric_am_list_component(load_am_versions(am_id, regenerate=True), _PREFIX)
 
 
 def _layout(am_metadata: AMMetadata) -> Component:
     return html.Div(
         [
-            html.Button('Charger les versions', id=_LOAD_BUTTON, className='btn btn-primary'),
+            html.Button('Charger les versions', id=_LOAD_BUTTON, className='btn btn-primary mb-3'),
             dcc.Store(data=am_metadata.cid, id=_AM_ID),
             dbc.Spinner(html.Div(), id=_OUTPUT),
         ]

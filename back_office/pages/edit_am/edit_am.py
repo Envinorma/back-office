@@ -522,7 +522,7 @@ def _get_structure_validation_diff(am_id: str, status: AMStatus) -> Component:
 def _list_parametric_texts(am_id: str, am_status: AMStatus) -> Component:
     if am_status != AMStatus.VALIDATED:
         return html.Div()
-    return parametric_am_list_component(load_am_versions(am_id), _PREFIX)
+    return parametric_am_list_component(load_am_versions(am_id, True), _PREFIX)
 
 
 def _link_to_am(am_id: str) -> Component:

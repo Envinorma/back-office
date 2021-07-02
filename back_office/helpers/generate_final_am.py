@@ -50,14 +50,14 @@ def _load_parametric_ams(folder: str) -> Dict[str, ArreteMinisteriel]:
     return {file_: _load_am(os.path.join(folder, file_)) for file_ in os.listdir(folder)}
 
 
-def _generate_versions_if_empty(am_id: str, folder: str) -> None:
-    if os.listdir(folder):
+def _generate_versions(am_id: str, folder: str, regenerate: bool) -> None:
+    if not regenerate and os.listdir(folder):
         return
     generate_and_dump_am_version(am_id)
 
 
-def load_am_versions(am_id: str) -> Dict[str, ArreteMinisteriel]:
+def load_am_versions(am_id: str, regenerate: bool) -> Dict[str, ArreteMinisteriel]:
     folder = get_parametric_ams_folder(am_id)
     _create_if_inexistent(folder)
-    _generate_versions_if_empty(am_id, folder)
+    _generate_versions(am_id, folder, regenerate)
     return _load_parametric_ams(folder)

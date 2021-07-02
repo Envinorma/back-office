@@ -1,29 +1,41 @@
-from typing import List
+from typing import List, Optional
 
 import dash_html_components as html
 from dash.development.base_component import Component
 from envinorma.models import StructuredText
-from envinorma.structure import Title, structured_text_to_text_elements
 
 from back_office.utils import get_truncated_str
 
 
-def _build_summary_line(title: Title, with_dots: bool) -> Component:
-    prefix = (title.level * '•' + ' ') if with_dots else ''
-    trunc_title = prefix + get_truncated_str(title.text)
-    class_name = 'level_0' if title.level <= 1 else 'level_1'
-    return html.Dd(html.A(trunc_title, href=f'#{title.id}', className=class_name))
+def _topic_name(section: StructuredText) -> Optional[str]:
+    topic = section.annotations.topic if section.annotations else None
+    return topic.name if topic else None
 
 
-def _extract_titles(text: StructuredText) -> List[Title]:
-    return [el for el in structured_text_to_text_elements(text, level=0) if isinstance(el, Title) and el.level != 0]
+def _badge(section: StructuredText) -> Component:
+    topic_name = _topic_name(section)
+    return html.Span(topic_name, className='badge badge-secondary') if topic_name else html.Span()
 
 
-def _build_component(titles: List[Title], with_dots: bool) -> Component:
-    lines = [_build_summary_line(title, with_dots) for title in titles]
-    return html.Dl(lines, className='summary')
+def _build_summary_line(text: StructuredText, with_dots: bool, with_topics: bool, depth: int) -> Component:
+    prefix = (depth * '•' + ' ') if with_dots else ''
+    trunc_title = prefix + get_truncated_str(text.title.text)
+    class_name = 'level_0' if depth <= 1 else 'level_1'
+    final_line = html.Span([trunc_title, _badge(text)]) if with_topics else html.Span(trunc_title)
+    return html.Dd(html.A(final_line, href=f'#{text.id}', className=class_name))
 
 
-def summary_component(text: StructuredText, with_dots: bool = True) -> Component:
-    titles = _extract_titles(text)
-    return _build_component(titles, with_dots)
+def _build_summary_lines(text: StructuredText, with_dots: bool, with_topics: bool, depth: int = 0) -> List[Component]:
+    lines = [
+        _build_summary_line(text, with_dots, with_topics, depth),
+        *[
+            comp
+            for section in text.sections
+            for comp in _build_summary_lines(section, with_dots, with_topics, depth + 1)
+        ],
+    ]
+    return lines
+
+
+def summary_component(text: StructuredText, with_dots: bool = True, with_topics: bool = True) -> Component:
+    return html.Dl(_build_summary_lines(text, with_dots, with_topics), className='summary')
