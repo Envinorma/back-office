@@ -13,6 +13,7 @@ from envinorma.io.markdown import extract_markdown_text
 from envinorma.models import AMMetadata, ArreteMinisteriel, Ints, StructuredText, Table
 from envinorma.parametrization import AlternativeSection, AMWarning, InapplicableSection, Parametrization
 from envinorma.parametrization.resync import UndefinedTitlesSequencesError, add_titles_sequences, regenerate_paths
+from envinorma.topics.simple_topics import add_simple_topics
 from envinorma.utils import AMStatus
 
 from back_office.app_init import app
@@ -664,7 +665,15 @@ def _handle_validate_structure(am_id: str) -> None:
     DATA_FETCHER.upsert_new_parametrization(am_id, new_parametrization)
 
 
-def _update_am_status(clicked_button: str, am_id: str) -> None:
+def _upsert_status(am_id: str, new_status: AMStatus) -> None:
+    DATA_FETCHER.upsert_am_status(am_id, new_status)
+    if ENVIRONMENT_TYPE == EnvironmentType.PROD:
+        send_slack_notification(
+            f'AM {am_id} a désormais le statut {new_status.value}', SlackChannel.ENRICHMENT_NOTIFICATIONS
+        )
+
+
+def _upsert_am_status(clicked_button: str, am_id: str) -> None:
     new_status = None
     if clicked_button == _VALIDATE_INITIALIZATION:
         new_status = AMStatus.PENDING_STRUCTURE_VALIDATION
@@ -679,15 +688,21 @@ def _update_am_status(clicked_button: str, am_id: str) -> None:
     elif clicked_button == _modal_confirm_button_id('validated'):
         new_status = AMStatus.PENDING_PARAMETRIZATION
     elif clicked_button == _modal_confirm_button_id('reset-structure'):
-        DATA_FETCHER.delete_structured_am(am_id)
+        new_status = None  # status does not change in this case.
     else:
         raise NotImplementedError(f'Unknown button id {clicked_button}')
     if new_status:
-        DATA_FETCHER.upsert_am_status(am_id, new_status)
-        if ENVIRONMENT_TYPE == EnvironmentType.PROD:
-            send_slack_notification(
-                f'AM {am_id} a désormais le statut {new_status.value}', SlackChannel.ENRICHMENT_NOTIFICATIONS
-            )
+        _upsert_status(am_id, new_status)
+
+
+def _handle_clicked_button(clicked_button: str, am_id: str) -> None:
+    _upsert_am_status(clicked_button, am_id)
+
+    if clicked_button in (_VALIDATE_INITIALIZATION, _modal_confirm_button_id('reset-structure')):
+        initial_am = DATA_FETCHER.load_initial_am(am_id)
+        if initial_am:
+            # structured_am must always exist and be equal to initial_am by default.
+            DATA_FETCHER.upsert_structured_am(am_id, add_simple_topics(initial_am))
     if clicked_button == _VALIDATE_PARAMETRIZATION:
         _handle_validate_parametrization(am_id)
     if clicked_button == _VALIDATE_STRUCTURE:
@@ -718,7 +733,7 @@ def _handle_click(*args):
     for id_, n_clicks in zip(_BUTTON_IDS, all_n_clicks):
         if (n_clicks or 0) >= 1:
             try:
-                _update_am_status(id_, am_id)
+                _handle_clicked_button(id_, am_id)
             except Exception:  # pylint: disable = broad-except
                 return error_component(traceback.format_exc())
             return _page_with_spinner(am_id, current_page)

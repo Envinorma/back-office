@@ -1,11 +1,15 @@
 from typing import List, Tuple
 
+import dash_bootstrap_components as dbc
+import dash_core_components as dcc
 import dash_html_components as html
 from dash import Dash
 from dash.development.base_component import Component
 from envinorma.models import AMMetadata, AMState, Classement
 from envinorma.utils import AMStatus
 
+from back_office.helpers.login import get_current_user
+from back_office.routing import Endpoint
 from back_office.utils import DATA_FETCHER
 
 
@@ -43,11 +47,29 @@ def _metadata(am: AMMetadata) -> Component:
     )
 
 
+def _edition(am_id: str) -> Component:
+    alert = (
+        dbc.Alert('Cet arrêté peut être modifié, restructuré ou paramétré par toute personne.')
+        if not get_current_user().is_authenticated
+        else html.Div()
+    )
+    delete_button = dcc.Link(dbc.Button('Supprimer l\'arrêté', color='danger'), href=f'/{Endpoint.DELETE_AM}/{am_id}')
+    return html.Div(
+        [
+            html.H2('Éditer'),
+            alert,
+            html.Div(dcc.Link(dbc.Button('Éditer le contenu de l\'arrêté', color='success'), href=f'/edit_am/{am_id}')),
+            html.Div(delete_button, className='mt-2'),
+        ]
+    )
+
+
 def _layout(am: AMMetadata) -> Component:
     return html.Div(
         [
             html.H4('Métadonnées', className='row, mb-3'),
             html.Div(className='row', children=_metadata(am)),
+            html.Div(className='row', children=_edition(am.cid)),
         ]
     )
 
