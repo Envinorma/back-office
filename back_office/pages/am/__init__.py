@@ -36,19 +36,9 @@ def _warning(am_metadata: AMMetadata) -> Component:
     raise NotImplementedError(f'Unhandled state {am_metadata.state}')
 
 
-def _load_tab(tab_label: str, am: AMMetadata, component_maker: Callable[[AMMetadata], Component]) -> Component:
-    start = time()
-    component = component_maker(am)
-    print(tab_label, time() - start)
-    return component
-
-
 def _tabs(am: AMMetadata) -> Component:
     return dbc.Tabs(
-        [
-            dbc.Tab(_load_tab(label, am, layout), label=label, className='mt-3', tab_id=label)
-            for label, layout, _ in _TABS
-        ],
+        [dbc.Tab(layout(am), label=label, className='mt-3', tab_id=label) for label, layout, _ in _TABS],
         id='am-tabs',
     )
 
