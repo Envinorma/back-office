@@ -12,6 +12,7 @@ from leginorma import LegifranceRequestError
 
 from back_office.components import error_component
 from back_office.components.diff import diff_component
+from back_office.routing import Page
 from back_office.utils import DATA_FETCHER, compute_am_diff, ensure_not_none, extract_aida_am, extract_legifrance_am
 
 _PREFIX = __file__.split('/')[-1].replace('.py', '').replace('_', '-')
@@ -77,17 +78,20 @@ def _build_component(am_id: str, compare_with_str: str) -> Component:
     return builder(am)
 
 
-def layout(am_id: str, compare_with_str: str) -> Component:
+def _layout(am_id: str, compare_with: str) -> Component:
     return html.Div(
         [
             dcc.Link('< Retour à l\'arrêté', href=f'/am/{am_id}'),
             dbc.Spinner(children=html.Div(), id=_SPINNER),
-            dcc.Store(data=[am_id, compare_with_str], id=_ARGS),
+            dcc.Store(data=[am_id, compare_with], id=_ARGS),
         ]
     )
 
 
-def add_callbacks(app_: Dash) -> None:
+def _callbacks(app_: Dash) -> None:
     @app_.callback(Output(_SPINNER, 'children'), Input(_ARGS, 'data'))
     def _define_diff_component(args):
         return _build_component(*args)
+
+
+PAGE = Page(_layout, _callbacks)

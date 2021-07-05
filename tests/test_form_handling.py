@@ -44,7 +44,7 @@ from back_office.pages.parametrization_edition.form_handling import (
     _try_building_range_condition,
 )
 from back_office.pages.parametrization_edition.target_sections_form import TargetSectionFormValues
-from back_office.utils import AMOperation
+from back_office.utils import AMOperation, ensure_not_none
 
 
 def test_simplify_condition():
@@ -250,7 +250,9 @@ def test_build_target_versions():
     text = StructuredText(estr('title'), [estr('content')], [], None)
     modif = _Modification(SectionReference((0, 0)), None, text)
     res = _build_target_versions(am, form_values)
-    modif.new_text.id = res[0].new_text.id
+    previous_text: StructuredText = ensure_not_none(res[0].new_text)
+    new_text: StructuredText = ensure_not_none(modif.new_text)
+    new_text.id = previous_text.id
     assert res == [modif]
 
     form_values = TargetSectionFormValues([], [], [dump_path((0, 0))], [[0, 1]])
@@ -277,8 +279,9 @@ def test_build_new_text():
         _build_new_text('aa', None)
     with pytest.raises(FormHandlingError):
         _build_new_text(None, 'bb')
-    assert _build_new_text('aa', 'bb').title.text == 'aa'
-    assert _build_new_text('aa', 'bb').outer_alineas == [estr('bb')]
+    new_text: StructuredText = ensure_not_none(_build_new_text('aa', 'bb'))
+    assert new_text.title.text == 'aa'
+    assert new_text.outer_alineas == [estr('bb')]
 
 
 def test_build_condition():

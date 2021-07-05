@@ -65,7 +65,7 @@ def scrap_nor(document_id: str) -> str:
 
 def extract_page_title(html: str) -> str:
     soup = BeautifulSoup(html, 'html.parser')
-    return soup.find('h1').text
+    return soup.find('h1').text  # type: ignore
 
 
 def scrap_title(document_id: str) -> str:

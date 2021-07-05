@@ -14,6 +14,7 @@ from envinorma.io.parse_html import extract_text_elements
 from envinorma.models import ArreteMinisteriel, EnrichedString, StructuredText, Table
 from envinorma.models.text_elements import TextElement, Title
 from envinorma.structure import build_structured_text, structured_text_to_text_elements
+from envinorma.topics.simple_topics import add_simple_topics
 
 from back_office.app_init import app
 from back_office.components import error_component, success_component
@@ -341,7 +342,7 @@ def _structure_text(am_id: str, new_am: str) -> ArreteMinisteriel:
 
 
 def _parse_text_and_save_message(am_id: str, new_am: str) -> str:
-    text = _structure_text(am_id, new_am)
+    text = add_simple_topics(_structure_text(am_id, new_am))
     DATA_FETCHER.upsert_structured_am(am_id, text)
     return 'Enregistrement réussi.'
 

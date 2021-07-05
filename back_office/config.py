@@ -1,3 +1,4 @@
+import logging
 import os
 from configparser import ConfigParser
 from enum import Enum
@@ -18,7 +19,7 @@ def _load_config_file() -> ConfigParser:
     if os.path.exists(filename):
         parser.read(filename)
     else:
-        print('config.ini not found, reading config from env')
+        logging.warn('config.ini not found, reading config from env')
     return parser
 
 

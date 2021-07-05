@@ -6,8 +6,9 @@ from dash.dependencies import Input, Output, State
 from dash.development.base_component import Component
 from flask_login import login_user
 
+from back_office.helpers.login import UNIQUE_USER
 from back_office.routing import Page
-from back_office.utils import UNIQUE_USER, generate_id
+from back_office.utils import generate_id
 
 _LOGIN_URL = generate_id(__file__, 'login-url')
 _LOGIN_ALERT = generate_id(__file__, 'login-alert')

@@ -5,15 +5,15 @@ from typing import Any, Dict, List, Optional
 
 import dash
 import dash_bootstrap_components as dbc
+import dash_core_components as dcc
 import dash_html_components as html
 from dash import Dash
 from dash.dependencies import ALL, Input, Output
 from dash.development.base_component import Component
 from envinorma.models.arrete_ministeriel import ArreteMinisteriel
 from envinorma.models.structured_text import StructuredText
-from envinorma.topics.simple_topics import add_simple_topics
 
-from back_office.routing import Page
+from back_office.routing import Endpoint, Page
 from back_office.utils import DATA_FETCHER, ensure_not_none, generate_id
 
 _BATCH_SIZE = 10
@@ -24,7 +24,7 @@ def _page_index(value: Any) -> Dict[str, Any]:
     return {'type': generate_id(__file__, 'page'), 'key': value}
 
 
-def _topic_name(section) -> Optional[str]:
+def _topic_name(section: StructuredText) -> Optional[str]:
     topic = section.annotations.topic if section.annotations else None
     return topic.name if topic else None
 
@@ -43,8 +43,19 @@ def _section_topics(section: StructuredText) -> Component:
     )
 
 
+def _edit_button(am_id: str) -> Component:
+    return dcc.Link(
+        html.Button('Éditer les thèmes', className='btn btn-link'), href=f'/{Endpoint.EDIT_TOPICS}/am/{am_id}'
+    )
+
+
 def _am_topics(am: ArreteMinisteriel, rank: int) -> Component:
-    content = [html.H4(am.id), html.H6(am.title.text), *[_section_topics(section) for section in am.sections]]
+    content = [
+        html.H4(am.id),
+        html.H6(am.title.text),
+        _edit_button(am.id or ''),
+        *[_section_topics(section) for section in am.sections],
+    ]
     return dbc.Tab(content, label=rank + 1, labelClassName='small')
 
 
@@ -57,7 +68,7 @@ def _fetch_am_id_batch(batch_index: int, batch_size: int) -> List[str]:
 
 def _load_and_enrich_ams(batch_index: int, batch_size: int) -> List[ArreteMinisteriel]:
     am_ids = _fetch_am_id_batch(batch_index, batch_size)
-    return [add_simple_topics(ensure_not_none(DATA_FETCHER.load_most_advanced_am(am_id))) for am_id in am_ids]
+    return [ensure_not_none(DATA_FETCHER.load_most_advanced_am(am_id)) for am_id in am_ids]
 
 
 def _page_button(index: int, active_index: int) -> Component:

@@ -4,7 +4,7 @@ from back_office.routing import ROUTER
 
 def test_routing():
     """
-    each rule in ROUTER must have be tied to a python file with a layout function and expected arguments
+    each rule in ROUTER must be tied to a python file with a layout function and expected arguments
     """
     for rule in ROUTER.map.iter_rules():
         for arg in rule.arguments:

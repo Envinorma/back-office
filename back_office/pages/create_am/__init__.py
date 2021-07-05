@@ -9,8 +9,9 @@ from dash.development.base_component import Component
 from envinorma.models import AMMetadata, AMSource, AMState, Classement, Regime
 from envinorma.utils import AIDA_URL
 
+from back_office.helpers.login import get_current_user
 from back_office.routing import Endpoint, Page
-from back_office.utils import DATA_FETCHER, get_current_user
+from back_office.utils import DATA_FETCHER
 
 from . import create_am_ids as page_ids
 from .am_creation_form_handling import handle_form, is_legifrance_id_valid
