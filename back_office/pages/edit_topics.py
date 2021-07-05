@@ -69,6 +69,7 @@ def _am_topics_with_loader(am: ArreteMinisteriel) -> Component:
             dbc.Spinner(_am_topics(am), id=_AM),
         ],
         className='col-9',
+        style={'height': '80vh', 'overflow-y': 'auto', 'border-bottom': '2px gainsboro solid'},
     )
 
 
