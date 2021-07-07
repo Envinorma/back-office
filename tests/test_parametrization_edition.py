@@ -33,14 +33,16 @@ def test_change_to_mono_conditions():
     res = _change_to_mono_conditions(Greater(_date, d1, False))
     assert res == (_AND_ID, [Greater(_date, d1, False)])
 
-    res = _change_to_mono_conditions(OrCondition([Greater(_date, d1, False), Equal(_regime, 'A')]))
-    assert res == (_OR_ID, [Greater(_date, d1, False), Equal(_regime, 'A')])
+    input_ = frozenset([Greater(_date, d1, False), Equal(_regime, 'A')])
+    op, conditions = _change_to_mono_conditions(OrCondition(input_))
+    assert op == _OR_ID
+    assert frozenset(conditions) == input_
 
     with pytest.raises(ValueError):
-        _change_to_mono_conditions(OrCondition([Range(_date, d1, d2), Equal(_regime, 'A')]))
+        _change_to_mono_conditions(OrCondition(frozenset([Range(_date, d1, d2), Equal(_regime, 'A')])))
 
-    res = _change_to_mono_conditions(AndCondition([Range(_date, d1, d2), Equal(_regime, 'A')]))
-    assert res == (_AND_ID, [Littler(_date, d2), Greater(_date, d1), Equal(_regime, 'A')])
+    op, conditions = _change_to_mono_conditions(AndCondition(frozenset([Range(_date, d1, d2), Equal(_regime, 'A')])))
+    assert (op, set(conditions)) == (_AND_ID, {Littler(_date, d2), Greater(_date, d1), Equal(_regime, 'A')})
 
 
 def test_get_str_target():
@@ -62,4 +64,4 @@ def test_make_mono_conditions():
     assert _make_mono_conditions(Littler(_date, d2)) == [Littler(_date, d2)]
     assert _make_mono_conditions(Greater(_date, d2)) == [Greater(_date, d2)]
     with pytest.raises(ValueError):
-        _make_mono_conditions(AndCondition([Greater(_date, d2)]))
+        _make_mono_conditions(AndCondition(frozenset([Greater(_date, d2)])))

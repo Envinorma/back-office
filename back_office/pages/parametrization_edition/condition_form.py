@@ -196,7 +196,7 @@ def _change_to_mono_conditions(condition: Condition) -> Tuple[str, List[MonoCond
         children_mono_conditions = [cd for child in condition.conditions for cd in _make_mono_conditions(child)]
         return _AND_ID, children_mono_conditions
     if isinstance(condition, (AndCondition, OrCondition)):
-        return _OR_ID, ensure_mono_conditions(condition.conditions)
+        return _OR_ID, ensure_mono_conditions(list(condition.conditions))
     raise NotImplementedError(f'Unhandled condition {type(condition)}')
 
 

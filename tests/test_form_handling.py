@@ -53,58 +53,44 @@ def test_simplify_condition():
     d1 = date(2010, 1, 1)
     d2 = date(2020, 1, 1)
     with pytest.raises(FormHandlingError):
-        _simplify_condition(AndCondition([]))
+        _simplify_condition(AndCondition(frozenset()))
     with pytest.raises(FormHandlingError):
-        _simplify_condition(OrCondition([]))
+        _simplify_condition(OrCondition(frozenset()))
     cond = Greater(_date, d1, False)
-    assert _simplify_condition(OrCondition([cond])) == cond
-    assert _simplify_condition(AndCondition([cond])) == cond
-    or_cond = OrCondition([cond, cond, cond])
-    assert _simplify_condition(or_cond) == or_cond
-    or_cond = OrCondition([cond, cond])
-    assert _simplify_condition(or_cond) == or_cond
-    and_cond = AndCondition([cond, cond, cond])
-    assert _simplify_condition(and_cond) == and_cond
-    and_cond = AndCondition([cond, cond])
+    cond_2 = Greater(_date, d2, False)
+    assert _simplify_condition(OrCondition(frozenset((cond,)))) == cond
+    assert _simplify_condition(AndCondition(frozenset((cond,)))) == cond
+    and_cond = AndCondition(frozenset((cond, cond_2)))
     with pytest.raises(FormHandlingError):
         _simplify_condition(and_cond)
-
-    cond = Equal(_regime, 'A')
-    and_cond = AndCondition([cond, cond])
-    with pytest.raises(FormHandlingError):
-        _simplify_condition(and_cond)
-
-    cond = Equal(_regime, 'A')
-    or_cond = OrCondition([cond, cond])
-    assert _simplify_condition(or_cond) == or_cond
 
     cond_1 = Greater(_date, d1)
     cond_2 = Littler(_date, d1)
-    and_cond = AndCondition([cond_1, cond_2])
+    and_cond = AndCondition(frozenset((cond_1, cond_2)))
     with pytest.raises(FormHandlingError):
         _simplify_condition(and_cond)
 
     cond_1 = Littler(_date, d1)
-    cond_2 = Littler(_date, d1)
-    and_cond = AndCondition([cond_1, cond_2])
+    cond_2 = Littler(_date, d2)
+    and_cond = AndCondition(frozenset((cond_1, cond_2)))
     with pytest.raises(FormHandlingError):
         _simplify_condition(and_cond)
 
     cond_1 = Littler(_date, d1)
     cond_2 = Equal(_date, d1)
-    and_cond = AndCondition([cond_1, cond_2])
+    and_cond = AndCondition(frozenset((cond_1, cond_2)))
     with pytest.raises(FormHandlingError):
         _simplify_condition(and_cond)
 
     cond_1 = Littler(_date, d2)
     cond_2 = Greater(_date, d1)
-    and_cond = AndCondition([cond_1, cond_2])
+    and_cond = AndCondition(frozenset((cond_1, cond_2)))
     res = _simplify_condition(and_cond)
     assert res == Range(_date, d1, d2)
 
-    and_cond = AndCondition([Littler(_date, d2), Greater(_date, d1), Equal(_regime, 'A')])
+    and_cond = AndCondition(frozenset((Littler(_date, d2), Greater(_date, d1), Equal(_regime, 'A'))))
     res = _simplify_condition(and_cond)
-    assert res == AndCondition([Range(_date, d1, d2), Equal(_regime, 'A')])
+    assert res == AndCondition(frozenset((Range(_date, d1, d2), Equal(_regime, 'A'))))
 
 
 def test_check_compatibility_and_build_range_try():
@@ -130,31 +116,32 @@ def test_building_range_condition():
     quantity = ParameterEnum.RUBRIQUE_QUANTITY.value
     reg = ParameterEnum.REGIME.value
 
-    assert _try_building_range_condition([]) is None
+    assert _try_building_range_condition(frozenset()) is None
 
     with pytest.raises(ValueError):
-        _try_building_range_condition([AndCondition([])])
+        _try_building_range_condition(frozenset((AndCondition(frozenset()),)))
 
     with pytest.raises(ValueError):
-        _try_building_range_condition([OrCondition([])])
+        _try_building_range_condition(frozenset((OrCondition(frozenset()),)))
 
-    assert _try_building_range_condition([Greater(date_, d1, False)]) == Greater(date_, d1, False)
-    assert _try_building_range_condition([Greater(date_, d1, False) for _ in range(3)]) is None
+    assert _try_building_range_condition(frozenset([Greater(date_, d1, False)])) == Greater(date_, d1, False)
 
-    res = _try_building_range_condition([Equal(reg, 'A'), Greater(date_, d2)])
-    assert res == AndCondition([Equal(reg, 'A'), Greater(date_, d2)])
+    res = _try_building_range_condition(frozenset([Equal(reg, 'A'), Greater(date_, d2)]))
+    assert res == AndCondition(frozenset([Equal(reg, 'A'), Greater(date_, d2)]))
 
     with pytest.raises(FormHandlingError):
-        _try_building_range_condition([Littler(date_, d2), Greater(date_, d2)])
+        _try_building_range_condition(frozenset([Littler(date_, d2), Greater(date_, d2)]))
 
-    res = _try_building_range_condition([Littler(date_, d2), Greater(date_, d1)])
+    res = _try_building_range_condition(frozenset([Littler(date_, d2), Greater(date_, d1)]))
     assert res == Range(date_, d1, d2)
 
-    res = _try_building_range_condition([Littler(date_, d2), Greater(date_, d1), Equal(reg, 'E'), Equal(quantity, 10)])
-    assert res == AndCondition([Range(date_, d1, d2), Equal(reg, 'E'), Equal(quantity, 10)])
+    res = _try_building_range_condition(
+        frozenset([Littler(date_, d2), Greater(date_, d1), Equal(reg, 'E'), Equal(quantity, 10)])
+    )
+    assert res == AndCondition(frozenset([Range(date_, d1, d2), Equal(reg, 'E'), Equal(quantity, 10)]))
 
-    res = _try_building_range_condition([Littler(quantity, 20), Greater(quantity, 10), Equal(reg, 'D')])
-    assert res == AndCondition([Range(quantity, 10, 20), Equal(reg, 'D')])
+    res = _try_building_range_condition(frozenset([Littler(quantity, 20), Greater(quantity, 10), Equal(reg, 'D')]))
+    assert res == AndCondition(frozenset([Range(quantity, 10, 20), Equal(reg, 'D')]))
 
 
 def test_simplify_mono_conditions():
@@ -297,7 +284,7 @@ def test_build_condition():
 
     cd_1 = Equal(ParameterEnum.DATE_DECLARATION.value, date(2020, 1, 1))
     cd_2 = Equal(ParameterEnum.REGIME.value, Regime.A)
-    res = AndCondition([cd_1, cd_2])
+    res = AndCondition(frozenset([cd_1, cd_2]))
     form_values = ConditionFormValues(['Date de déclaration', 'Régime'], ['=', '='], ['01/01/2020', 'A'], _AND_ID)
     assert _build_condition(form_values) == res
 

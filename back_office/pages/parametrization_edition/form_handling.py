@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import date, datetime
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any, Dict, FrozenSet, List, Optional, Type, Union
 
 from envinorma.models import ArreteMinisteriel, Regime, StructuredText, ensure_rubrique, load_path
 from envinorma.models.text_elements import EnrichedString
@@ -172,22 +172,22 @@ def _simplify_mono_conditions(parameter: Parameter, conditions: List[MonoConditi
     return _check_compatibility_and_build_range(parameter, conditions[0], conditions[1])
 
 
-def _try_building_range_condition(conditions: List[Condition]) -> Optional[Condition]:
+def _try_building_range_condition(conditions: FrozenSet[Condition]) -> Optional[Condition]:
     if not conditions:
         return None
-    mono_conditions = ensure_mono_conditions(conditions)
+    mono_conditions = ensure_mono_conditions(list(conditions))
     parameter_to_conditions = _extract_parameter_to_conditions(mono_conditions)
     try:
         new_conditions = [_simplify_mono_conditions(param, cds) for param, cds in parameter_to_conditions.items()]
     except _NotSimplifiableError:
         return None
-    return AndCondition([*new_conditions]) if len(new_conditions) != 1 else new_conditions[0]
+    return AndCondition(frozenset(new_conditions)) if len(new_conditions) != 1 else new_conditions[0]
 
 
 def _simplify_condition(condition: Condition) -> Condition:
     if isinstance(condition, (AndCondition, OrCondition)):
         if len(condition.conditions) == 1:
-            return condition.conditions[0]
+            return list(condition.conditions)[0]
         if len(condition.conditions) == 0:
             raise FormHandlingError('Au moins une condition est nécessaire !')
     if isinstance(condition, AndCondition):
@@ -211,7 +211,7 @@ def _build_condition(condition_form_values: ConditionFormValues) -> Condition:
     if len(conditions_raw) == 0:
         raise FormHandlingError('Au moins une condition est nécessaire !')
     conditions = [_extract_condition(i, *condition_raw) for i, condition_raw in enumerate(conditions_raw)]
-    return _simplify_condition(condition_cls(conditions))
+    return _simplify_condition(condition_cls(frozenset(conditions)))
 
 
 @dataclass
