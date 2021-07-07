@@ -14,7 +14,7 @@ from envinorma.topics.simple_topics import SIMPLE_ONTOLOGY
 
 from back_office.helpers.login import get_current_user
 from back_office.routing import Endpoint, Page
-from back_office.utils import DATA_FETCHER, generate_id
+from back_office.utils import DATA_FETCHER, ensure_not_none, generate_id
 
 _TOPICS = SIMPLE_ONTOLOGY.keys()
 _NO_TOPIC = 'no-topic'
@@ -74,8 +74,8 @@ def _am_topics_with_loader(am: ArreteMinisteriel) -> Component:
 
 
 def _topics_dropdown() -> Component:
-    options = [{'label': topic.value, 'value': topic.value} for topic in _TOPICS]
-    options.append({'label': _NO_TOPIC, 'value': _NO_TOPIC})
+    values = [_NO_TOPIC] + [topic.value for topic in _TOPICS]
+    options = [{'label': topic, 'value': topic} for topic in values]
     return html.Div(
         html.Div(
             [
@@ -130,13 +130,42 @@ def _keep_deepest_id(section_ids: List[str], section_id_to_depth: Dict[str, int]
     return sorted(section_ids, key=lambda section_id: section_id_to_depth[section_id])[-1]
 
 
-def _edit_section_topic(section: StructuredText, target_section_id: str, topic: Optional[TopicName]) -> StructuredText:
+class _EditionError(Exception):
+    pass
+
+
+def _has_topic(section: StructuredText) -> bool:
+    return bool(section.annotations and section.annotations.topic)
+
+
+def _ensure_sections_have_no_subtopics(sections: List[StructuredText]) -> None:
+    for section in sections:
+        if _has_topic(section):
+            raise _EditionError("Impossible d'affecter le thème car une sous-section contient un thème.")
+        _ensure_sections_have_no_subtopics(section.sections)
+
+
+def _check_edition_is_permitted(section: StructuredText, topic: Optional[TopicName], ascendant_has_topic: bool) -> None:
+    if not topic:  # Erasing a topic is always allowed
+        return
+    if ascendant_has_topic:
+        raise _EditionError("Impossible d'affecter le thème car un section parente contient un thème.")
+    _ensure_sections_have_no_subtopics(section.sections)
+
+
+def _edit_section_topic(
+    section: StructuredText, target_section_id: str, topic: Optional[TopicName], ascendant_has_topic: bool = False
+) -> StructuredText:
     if section.id == target_section_id:
+        _check_edition_is_permitted(section, topic, ascendant_has_topic)
         if not section.annotations:
             section.annotations = Annotations()
         section.annotations.topic = topic
     else:
-        section.sections = [_edit_section_topic(sub, target_section_id, topic) for sub in section.sections]
+        ascendant_has_topic = ascendant_has_topic or _has_topic(section)
+        section.sections = [
+            _edit_section_topic(sub, target_section_id, topic, ascendant_has_topic) for sub in section.sections
+        ]
     return section
 
 
@@ -163,7 +192,11 @@ def _callbacks(app: Dash) -> None:
     def _edit_topic(_, dropdown_value, am_structure, am_id):
         section_ids = _extract_trigger_keys(dash.callback_context.triggered)
         target_section = _keep_deepest_id(section_ids, am_structure)
-        am = _edit_am_topic(am_id, target_section, dropdown_value)
+        try:
+            am = _edit_am_topic(am_id, target_section, dropdown_value)
+        except _EditionError as exc:
+            am = ensure_not_none(DATA_FETCHER.load_structured_am(am_id))
+            return dbc.Alert(str(exc), color='danger'), _am_topics(am)
         return dbc.Alert(f'Section {target_section} affectée au thème {dropdown_value}.'), _am_topics(am)
 
 

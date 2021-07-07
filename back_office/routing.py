@@ -43,6 +43,7 @@ ROUTER: MapAdapter = Map(
         ),
         Rule(f'/{Endpoint.AM_OLD}/<am_id>', endpoint=Endpoint.AM_OLD.value),
         Rule(f'/{Endpoint.AM}/<am_id>', endpoint=Endpoint.AM.value),
+        Rule(f'/{Endpoint.AM}/<am_id>/<tab>', endpoint=Endpoint.AM.value),
         Rule(f'/{Endpoint.AM_COMPARE}/<am_id>/<compare_with>', endpoint=Endpoint.AM_COMPARE.value),
         Rule(f'/{Endpoint.LOGIN}', endpoint=Endpoint.LOGIN.value),
         Rule(f'/{Endpoint.LOGOUT}', endpoint=Endpoint.LOGOUT.value),

@@ -215,4 +215,4 @@ def _callbacks(app: Dash) -> None:
     parametric_am_callbacks(app, _PREFIX)
 
 
-TAB = ('Paramétrage', _layout, _callbacks)
+TAB = ("Application d'un jeu de paramètres", _layout, _callbacks)
