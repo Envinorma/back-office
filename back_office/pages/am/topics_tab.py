@@ -37,17 +37,17 @@ def _am_topics(am: Optional[ArreteMinisteriel]) -> Component:
 
 def _edit_button(am_id: str) -> Component:
     return dcc.Link(
-        html.Button('Éditer les thèmes', className='btn btn-link'), href=f'/{Endpoint.EDIT_TOPICS}/am/{am_id}'
+        html.Button('Éditer les thèmes', className='btn btn-primary'), href=f'/{Endpoint.EDIT_TOPICS}/am/{am_id}'
     )
 
 
 def _layout(am: AMMetadata) -> Component:
     return html.Div(
         [
-            html.H4('Thèmes', className='row, mb-3'),
-            _edit_button(am.cid),
-            html.Div(className='row', children=_am_topics(DATA_FETCHER.load_most_advanced_am(am.cid))),
-        ]
+            html.Div(_edit_button(am.cid), className='col-3'),
+            html.Div(className='col-9', children=_am_topics(DATA_FETCHER.load_most_advanced_am(am.cid))),
+        ],
+        className='row',
     )
 
 

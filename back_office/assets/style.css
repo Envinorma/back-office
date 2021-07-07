@@ -113,3 +113,14 @@ html {
   background-color: #5a5a5a33;
   cursor: pointer;
 }
+
+.condition-block {
+  font-size: 0.8em;
+  cursor: pointer;
+}
+.condition-block:hover {
+  background-color: #b3b3b3;
+}
+.condition-block-selected {
+  background-color: #007bff;
+}

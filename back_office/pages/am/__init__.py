@@ -1,5 +1,4 @@
-from time import time
-from typing import Callable
+from typing import Optional
 
 import dash_bootstrap_components as dbc
 import dash_html_components as html
@@ -10,14 +9,14 @@ from envinorma.models.am_metadata import AMMetadata, AMState
 from back_office.routing import Page
 from back_office.utils import DATA_FETCHER
 
-from .am_apply_parameters_tab import TAB as am_apply_parameters_tab
 from .am_versions_tab import TAB as am_versions_tab
 from .compare_tab import TAB as compare_tab
 from .default_content_tab import TAB as default_content_tab
 from .metadata_tab import TAB as metadata_tab
+from .parametrization_tab import TAB as parametrization_tab
 from .topics_tab import TAB as topics_tab
 
-_TABS = [metadata_tab, default_content_tab, am_versions_tab, am_apply_parameters_tab, compare_tab, topics_tab]
+_TABS = [metadata_tab, default_content_tab, am_versions_tab, parametrization_tab, compare_tab, topics_tab]
 
 
 def _warning(am_metadata: AMMetadata) -> Component:
@@ -36,18 +35,18 @@ def _warning(am_metadata: AMMetadata) -> Component:
     raise NotImplementedError(f'Unhandled state {am_metadata.state}')
 
 
-def _tabs(am: AMMetadata) -> Component:
-    return dbc.Tabs(
-        [dbc.Tab(layout(am), label=label, className='mt-3', tab_id=label) for label, layout, _ in _TABS],
-        id='am-tabs',
-    )
+def _tabs(am: AMMetadata, default_tab_id: Optional[str]) -> Component:
+    tabs = [
+        dbc.Tab(layout(am), label=label, className='mt-3', tab_id=str(i)) for i, (label, layout, _) in enumerate(_TABS)
+    ]
+    return dbc.Tabs(tabs, id='am-tabs', active_tab=default_tab_id or '0')
 
 
-def _layout(am_id: str) -> Component:
+def _layout(am_id: str, tab: Optional[str] = None) -> Component:
     am = DATA_FETCHER.load_am_metadata(am_id)
     if not am:
         return html.Div('404')
-    return html.Div([html.H3(f'AM {am.cid}'), _warning(am), _tabs(am)])
+    return html.Div([html.H3(f'AM {am.cid}'), _warning(am), _tabs(am, tab)])
 
 
 def _callbacks(app: Dash) -> None:

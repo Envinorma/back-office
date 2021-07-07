@@ -67,7 +67,6 @@ def _edition(am_id: str) -> Component:
 def _layout(am: AMMetadata) -> Component:
     return html.Div(
         [
-            html.H4('Métadonnées', className='row, mb-3'),
             html.Div(className='row', children=_metadata(am)),
             html.Div(className='row', children=_edition(am.cid)),
         ]
