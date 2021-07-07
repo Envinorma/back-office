@@ -10,7 +10,13 @@ from dash import Dash
 from dash.dependencies import ALL, Input, Output, State
 from dash.development.base_component import Component
 from envinorma.models import AMMetadata, ArreteMinisteriel, Ints, StructuredText
-from envinorma.parametrization.models import AlternativeSection, Condition, InapplicableSection, Parametrization
+from envinorma.parametrization.models import (
+    AlternativeSection,
+    AMWarning,
+    Condition,
+    InapplicableSection,
+    Parametrization,
+)
 
 from back_office.utils import DATA_FETCHER, generate_id
 
@@ -50,25 +56,24 @@ def _conditions_component(parametrization: Parametrization) -> Component:
 def _condition_badge(condition: Condition, operation: str) -> Component:
     id_ = _badge_id(_random_id())
     return html.Span(
-        [
-            html.Span(
-                operation, id=id_, className='badge badge-secondary ml-1', **{'data-condition-id': str(hash(condition))}
-            )
-        ]
+        operation, id=id_, className='badge badge-secondary ml-1', **{'data-condition-id': str(hash(condition))}
     )
 
 
 def _condition_badges(
-    inapplicabilities: List[InapplicableSection], alternatives: List[AlternativeSection]
+    inapplicabilities: List[InapplicableSection], alternatives: List[AlternativeSection], warnings: List[AMWarning]
 ) -> Component:
     badges_1 = [_condition_badge(inap.condition, 'inapplicable') for inap in inapplicabilities]
     badges_2 = [_condition_badge(alt.condition, 'section modifiée') for alt in alternatives]
-    return html.Span(badges_1 + badges_2)
+    badges_3: List[Component] = [html.Span('warning', className='badge badge-secondary ml-1') for _ in warnings]
+    return html.Span(badges_1 + badges_2 + badges_3)
 
 
 def _title(section: StructuredText, path: Ints, parametrization: Parametrization) -> Component:
     badges = _condition_badges(
-        parametrization.path_to_conditions.get(path) or [], parametrization.path_to_alternative_sections.get(path) or []
+        parametrization.path_to_conditions.get(path) or [],
+        parametrization.path_to_alternative_sections.get(path) or [],
+        parametrization.path_to_warnings.get(path) or [],
     )
     return html.Span([f'{section.title.text} ', badges], style={'font-size': '0.8em'})
 
