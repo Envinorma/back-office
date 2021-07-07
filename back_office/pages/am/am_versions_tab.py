@@ -29,7 +29,7 @@ def _layout(am_metadata: AMMetadata) -> Component:
     )
 
 
-def _callbacks(app: Dash) -> None:
+def _callbacks(app: Dash, tab_id: str) -> None:
     parametric_am_list_callbacks(app, _PREFIX)
 
     @app.callback(

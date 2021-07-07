@@ -51,7 +51,7 @@ def _layout(am: AMMetadata) -> Component:
     )
 
 
-def _callbacks(app: Dash) -> None:
+def _callbacks(app: Dash, tab_id: str) -> None:
     ...
 
 

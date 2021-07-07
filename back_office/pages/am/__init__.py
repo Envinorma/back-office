@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Callable, List, Optional, Tuple
 
 import dash_bootstrap_components as dbc
 import dash_html_components as html
@@ -16,7 +16,8 @@ from .metadata_tab import TAB as metadata_tab
 from .parametrization_tab import TAB as parametrization_tab
 from .topics_tab import TAB as topics_tab
 
-_TABS = [metadata_tab, default_content_tab, am_versions_tab, parametrization_tab, compare_tab, topics_tab]
+_Tab = Tuple[str, Callable[[AMMetadata], Component], Callable[[Dash, str], None]]
+_TABS: List[_Tab] = [metadata_tab, default_content_tab, am_versions_tab, parametrization_tab, compare_tab, topics_tab]
 
 
 def _warning(am_metadata: AMMetadata) -> Component:
@@ -50,8 +51,8 @@ def _layout(am_id: str, tab: Optional[str] = None) -> Component:
 
 
 def _callbacks(app: Dash) -> None:
-    for _, _, callbacks in _TABS:
-        callbacks(app)
+    for tab_rank, (_, _, callbacks) in enumerate(_TABS):
+        callbacks(app, str(tab_rank))
 
 
 PAGE = Page(_layout, _callbacks)

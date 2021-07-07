@@ -54,14 +54,14 @@ def _layout(am_metadata: AMMetadata) -> Component:
     )
 
 
-def _callbacks(app: Dash) -> None:
+def _callbacks(app: Dash, tab_id: str) -> None:
     parametric_am_callbacks(app, _PREFIX)
 
     @app.callback(
         Output(_TAB, 'children'), Input('am-tabs', 'active_tab'), State(_AM_ID, 'data'), prevent_initial_call=True
     )
     def load_main_component(active_tab: str, am_id: str):
-        if active_tab == 'Version par défaut':
+        if active_tab == str(tab_id):
             return _main_component(am_id)
         return html.Div()
 

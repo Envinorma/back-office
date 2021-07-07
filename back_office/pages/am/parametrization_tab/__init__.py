@@ -21,7 +21,7 @@ def _layout(am_metadata: AMMetadata) -> Component:
     return _tabs(am_metadata)
 
 
-def _callbacks(app: Dash) -> None:
+def _callbacks(app: Dash, tab_id: str) -> None:
     for _, _, callbacks in _SUB_TABS:
         callbacks(app)
 

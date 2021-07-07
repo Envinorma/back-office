@@ -24,7 +24,7 @@ def _layout(am_metadata: AMMetadata) -> Component:
     return _diff_component(am_metadata.cid)
 
 
-def _callbacks(app: Dash) -> None:
+def _callbacks(app: Dash, tab_id: str) -> None:
     ...
 
 
