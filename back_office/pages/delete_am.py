@@ -1,5 +1,6 @@
 from dataclasses import replace
 from typing import Optional
+from urllib.parse import quote_plus
 
 import dash
 import dash_bootstrap_components as dbc
@@ -44,7 +45,8 @@ def _page_if_logged(am_id: str) -> Component:
 
 def _page(am_id: str) -> Component:
     if not get_current_user().is_authenticated:
-        return dcc.Location(pathname='/login', id='login-redirect')
+        origin = quote_plus(f'/{Endpoint.DELETE_AM}/{am_id}')
+        return dcc.Location(pathname=f'/{Endpoint.LOGIN}/{origin}', id='login-redirect')
     return _page_if_logged(am_id)
 
 

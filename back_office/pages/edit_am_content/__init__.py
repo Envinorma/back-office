@@ -1,4 +1,5 @@
 from typing import Any, Dict, Optional
+from urllib.parse import quote_plus
 
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
@@ -105,7 +106,8 @@ def _layout_if_logged(am_id: str, buttons_hidden: bool = True) -> Component:
 
 def _layout(am_id: str, with_buttons: Optional[str] = None) -> Component:
     if not get_current_user().is_authenticated:
-        return dcc.Location(pathname=f'/{Endpoint.LOGIN}', id='login-redirect')
+        origin = quote_plus(f'/{Endpoint.EDIT_AM_CONTENT}/{am_id}')
+        return dcc.Location(pathname=f'/{Endpoint.LOGIN}/{origin}', id='login-redirect')
     return dbc.Spinner(_layout_if_logged(am_id, not with_buttons), id=_LAYOUT)
 
 

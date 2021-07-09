@@ -1,5 +1,6 @@
 import os
 from typing import Dict, Optional
+from urllib.parse import quote_plus
 
 import dash_core_components as dcc
 import dash_html_components as html
@@ -106,7 +107,8 @@ def router(pathname: str) -> Component:
     prefix, suffix = split_route(pathname)
     if prefix == '/edit_am':
         if not get_current_user().is_authenticated:
-            return dcc.Location(pathname='/login', id='login-redirect')
+            origin = quote_plus(pathname)
+            return dcc.Location(pathname=f'/{Endpoint.LOGIN}/{origin}', id='login-redirect')
         return edit_am_page_router(prefix, suffix)
     try:
         return _route(pathname)
