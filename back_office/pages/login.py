@@ -36,10 +36,9 @@ def _form() -> Component:
 
 
 _INFO_TEXT = (
-    'L\'édition d\'un arrêté ministériel par toute personne est possible et encouragée. Pour cela,'
-    ' des identifiants sont disponibles sur simple contact à l\'adresse remi.delbouys@i-carre.net.'
-    ' Vous pouvez également nous faire part de toutes vos remarques, erreurs relevées ou autre '
-    'suggestion à cette même adresse.'
+    "L'édition d'un arrêté ministériel est réservée à l'équipe Envinorma."
+    " Si vous relevez une erreur sur un arrêté, n'hésitez pas à nous en faire part "
+    "par email à l'adresse remi.delbouys@i-carre.net"
 )
 
 
@@ -60,7 +59,7 @@ def _success() -> Component:
 
 
 def _error() -> Component:
-    return dbc.Alert('Erreur dans le nom d\'utilisateur ou le mot de passe.', color='danger', dismissable=True)
+    return dbc.Alert("Erreur dans le nom d'utilisateur ou le mot de passe.", color='danger', dismissable=True)
 
 
 def _path(origin: Optional[str]) -> str:

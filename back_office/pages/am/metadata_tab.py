@@ -55,7 +55,11 @@ def _metadata(am: AMMetadata) -> Component:
 
 def _alert() -> Component:
     return (
-        dbc.Alert('Cet arrêté peut être modifié, restructuré ou paramétré par toute personne.', color='primary')
+        dbc.Alert(
+            'Pour toute suggestion de modification, veuillez en faire part '
+            "par email à l'adresse remi.delbouys@i-carre.net",
+            color='primary',
+        )
         if not get_current_user().is_authenticated
         else html.Div()
     )
