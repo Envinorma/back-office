@@ -1,5 +1,6 @@
 import os
 from typing import Dict, Optional
+from urllib.parse import quote_plus
 
 import dash_core_components as dcc
 import dash_html_components as html
@@ -17,6 +18,7 @@ from back_office.pages.am_old import PAGE as am_old_page
 from back_office.pages.create_am import PAGE as create_am_page
 from back_office.pages.delete_am import PAGE as delete_am_page
 from back_office.pages.edit_am.edit_am import router as edit_am_page_router
+from back_office.pages.edit_am_content import PAGE as edit_am_content_page
 from back_office.pages.edit_topics import PAGE as edit_topics_page
 from back_office.pages.envinorma_compare import PAGE as envinorma_compare_page
 from back_office.pages.index import PAGE as index_page
@@ -81,6 +83,7 @@ _ENDPOINT_TO_PAGE: Dict[str, Page] = {
     Endpoint.AM_OLD.value: am_old_page,
     Endpoint.AM.value: am_page,
     Endpoint.LEGIFRANCE_COMPARE.value: legifrance_compare_page,
+    Endpoint.EDIT_AM_CONTENT.value: edit_am_content_page,
     Endpoint.EDIT_TOPICS.value: edit_topics_page,
     Endpoint.AM_COMPARE.value: envinorma_compare_page,
     Endpoint.LOGIN.value: login_page,
@@ -104,7 +107,8 @@ def router(pathname: str) -> Component:
     prefix, suffix = split_route(pathname)
     if prefix == '/edit_am':
         if not get_current_user().is_authenticated:
-            return dcc.Location(pathname='/login', id='login-redirect')
+            origin = quote_plus(pathname)
+            return dcc.Location(pathname=f'/{Endpoint.LOGIN}/{origin}', id='login-redirect')
         return edit_am_page_router(prefix, suffix)
     try:
         return _route(pathname)

@@ -1,5 +1,6 @@
 from typing import Optional
 
+import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
 from dash import Dash
@@ -36,15 +37,32 @@ def _am_topics(am: Optional[ArreteMinisteriel]) -> Component:
 
 
 def _edit_button(am_id: str) -> Component:
+
     return dcc.Link(
-        html.Button('Éditer les thèmes', className='btn btn-primary'), href=f'/{Endpoint.EDIT_TOPICS}/am/{am_id}'
+        html.Button('Éditer les thèmes', className='btn btn-primary'), href=f'/{Endpoint.EDIT_TOPICS}/{am_id}'
+    )
+
+
+def _edition(am_id: str) -> Component:
+    return html.Div(
+        [
+            html.H3('Thèmes'),
+            dbc.Alert(
+                'Pour toute suggestion de modification, veuillez en faire part '
+                "par email à l'adresse remi.delbouys@i-carre.net",
+                color='primary',
+            ),
+            _edit_button(am_id),
+        ],
+        style={'background-color': '#EEEEEE', 'border-radius': '5px'},
+        className='p-3',
     )
 
 
 def _layout(am: AMMetadata) -> Component:
     return html.Div(
         [
-            html.Div(_edit_button(am.cid), className='col-3'),
+            html.Div(_edition(am.cid), className='col-3'),
             html.Div(className='col-9', children=_am_topics(DATA_FETCHER.load_most_advanced_am(am.cid))),
         ],
         className='row',

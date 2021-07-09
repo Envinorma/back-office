@@ -124,3 +124,9 @@ html {
 .condition-block-selected {
   background-color: #007bff;
 }
+
+.editable-alineas:hover,
+.editable-title:hover {
+  cursor: text;
+  background-color: #beddff;
+}

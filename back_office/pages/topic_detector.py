@@ -44,9 +44,7 @@ def _section_topics(section: StructuredText) -> Component:
 
 
 def _edit_button(am_id: str) -> Component:
-    return dcc.Link(
-        html.Button('Éditer les thèmes', className='btn btn-link'), href=f'/{Endpoint.EDIT_TOPICS}/am/{am_id}'
-    )
+    return dcc.Link(html.Button('Éditer les thèmes', className='btn btn-link'), href=f'/{Endpoint.EDIT_TOPICS}/{am_id}')
 
 
 def _am_topics(am: ArreteMinisteriel, rank: int) -> Component:

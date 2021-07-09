@@ -1,5 +1,6 @@
 import json
 from typing import Any, Dict, List, Optional, Union
+from urllib.parse import quote_plus
 
 import dash
 import dash_bootstrap_components as dbc
@@ -118,7 +119,8 @@ def _layout_if_logged(am_id: str) -> Component:
 
 def _layout(am_id: str) -> Component:
     if not get_current_user().is_authenticated:
-        return dcc.Location(pathname='/login', id='login-redirect')
+        origin = quote_plus(f'/{Endpoint.EDIT_TOPICS}/{am_id}')
+        return dcc.Location(pathname=f'/{Endpoint.LOGIN}/{origin}', id='login-redirect')
     return _layout_if_logged(am_id)
 
 

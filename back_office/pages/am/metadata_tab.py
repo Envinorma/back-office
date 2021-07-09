@@ -23,10 +23,16 @@ def _get_str_classements(classements: List[Classement]) -> str:
     return ', '.join([_get_str_classement(classement) for classement in classements])
 
 
-def _row(contents: Tuple[str, str], second_class_name: str) -> Component:
-    return html.Tr(
-        [html.Td(contents[0], className='font-weight-bold'), html.Td(contents[1], className=second_class_name)]
-    )
+def _row(contents: Tuple[str, str]) -> Component:
+    return html.Tr([html.Td(contents[0], className='font-weight-bold'), html.Td(contents[1])])
+
+
+def _state(state: AMState) -> Component:
+    return dbc.Badge(state.value, color='success' if state == AMState.VIGUEUR else 'danger')
+
+
+def _status(status: AMStatus) -> Component:
+    return dbc.Badge(status.value, color='success' if status == AMStatus.VALIDATED else 'danger')
 
 
 def _metadata(am: AMMetadata) -> Component:
@@ -34,42 +40,71 @@ def _metadata(am: AMMetadata) -> Component:
     status = DATA_FETCHER.load_am_status(am.cid)
     return html.Table(
         [
-            _row(('Id', am.cid), ''),
-            _row(('Titre', am.title), ''),
-            _row(('Date de signature', date_), ''),
-            _row(('NOR', am.nor or ''), ''),
-            _row(('Initialisé via', am.source.value), ''),
-            _row(('État', am.state.value), 'table-success' if am.state == AMState.VIGUEUR else 'table-danger'),
-            _row(('Statut', status.value), 'table-success' if status == AMStatus.VALIDATED else 'table-danger'),
-            _row(('Classements', _get_str_classements(am.classements)), ''),
+            _row(('Id', am.cid)),
+            _row(('Titre', am.title)),
+            _row(('Date de signature', date_)),
+            _row(('NOR', am.nor or '')),
+            _row(('Initialisé via', am.source.value)),
+            _row(('État', _state(am.state))),
+            _row(('Statut', _status(status))),
+            _row(('Classements', _get_str_classements(am.classements))),
         ],
         className='table table-bordered',
     )
 
 
-def _edition(am_id: str) -> Component:
-    alert = (
-        dbc.Alert('Cet arrêté peut être modifié, restructuré ou paramétré par toute personne.')
+def _alert() -> Component:
+    return (
+        dbc.Alert(
+            'Pour toute suggestion de modification, veuillez en faire part '
+            "par email à l'adresse remi.delbouys@i-carre.net",
+            color='primary',
+        )
         if not get_current_user().is_authenticated
         else html.Div()
     )
-    delete_button = dcc.Link(dbc.Button('Supprimer l\'arrêté', color='danger'), href=f'/{Endpoint.DELETE_AM}/{am_id}')
+
+
+def _edit_metadata_button(am_id: str) -> Component:
+    return dcc.Link(dbc.Button('Modifier les metadonnées', color='primary'), href=f'/{Endpoint.CREATE_AM}/{am_id}')
+
+
+def _edit_content_button(am_id: str) -> Component:
+    return dcc.Link(
+        dbc.Button("Modifier le contenu de l'arrêté", color='primary'), href=f'/{Endpoint.EDIT_AM_CONTENT}/{am_id}'
+    )
+
+
+def _reinit_button(am_id: str) -> Component:
+    return dcc.Link(dbc.Button("Réinitialiser l'arrêté", color='primary'), href=f'/edit_am/{am_id}')
+
+
+def _delete_button(am_id: str) -> Component:
+    return dcc.Link(dbc.Button("Supprimer l'arrêté", color='danger'), href=f'/{Endpoint.DELETE_AM}/{am_id}')
+
+
+def _edition(am_id: str) -> Component:
     return html.Div(
         [
-            html.H2('Éditer'),
-            alert,
-            html.Div(dcc.Link(dbc.Button('Éditer le contenu de l\'arrêté', color='success'), href=f'/edit_am/{am_id}')),
-            html.Div(delete_button, className='mt-2'),
-        ]
+            html.H3('Édition'),
+            _alert(),
+            html.Div(_edit_metadata_button(am_id), className='pb-2'),
+            html.Div(_edit_content_button(am_id), className='pb-2'),
+            html.Div(_reinit_button(am_id), className='pb-2'),
+            html.Div(_delete_button(am_id), className='pb-2'),
+        ],
+        style={'background-color': '#EEEEEE', 'border-radius': '5px'},
+        className='p-3',
     )
 
 
 def _layout(am: AMMetadata) -> Component:
     return html.Div(
         [
-            html.Div(className='row', children=_metadata(am)),
-            html.Div(className='row', children=_edition(am.cid)),
-        ]
+            html.Div(className='col-8', children=_metadata(am)),
+            html.Div(className='col-4', children=_edition(am.cid)),
+        ],
+        className='row',
     )
 
 

@@ -1,3 +1,6 @@
+from typing import Optional
+from urllib.parse import unquote
+
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
@@ -10,6 +13,7 @@ from back_office.helpers.login import UNIQUE_USER
 from back_office.routing import Page
 from back_office.utils import generate_id
 
+_ORIGIN = generate_id(__file__, 'origin')
 _LOGIN_URL = generate_id(__file__, 'login-url')
 _LOGIN_ALERT = generate_id(__file__, 'login-alert')
 _LOGIN_USERNAME = generate_id(__file__, 'login-username')
@@ -32,19 +36,19 @@ def _form() -> Component:
 
 
 _INFO_TEXT = (
-    'L\'édition d\'un arrêté ministériel par toute personne est possible et encouragée. Pour cela,'
-    ' des identifiants sont disponibles sur simple contact à l\'adresse remi.delbouys@i-carre.net.'
-    ' Vous pouvez également nous faire part de toutes vos remarques, erreurs relevées ou autre '
-    'suggestion à cette même adresse.'
+    "L'édition d'un arrêté ministériel est faite par Envinorma."
+    " Si vous relevez une erreur sur un arrêté, n'hésitez pas à nous en faire part "
+    "par email à l'adresse remi.delbouys@i-carre.net"
 )
 
 
-def _layout() -> Component:
+def _layout(origin: Optional[str] = None) -> Component:
     col = [
-        dcc.Location(id=_LOGIN_URL, refresh=True, pathname='/login'),
+        html.Div(id=_LOGIN_URL),
         html.H2('Connexion'),
         dbc.Alert(_INFO_TEXT, dismissable=True),
         html.Div(id=_LOGIN_ALERT),
+        dcc.Store(id=_ORIGIN, data=origin),
         _form(),
     ]
     return dbc.Row(dbc.Col(col, width=6))
@@ -55,22 +59,30 @@ def _success() -> Component:
 
 
 def _error() -> Component:
-    return dbc.Alert('Erreur dans le nom d\'utilisateur ou le mot de passe.', color='danger', dismissable=True)
+    return dbc.Alert("Erreur dans le nom d'utilisateur ou le mot de passe.", color='danger', dismissable=True)
+
+
+def _path(origin: Optional[str]) -> str:
+    if not origin:
+        return '/'
+    return unquote(origin)
 
 
 def _callbacks(app: Dash):
     @app.callback(
-        Output(_LOGIN_URL, 'pathname'),
+        Output(_LOGIN_URL, 'children'),
         Output(_LOGIN_ALERT, 'children'),
         Input(_LOGIN_BUTTON, 'n_clicks'),
         State(_LOGIN_PASSWORD, 'value'),
         State(_LOGIN_USERNAME, 'value'),
+        State(_ORIGIN, 'data'),
+        prevent_initial_call=True,
     )
-    def _login(n_clicks, password, username):
+    def _login(n_clicks, password, username, origin):
         if n_clicks and password and username:
             if username == UNIQUE_USER.username and password == UNIQUE_USER.password:
                 login_user(UNIQUE_USER)
-                return '/', _success()
+                return dcc.Location(pathname=_path(origin), id='login-redirection'), _success()
             else:
                 return no_update, _error()
         return no_update, ''

@@ -23,8 +23,15 @@ from back_office.config import (
 )
 from back_office.helpers.aida import parse_aida_text
 
-LEGIFRANCE_CLIENT = LegifranceClient(LEGIFRANCE_CLIENT_ID, LEGIFRANCE_CLIENT_SECRET)
+LEGIFRANCE_CLIENT = None
 DATA_FETCHER = DataFetcher(PSQL_DSN)
+
+
+def get_legifrance_client() -> LegifranceClient:
+    global LEGIFRANCE_CLIENT
+    if not LEGIFRANCE_CLIENT:
+        LEGIFRANCE_CLIENT = LegifranceClient(LEGIFRANCE_CLIENT_ID, LEGIFRANCE_CLIENT_SECRET)
+    return LEGIFRANCE_CLIENT
 
 
 @lru_cache
@@ -154,7 +161,7 @@ def extract_aida_am(page_id: str, am_id: str) -> Optional[ArreteMinisteriel]:
 def extract_legifrance_am(am_id: str, date_: Optional[date] = None) -> ArreteMinisteriel:
     date_ = date_ or date.today()
     datetime_ = datetime(date_.year, date_.month, date_.day)
-    legifrance_current_version = LegifranceText.from_dict(LEGIFRANCE_CLIENT.consult_law_decree(am_id, datetime_))
+    legifrance_current_version = LegifranceText.from_dict(get_legifrance_client().consult_law_decree(am_id, datetime_))
     random.seed(legifrance_current_version.title)
     return legifrance_to_arrete_ministeriel(legifrance_current_version, am_id=am_id)
 
