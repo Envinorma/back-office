@@ -34,7 +34,7 @@ def _get_row(rank: int, am_state: Optional[AMStatus], am_metadata: AMMetadata, o
     am_step = am_state.step() if am_state else -1
     rows = [
         _normal_td(rank),
-        _normal_td(dcc.Link(am_metadata.cid, href=f'/am/{am_metadata.cid}')),
+        _normal_td(dcc.Link(am_metadata.cid, href=f'/{Endpoint.AM}/{am_metadata.cid}')),
         _normal_td(str(am_metadata.nor)),
         _normal_td(am_metadata.date_of_signature.strftime('%d/%m/%y')),
         _normal_td(_get_str_classements(am_metadata.classements)),

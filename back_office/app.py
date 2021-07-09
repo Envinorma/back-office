@@ -17,6 +17,7 @@ from back_office.pages.am_old import PAGE as am_old_page
 from back_office.pages.create_am import PAGE as create_am_page
 from back_office.pages.delete_am import PAGE as delete_am_page
 from back_office.pages.edit_am.edit_am import router as edit_am_page_router
+from back_office.pages.edit_am_content import PAGE as edit_am_content_page
 from back_office.pages.edit_topics import PAGE as edit_topics_page
 from back_office.pages.envinorma_compare import PAGE as envinorma_compare_page
 from back_office.pages.index import PAGE as index_page
@@ -81,6 +82,7 @@ _ENDPOINT_TO_PAGE: Dict[str, Page] = {
     Endpoint.AM_OLD.value: am_old_page,
     Endpoint.AM.value: am_page,
     Endpoint.LEGIFRANCE_COMPARE.value: legifrance_compare_page,
+    Endpoint.EDIT_AM_CONTENT.value: edit_am_content_page,
     Endpoint.EDIT_TOPICS.value: edit_topics_page,
     Endpoint.AM_COMPARE.value: envinorma_compare_page,
     Endpoint.LOGIN.value: login_page,
