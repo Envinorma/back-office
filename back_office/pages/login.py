@@ -36,7 +36,7 @@ def _form() -> Component:
 
 
 _INFO_TEXT = (
-    "L'édition d'un arrêté ministériel est réservée à l'équipe Envinorma."
+    "L'édition d'un arrêté ministériel est faite par Envinorma."
     " Si vous relevez une erreur sur un arrêté, n'hésitez pas à nous en faire part "
     "par email à l'adresse remi.delbouys@i-carre.net"
 )
