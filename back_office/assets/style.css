@@ -130,3 +130,11 @@ html {
   cursor: text;
   background-color: #beddff;
 }
+
+.nav-link {
+  color: #cccccc;
+}
+
+a.nav-link:hover {
+  color: white;
+}

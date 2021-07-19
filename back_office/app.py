@@ -43,7 +43,7 @@ _create_tmp_am_folder()
 
 
 def _header_link(content: str, href: str, target: Optional[str] = None, hidden: bool = False) -> Component:
-    style = {'color': '#CCCCCC', 'display': 'inline-block'}
+    style = {'display': 'inline-block'}
     return html.Span(html.A(content, href=href, className='nav-link', style=style, target=target), hidden=hidden)
 
 
