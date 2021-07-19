@@ -43,7 +43,7 @@ _create_tmp_am_folder()
 
 
 def _header_link(content: str, href: str, target: Optional[str] = None, hidden: bool = False) -> Component:
-    style = {'color': 'grey', 'display': 'inline-block'}
+    style = {'color': '#CCCCCC', 'display': 'inline-block'}
     return html.Span(html.A(content, href=href, className='nav-link', style=style, target=target), hidden=hidden)
 
 
@@ -65,13 +65,13 @@ def _get_nav() -> Component:
 
 
 def _get_page_heading() -> Component:
-    src = '/assets/logo-envinorma.png'
+    src = '/assets/logo-envinorma-grey.svg'
     sticky_style = {
         'padding': '.2em',
         'border-bottom': '1px solid rgba(0,0,0,.1)',
         'position': 'sticky',
         'top': 0,
-        'background-color': '#fff',
+        'background-color': '#1D2026',
         'z-index': '10',
         'margin-bottom': '10px',
     }

@@ -1,4 +1,4 @@
-![Envinorma Logo](./back_office/assets/favicon.ico)
+![Envinorma Logo](./back_office/assets/favicon-light.ico)
 
 # Envinorma back-office
 
