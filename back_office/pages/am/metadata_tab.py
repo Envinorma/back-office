@@ -56,7 +56,7 @@ def _metadata(am: AMMetadata) -> Component:
 def _alert() -> Component:
     return (
         dbc.Alert(
-            'Pour toute suggestion de modification, veuillez en faire part '
+            'Toute suggestion de modification est bienvenue. Vous pouvez en faire part '
             "par email à l'adresse remi.delbouys@i-carre.net",
             color='primary',
         )
