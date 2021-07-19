@@ -131,10 +131,10 @@ html {
   background-color: #beddff;
 }
 
-.nav-link {
+.main-header .nav-link {
   color: #cccccc;
 }
 
-a.nav-link:hover {
+.main-header .nav-link:hover {
   color: white;
 }
