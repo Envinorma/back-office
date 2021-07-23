@@ -38,7 +38,7 @@ def _form() -> Component:
 _INFO_TEXT = (
     "L'édition d'un arrêté ministériel est faite par l'équipe Envinorma."
     " Si vous relevez une erreur sur un arrêté, n'hésitez pas à nous en faire part "
-    "par email à l'adresse remi.delbouys@i-carre.net"
+    "par email à l'adresse drieat-if.envinorma@developpement-durable.gouv.fr"
 )
 
 

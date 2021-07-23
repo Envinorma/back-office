@@ -49,7 +49,7 @@ def _edition(am_id: str) -> Component:
             html.H3('Thèmes'),
             dbc.Alert(
                 'Pour toute suggestion de modification, veuillez en faire part '
-                "par email à l'adresse remi.delbouys@i-carre.net",
+                "par email à l'adresse drieat-if.envinorma@developpement-durable.gouv.fr",
                 color='primary',
             ),
             _edit_button(am_id),
