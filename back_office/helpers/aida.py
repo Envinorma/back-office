@@ -47,8 +47,8 @@ def _extract_nor_from_text(text: str) -> str:
 def extract_nor_from_html(html: str) -> str:
     soup = BeautifulSoup(html, 'html.parser')
     for tag in soup.find_all('h5'):
-        if 'NOR' in tag.text:
-            return _extract_nor_from_text(tag.text)
+        if 'NOR' in tag.text:  # type: ignore
+            return _extract_nor_from_text(tag.text)  # type: ignore
     raise ValueError('NOR not found!')
 
 
@@ -76,13 +76,15 @@ def get_aida_content_area(soup: BeautifulSoup) -> Tag:
     content_area = soup.find('div', {'id': 'content-area'})
     if not content_area:
         raise ValueError('Content area not found in this AIDA page!')
-    return content_area
+    return content_area  # type: ignore
 
 
 def extract_hyperlinks(html: str) -> List[Hyperlink]:
     soup = BeautifulSoup(html, 'html.parser')
     return [
-        Hyperlink(tag.text, tag['href']) for tag in get_aida_content_area(soup).find_all('a') if 'href' in tag.attrs
+        Hyperlink(tag.text, tag['href'])  # type: ignore
+        for tag in get_aida_content_area(soup).find_all('a')
+        if 'href' in tag.attrs  # type: ignore
     ]
 
 
@@ -129,7 +131,7 @@ def extract_anchor_if_present_in_tag(tag: Tag) -> Optional[Anchor]:
     a_tag = tag.find('a')
     if not a_tag:
         return None
-    name = a_tag.attrs.get('name')
+    name = a_tag.attrs.get('name')  # type: ignore
     if not name:
         return None
     anchored_text = tag.text.strip()
@@ -138,7 +140,7 @@ def extract_anchor_if_present_in_tag(tag: Tag) -> Optional[Anchor]:
 
 def extract_anchors_from_soup(content_area: Tag) -> List[Anchor]:
     candidates = [
-        extract_anchor_if_present_in_tag(tag)
+        extract_anchor_if_present_in_tag(tag)  # type: ignore
         for title_level in [f'h{i}' for i in range(1, 7)]
         for tag in content_area.find_all(title_level)
     ]

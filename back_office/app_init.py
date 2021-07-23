@@ -25,7 +25,6 @@ class SVGFaviconDash(dash.Dash):
         '''.format(
             metas=kwargs['metas'],
             title=kwargs['title'],
-            favicon=kwargs['favicon'],
             css=kwargs['css'],
             app_entry=kwargs['app_entry'],
             config=kwargs['config'],

@@ -43,7 +43,15 @@ def _tabs(am: AMMetadata, default_tab_id: Optional[str]) -> Component:
     return dbc.Tabs(tabs, id='am-tabs', active_tab=default_tab_id or '0')
 
 
+def _clean_am_id(am_id: str) -> str:
+    for regime in 'AED':
+        if am_id.endswith(f'_{regime}'):
+            return am_id[:-2]
+    return am_id
+
+
 def _layout(am_id: str, tab: Optional[str] = None) -> Component:
+    am_id = _clean_am_id(am_id)
     am = DATA_FETCHER.load_am_metadata(am_id)
     if not am:
         return html.Div('404')
