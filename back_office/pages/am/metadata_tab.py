@@ -57,7 +57,7 @@ def _alert() -> Component:
     return (
         dbc.Alert(
             'Toute suggestion de modification est bienvenue. Vous pouvez en faire part '
-            "par email à l'adresse remi.delbouys@i-carre.net",
+            "par email à l'adresse drieat-if.envinorma@developpement-durable.gouv.fr",
             color='primary',
         )
         if not get_current_user().is_authenticated
