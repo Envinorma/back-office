@@ -12,8 +12,9 @@ from leginorma import LegifranceRequestError
 
 from back_office.components import error_component
 from back_office.components.diff import diff_component
+from back_office.helpers.aida import extract_aida_am
 from back_office.routing import Endpoint, Page
-from back_office.utils import DATA_FETCHER, compute_am_diff, ensure_not_none, extract_aida_am, extract_legifrance_am
+from back_office.utils import DATA_FETCHER, compute_am_diff, ensure_not_none, extract_legifrance_am
 
 _PREFIX = __file__.split('/')[-1].replace('.py', '').replace('_', '-')
 _ARGS = _PREFIX + '-args'

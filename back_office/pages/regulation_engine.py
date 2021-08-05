@@ -147,7 +147,7 @@ def _row_to_classement(record: Dict[str, Any]) -> DetailedClassement:
 
 
 def _classements() -> List[DetailedClassement]:
-    import pandas  # Hacky: to avoid adding new dependency
+    import pandas  # type: ignore # Hacky: to avoid adding new dependency
 
     dataframe = pandas.read_csv(
         _CLASSEMENTS_FILENAME,
