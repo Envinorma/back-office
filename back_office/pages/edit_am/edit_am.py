@@ -589,7 +589,10 @@ def _get_title_component(
 ) -> Component:
     nav = html.Div(_get_nav(am_status), className='col-6')
     am_id = (am_metadata.nor or am_metadata.cid) if am_metadata else am_id
-    am_backlink = html.Div(dcc.Link(html.H2(f'Arrêté ministériel {am_id}'), href=parent_page), className='col-6')
+    cid = am_metadata.cid if am_metadata else am_id
+    am_backlink = html.Div(
+        dcc.Link(html.H2(f'Arrêté ministériel {am_id}'), href=f'/{Endpoint.AM}/{cid}'), className='col-6'
+    )
     row = html.Div(html.Div([am_backlink, nav], className='row'), className='container')
     return html.Div(row, className='am_title')
 

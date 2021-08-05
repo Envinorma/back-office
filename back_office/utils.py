@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional, Tuple, TypeVar, Union
 import requests
 from envinorma.data_fetcher import DataFetcher
 from envinorma.from_legifrance.legifrance_to_am import legifrance_to_arrete_ministeriel
-from envinorma.models import ArreteMinisteriel, EnrichedString, Ints, StructuredText
+from envinorma.models import ArreteMinisteriel, Ints, StructuredText
 from leginorma import LegifranceClient, LegifranceText
 from text_diff import TextDifferences, text_differences
 
@@ -21,7 +21,6 @@ from back_office.config import (
     PSQL_DSN,
     SLACK_ENRICHMENT_NOTIFICATION_URL,
 )
-from back_office.helpers.aida import parse_aida_text
 
 LEGIFRANCE_CLIENT = None
 DATA_FETCHER = DataFetcher(PSQL_DSN)
@@ -137,27 +136,6 @@ class RouteParsingError(Exception):
     pass
 
 
-def extract_aida_am(page_id: str, am_id: str) -> Optional[ArreteMinisteriel]:
-    text = parse_aida_text(page_id)
-    if not text:
-        return None
-    if len(text.sections) == 1:
-        section = text.sections[0]
-        if section.outer_alineas:
-            new_sections = [StructuredText(EnrichedString(''), section.outer_alineas, [], None)] + section.sections
-        else:
-            new_sections = section.sections
-        return ArreteMinisteriel(
-            title=section.title,
-            sections=new_sections,
-            visa=[],
-            id=am_id,
-        )
-    raise NotImplementedError(
-        f'Cannot handle more than one section when extracting text from AIDA. Got {len(text.sections)}'
-    )
-
-
 def extract_legifrance_am(am_id: str, date_: Optional[date] = None) -> ArreteMinisteriel:
     date_ = date_ or date.today()
     datetime_ = datetime(date_.year, date_.month, date_.day)
@@ -167,7 +145,7 @@ def extract_legifrance_am(am_id: str, date_: Optional[date] = None) -> ArreteMin
 
 
 def _extract_lines(am: ArreteMinisteriel) -> List[str]:
-    return [line for section in am.sections for line in section.text_lines(0)]
+    return [line for section in am.sections for line in section.text_lines(1)]
 
 
 def compute_am_diff(am_before: ArreteMinisteriel, am_after: ArreteMinisteriel) -> TextDifferences:
