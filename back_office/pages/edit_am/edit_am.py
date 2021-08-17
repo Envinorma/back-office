@@ -1,7 +1,6 @@
-import difflib
 import traceback
 import warnings
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
@@ -10,14 +9,14 @@ from dash.dependencies import MATCH, Input, Output, State
 from dash.development.base_component import Component
 from dash.exceptions import PreventUpdate
 from envinorma.io.markdown import extract_markdown_text
-from envinorma.models import AMMetadata, ArreteMinisteriel, Ints, StructuredText, Table
+from envinorma.models import AMMetadata, ArreteMinisteriel, Ints
 from envinorma.parametrization import AlternativeSection, AMWarning, InapplicableSection, Parametrization
 from envinorma.parametrization.resync import UndefinedTitlesSequencesError, add_titles_sequences, regenerate_paths
 from envinorma.topics.simple_topics import add_simple_topics
 from envinorma.utils import AMStatus
 
 from back_office.app_init import app
-from back_office.components import ButtonState, button, error_component, link_button, surline_text
+from back_office.components import ButtonState, button, error_component, link_button
 from back_office.components.am_component import am_component
 from back_office.components.parametric_am_list import parametric_am_list_callbacks
 from back_office.components.summary_component import summary_component
@@ -37,12 +36,6 @@ _VALIDATE_INITIALIZATION = f'{_PREFIX}-validate-init'
 _VALIDATE_STRUCTURE = f'{_PREFIX}-validate-structure'
 _VALIDATE_PARAMETRIZATION = f'{_PREFIX}-validate-parametrization'
 _LOADER = f'{_PREFIX}-loading-output'
-_STRUCTURE_TABS_AM_TAB = _PREFIX + '-structure-tabs-am-tab'
-_STRUCTURE_TABS_DIFF_TAB = _PREFIX + '-structure-tabs-diff-tab'
-_STRUCTURE_TABS_AM = _PREFIX + '-structure-tabs-am'
-_STRUCTURE_TABS_DIFF = _PREFIX + '-structure-tabs-diff'
-_STRUCTURE_TABS_AM_TAB = _PREFIX + '-structure-tabs-am-tab'
-_STRUCTURE_TABS_DIFF_TAB = _PREFIX + '-structure-tabs-diff-tab'
 
 
 def _modal_confirm_button_id(step: Optional[str] = None) -> Dict[str, Any]:
@@ -314,7 +307,7 @@ def _add_warning_button(parent_page: str, status: AMStatus) -> Component:
 def _get_am_component_with_toc(am: ArreteMinisteriel) -> Component:
     return html.Div(
         [
-            html.Div([summary_component(am.to_text(), True, True)], className='col-3'),
+            html.Div([summary_component(am.to_text(), True, False)], className='col-3'),
             html.Div(am_component(am, [], 5), className='col-9'),
         ],
         className='row',
@@ -354,103 +347,6 @@ def _get_parametrization_summary(
     )
 
 
-def _keep_defined_and_join(elements: List[Optional[Union[str, Component]]]) -> List[Union[str, Component]]:
-    return [el_lb for el in elements if el is not None for el_lb in (el, html.Br())]
-
-
-def _extract_char_positions(str_: str, char: str) -> Set[int]:
-    return {i for i, ch in enumerate(str_) if ch == char}
-
-
-def _diffline_is_special(line: Optional[str]) -> bool:
-    return bool(line and line[:1] in ('-', '+', '?'))
-
-
-def _extract_diff_component(diff: str, next_diff: Optional[str]) -> Optional[Union[Component, str]]:
-    if diff[:1] == '+':
-        symbol = '+'
-        strong_color = '#acf2bd'
-        light_color = '#e6ffec'
-    elif diff[:1] == '-':
-        symbol = '-'
-        strong_color = '#fdb8c0'
-        light_color = '#feeef0'
-    else:
-        raise ValueError(f'Expecting diff to start with "+" or "-", received {diff[:1]}')
-    to_surline = _extract_char_positions(next_diff, symbol) if next_diff and next_diff[0] == '?' else set()
-    rich_diff = surline_text(diff, to_surline, {'background-color': strong_color})
-    return html.Span(rich_diff, style={'background-color': light_color})
-
-
-def _ellipse() -> Component:
-    return html.Span('[...]', style={'color': 'grey'})
-
-
-def _diff_to_component(
-    diff: str, previous_diff: Optional[str], next_diff: Optional[str]
-) -> Optional[Union[Component, str]]:
-    if not _diffline_is_special(diff):
-        if _diffline_is_special(previous_diff):
-            if _diffline_is_special(next_diff):
-                return diff
-            return html.Span([diff, html.Br(), _ellipse()])
-        if _diffline_is_special(next_diff):
-            return diff
-        return None
-    if diff[:1] in ('+', '-'):
-        return _extract_diff_component(diff, next_diff)
-    if diff[:1] == '?':
-        return None
-    raise ValueError(f'Unexpected diff format "{diff}"')
-
-
-def _build_diff_component(text_1: List[str], text_2: List[str]) -> Component:
-    diffs = list(difflib.Differ().compare(text_1, text_2))
-    components = _keep_defined_and_join(
-        [
-            _diff_to_component(diff, previous, next_)
-            for diff, previous, next_ in zip(diffs, [None, *diffs[:-1]], [*diffs[1:], None])
-        ]
-    )
-    if not components:
-        return html.P('Pas de différences.')
-    return html.Div(components)
-
-
-def _extract_tables(text: Union[ArreteMinisteriel, StructuredText]) -> List[Table]:
-    in_sections = [tb for sec in text.sections for tb in _extract_tables(sec)]
-    if isinstance(text, ArreteMinisteriel):
-        return in_sections
-    return [al.table for al in text.outer_alineas if al.table] + in_sections
-
-
-def _extract_nb_cells(table: Table) -> int:
-    return sum([len(row.cells) for row in table.rows])
-
-
-def _build_difference_in_tables_component(initial_am: ArreteMinisteriel, current_am: ArreteMinisteriel) -> Component:
-    initial_tables_nb_cells = list(map(_extract_nb_cells, _extract_tables(initial_am)))
-    current_tables_nb_cells = list(map(_extract_nb_cells, _extract_tables(current_am)))
-    if initial_tables_nb_cells == current_tables_nb_cells:
-        return html.Div()
-    return html.Div(
-        [
-            html.H4('Différences liées aux tableaux'),
-            error_component(
-                'Les tableaux du texte transformé sont différents des tableaux d\'origine.'
-                f'\nNombre de cellules par tableau dans le texte d\'origine: {initial_tables_nb_cells}'
-                f'\nNombre de cellules par tableau dans le texte transformé: {current_tables_nb_cells}'
-            ),
-        ]
-    )
-
-
-def _build_am_diff_component(initial_am: ArreteMinisteriel, current_am: ArreteMinisteriel) -> Component:
-    diff_tables = _build_difference_in_tables_component(initial_am, current_am)
-    diff_lines = _build_diff_component(initial_am.to_text().text_lines(), current_am.to_text().text_lines())
-    return html.Div([diff_tables, diff_lines])
-
-
 def _structure_am_component(am: ArreteMinisteriel) -> Component:
     style = {
         'position': 'sticky',
@@ -460,43 +356,13 @@ def _structure_am_component(am: ArreteMinisteriel) -> Component:
         'overflow-y': 'auto',
     }
     return html.Div(
-        [html.H4('Version actuelle de l\'AM'), html.Div([_get_am_component_with_toc(am)], style=style)],
-        hidden=False,
-        id=_STRUCTURE_TABS_AM,
+        [html.H4('Version actuelle de l\'AM'), html.Div([_get_am_component_with_toc(am)], style=style)], hidden=False
     )
-
-
-def _diff_tab_content(initial_am: ArreteMinisteriel, current_am: Optional[ArreteMinisteriel]) -> Component:
-    if not current_am:
-        child = 'Pas de modifications de structuration par rapport à l\'arrêté d\'origine.'
-    else:
-        child = _build_am_diff_component(initial_am, current_am)
-    return html.Div(
-        [html.H4('Liste des différences avec le texte d\'origine'), child], hidden=True, id=_STRUCTURE_TABS_DIFF
-    )
-
-
-def _nav(tab_title_and_ids: List[Tuple[str, str]]) -> Component:
-    tabs = [
-        html.A(title, href='#', id=id_, className='nav-link' + (' active' if i == 0 else ''))
-        for i, (title, id_) in enumerate(tab_title_and_ids)
-    ]
-    return html.Div([html.Div(tabs, className='nav flex-column nav-pills me-3')], className='d-flex align-items-start')
 
 
 def _structure_tabs(initial_am: ArreteMinisteriel, current_am: Optional[ArreteMinisteriel]) -> Component:
     am_to_display = current_am or initial_am
-    tabs = [('AM', _STRUCTURE_TABS_AM_TAB), ('Diff', _STRUCTURE_TABS_DIFF_TAB)]
-    nav = _nav(tabs)
-    return html.Div(
-        [
-            html.Div(nav, className='col-1'),
-            html.Div(
-                [_diff_tab_content(initial_am, current_am), _structure_am_component(am_to_display)], className='col-11'
-            ),
-        ],
-        className='row',
-    )
+    return html.Div(_structure_am_component(am_to_display), className='row')
 
 
 def _get_structure_validation_diff(am_id: str, status: AMStatus) -> Component:
@@ -723,22 +589,6 @@ def _toggle_modal(n_clicks, n_clicks_close, is_open):
     if n_clicks or n_clicks_close:
         return not is_open
     return False
-
-
-@app.callback(
-    Output(_STRUCTURE_TABS_AM, 'hidden'),
-    Output(_STRUCTURE_TABS_DIFF, 'hidden'),
-    Output(_STRUCTURE_TABS_AM_TAB, 'className'),
-    Output(_STRUCTURE_TABS_DIFF_TAB, 'className'),
-    Input(_STRUCTURE_TABS_AM_TAB, 'n_clicks_timestamp'),
-    Input(_STRUCTURE_TABS_DIFF_TAB, 'n_clicks_timestamp'),
-    prevent_initial_call=True,
-)
-def _structure_tabs_click_handler(click_timestamp_am_tab, click_timestamp_diff_tab):
-    if (click_timestamp_am_tab or 0) > (click_timestamp_diff_tab or 0):
-        return False, True, 'nav-link active', 'nav-link'
-    else:
-        return True, False, 'nav-link', 'nav-link active'
 
 
 parametric_am_list_callbacks(app, _PREFIX)
