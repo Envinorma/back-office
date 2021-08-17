@@ -19,11 +19,10 @@ from envinorma.utils import AMStatus
 from back_office.app_init import app
 from back_office.components import ButtonState, button, error_component, link_button, surline_text
 from back_office.components.am_component import am_component
-from back_office.components.parametric_am_list import parametric_am_list_callbacks, parametric_am_list_component
+from back_office.components.parametric_am_list import parametric_am_list_callbacks
 from back_office.components.summary_component import summary_component
 from back_office.components.table import ExtendedComponent, table_component
 from back_office.config import ENVIRONMENT_TYPE, EnvironmentType
-from back_office.helpers.generate_final_am import generate_and_dump_am_version, load_am_versions
 from back_office.helpers.slack import SlackChannel, send_slack_notification
 from back_office.helpers.texts import get_traversed_titles, safe_get_section
 from back_office.pages.edit_am.am_init_edition import router as am_init_router
@@ -76,7 +75,7 @@ def _get_edit_structure_button(parent_page: str) -> Component:
     return link_button('Éditer la structure', href, state=ButtonState.NORMAL_LINK)
 
 
-def _get_am_initialization_buttons() -> Tuple[Optional[Component], Optional[Component]]:
+def _am_initialization_buttons() -> Tuple[Optional[Component], Optional[Component]]:
     return (None, button('Valider le texte initial', id_=_VALIDATE_INITIALIZATION, state=ButtonState.NORMAL))
 
 
@@ -107,7 +106,7 @@ def _get_reset_structure_button() -> Component:
     return _get_confirmation_modal('Réinitialiser le texte', modal_content, 'reset-structure', 'btn btn-danger')
 
 
-def _get_structure_validation_buttons(parent_page: str) -> Tuple[Optional[Component], Optional[Component]]:
+def _structure_validation_buttons(parent_page: str) -> Tuple[Optional[Component], Optional[Component]]:
     modal_content = (
         'Êtes-vous sûr de vouloir retourner à la phase d\'initialisation du texte ? Ceci est '
         'déconseillé lorsque l\'AM provient de Légifrance ou que la structure a déjà été modifiée.'
@@ -123,7 +122,7 @@ def _get_structure_validation_buttons(parent_page: str) -> Tuple[Optional[Compon
     )
 
 
-def _get_parametrization_edition_buttons() -> Tuple[Optional[Component], Optional[Component]]:
+def _parametrization_edition_buttons() -> Tuple[Optional[Component], Optional[Component]]:
     modal_content = (
         'Êtes-vous sûr de vouloir retourner à la phase de structuration du texte ? Si des paramètres '
         'ont déjà été renseignés, cela peut désaligner certains paramétrages.'
@@ -134,11 +133,6 @@ def _get_parametrization_edition_buttons() -> Tuple[Optional[Component], Optiona
     )
 
 
-def _get_validated_buttons() -> Tuple[Optional[Component], Optional[Component]]:
-    modal_content = 'Retourner au paramétrage ?'
-    return (_get_confirmation_modal('Étape précédente', modal_content, 'validated', 'btn btn-light'), None)
-
-
 def _inline_buttons(button_left: Optional[Component], button_right: Optional[Component]) -> List[Component]:
     left = html.Div(button_left, style={'display': 'inline-block', 'float': 'left'})
     right = html.Div(button_right, style={'display': 'inline-block', 'float': 'right'})
@@ -147,11 +141,11 @@ def _inline_buttons(button_left: Optional[Component], button_right: Optional[Com
 
 def _get_buttons(am_status: AMStatus, parent_page: str) -> Component:
     successive_buttons = [
-        _get_am_initialization_buttons(),
-        _get_structure_validation_buttons(parent_page),
-        _get_parametrization_edition_buttons(),
-        _get_validated_buttons(),
+        _am_initialization_buttons(),
+        _structure_validation_buttons(parent_page),
+        _parametrization_edition_buttons(),
     ]
+    visibility = [am_status.step() == 0, am_status.step() == 1, am_status.step() >= 2]
     style = {
         'position': 'fixed',
         'bottom': '0px',
@@ -163,10 +157,8 @@ def _get_buttons(am_status: AMStatus, parent_page: str) -> Component:
     }
     return html.Div(
         [
-            html.Div(
-                html.Div(_inline_buttons(*buttons), className='container'), hidden=i != am_status.step(), style=style
-            )
-            for i, buttons in enumerate(successive_buttons)
+            html.Div(html.Div(_inline_buttons(*buttons), className='container'), hidden=not visible, style=style)
+            for buttons, visible in zip(successive_buttons, visibility)
         ]
     )
 
@@ -333,12 +325,13 @@ def _get_am_component_with_toc(am: ArreteMinisteriel) -> Component:
 def _get_parametrization_summary(
     parent_page: str, status: AMStatus, parametrization: Parametrization, am: Optional[ArreteMinisteriel]
 ) -> Component:
-    if status != AMStatus.PENDING_PARAMETRIZATION:
+    if status not in (AMStatus.PENDING_PARAMETRIZATION, AMStatus.VALIDATED):
         return html.Div([])
     if not am:
         return error_component('AM introuvable, impossible d\'afficher les paramètres.')
     return html.Div(
         [
+            dcc.Link("< Retour à l'arrêté", href=f'/{Endpoint.AM}/{am.id}'),
             html.H4('Sections potentiellement inapplicables'),
             _get_inapplicable_sections_table(parametrization, am, parent_page),
             _get_add_condition_button(parent_page, status),
@@ -515,34 +508,12 @@ def _get_structure_validation_diff(am_id: str, status: AMStatus) -> Component:
     return _structure_tabs(initial_am, DATA_FETCHER.load_structured_am(am_id))
 
 
-def _list_parametric_texts(am_id: str, am_status: AMStatus) -> Component:
-    if am_status != AMStatus.VALIDATED:
-        return html.Div()
-    return parametric_am_list_component(load_am_versions(am_id, True), _PREFIX)
-
-
-def _link_to_am(am_id: str) -> Component:
-    return html.Div(dcc.Link('< Retour à l\'AM', href=f'/{Endpoint.AM}/{am_id}'), className='mb-3')
-
-
-def _final_parametric_texts_component(am_id: str, am_status: AMStatus) -> Component:
-    return html.Div([_link_to_am(am_id), html.H3('Versions finales'), _list_parametric_texts(am_id, am_status)])
-
-
-def _get_final_parametric_texts_component(am_id: str, am_status: AMStatus) -> Component:
-    return html.Div([_final_parametric_texts_component(am_id, am_status)], hidden=am_status != AMStatus.VALIDATED)
-
-
 def _get_initial_am_component(
     am_id: str, am_status: AMStatus, am: Optional[ArreteMinisteriel], am_page: str
 ) -> Component:
     if am_status != AMStatus.PENDING_INITIALIZATION:
         return html.Div()
     return am_init_tab(am_id, am, am_page)
-
-
-def _deduce_step_classname(rank: int, status: AMStatus) -> str:
-    return 'breadcrumb-item' + (' ' if rank == status.step() else ' active') + (' ' if rank < status.step() else '')
 
 
 def _build_component_based_on_status(
@@ -554,7 +525,6 @@ def _build_component_based_on_status(
                 _get_initial_am_component(am_id, am_status, am, parent_page),
                 _get_structure_validation_diff(am_id, am_status),
                 _get_parametrization_summary(parent_page, am_status, parametrization, am),
-                _get_final_parametric_texts_component(am_id, am_status),
             ],
             style={'margin-bottom': '100px'},
         ),
@@ -569,9 +539,13 @@ def _make_am_index_component(
     return _build_component_based_on_status(am_id, parent_page, am_status, parametrization, am)
 
 
+def _add_suffix(rank: int, text: str, status: AMStatus) -> str:
+    return text + (' ☑️' if rank < status.step() else '')
+
+
 def _get_nav(status: AMStatus) -> Component:
-    texts = ['1. Initilisation', '2. Structuration', '3. Paramétrage', '4. Relecture']
-    lis = [html.Li(text, className=_deduce_step_classname(i, status)) for i, text in enumerate(texts)]
+    texts = ['1. Initilisation', '2. Structuration', '3. Paramétrage']
+    lis = [html.Li(_add_suffix(i, text, status), className='breadcrumb-item') for i, text in enumerate(texts)]
     return html.Ol(
         className='breadcrumb',
         children=lis,
@@ -644,7 +618,6 @@ def _add_titles_sequences(am_id: str) -> None:
 
 
 def _handle_validate_parametrization(am_id: str) -> None:
-    generate_and_dump_am_version(am_id)
     _add_titles_sequences(am_id)
 
 
@@ -716,7 +689,6 @@ _BUTTON_IDS = [
     _modal_confirm_button_id('parametrization'),
     _modal_confirm_button_id('reset-structure'),
     _VALIDATE_PARAMETRIZATION,
-    _modal_confirm_button_id('validated'),
 ]
 _INPUTS = [Input(id_, 'n_clicks') for id_ in _BUTTON_IDS] + [
     Input(f'{_PREFIX}-am-id', 'children'),
@@ -734,6 +706,8 @@ def _handle_click(*args):
                 _handle_clicked_button(id_, am_id)
             except Exception:  # pylint: disable = broad-except
                 return error_component(traceback.format_exc())
+            if id_ == _VALIDATE_PARAMETRIZATION:
+                return dcc.Location(id='redirect-to-am', href=f'/{Endpoint.AM}/{am_id}')
             return _page_with_spinner(am_id, current_page)
     raise PreventUpdate
 

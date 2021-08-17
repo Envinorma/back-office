@@ -76,7 +76,7 @@ def _edit_content_button(am_id: str) -> Component:
 
 
 def _reinit_button(am_id: str) -> Component:
-    return dcc.Link(dbc.Button("Réinitialiser l'arrêté", color='primary'), href=f'/edit_am/{am_id}')
+    return dcc.Link(dbc.Button("Éditer le paramétrage", color='primary'), href=f'/edit_am/{am_id}')
 
 
 def _delete_button(am_id: str) -> Component:
