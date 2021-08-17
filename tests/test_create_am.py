@@ -16,6 +16,7 @@ def test_extract_am_metadata():
         state=AMState('VIGUEUR'),
         date_of_signature=date.fromisoformat('2021-02-01'),
         source=AMSource('LEGIFRANCE'),
+        is_transverse=True,
     )
     args = {
         'am_id': 'JORFTEXT000012345678',
@@ -28,6 +29,7 @@ def test_extract_am_metadata():
         'rubriques': ['5000'],
         'regimes': ['E'],
         'alineas': ['A.2'],
+        'is_transverse': True,
     }
     assert _extract_am_metadata(**args) == expected
 

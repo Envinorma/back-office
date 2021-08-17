@@ -86,6 +86,16 @@ def _title(am_metadata: Optional[AMMetadata]) -> Component:
     )
 
 
+def _is_transverse_checkbox(am_metadata: Optional[AMMetadata]) -> Component:
+    default_value = am_metadata.is_transverse if am_metadata else False
+    return dbc.FormGroup(
+        [
+            dbc.Checkbox(checked=default_value, id=page_ids.IS_TRANSVERSE_CHECKBOX, className='mr-2'),
+            html.Label('AM transverse', className='form-label'),
+        ]
+    )
+
+
 def _aida_page_form(am_metadata: Optional[AMMetadata]) -> Component:
     default_value = am_metadata.aida_page if am_metadata else ''
     return dbc.FormGroup(
@@ -217,6 +227,7 @@ def _metadata_form(am_metadata: Optional[AMMetadata]) -> Component:
             _warning(am_metadata),
             _nor_form(am_metadata),
             _title(am_metadata),
+            _is_transverse_checkbox(am_metadata),
             _aida_page_form(am_metadata),
             _classements_form(am_metadata),
             _am_state(am_metadata),
@@ -298,6 +309,7 @@ def _add_callbacks(app: dash.Dash) -> None:
         Input(page_ids.SUBMIT_BUTTON, 'n_clicks'),
         State(page_ids.AM_ID, 'data'),
         State(page_ids.TITLE, 'value'),
+        State(page_ids.IS_TRANSVERSE_CHECKBOX, 'checked'),
         State(page_ids.AIDA_PAGE, 'value'),
         State(page_ids.AM_STATE, 'value'),
         State(page_ids.AM_SOURCE, 'value'),
@@ -312,6 +324,7 @@ def _add_callbacks(app: dash.Dash) -> None:
         _,
         am_id: Optional[str],
         title: Optional[str],
+        is_transverse: bool,
         aida_page: Optional[str],
         am_state: Optional[str],
         am_source: Optional[str],
@@ -325,6 +338,7 @@ def _add_callbacks(app: dash.Dash) -> None:
         return handle_form(
             am_id,
             title,
+            is_transverse,
             aida_page,
             am_state,
             am_source,
