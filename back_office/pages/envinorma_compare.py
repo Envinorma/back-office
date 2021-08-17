@@ -13,8 +13,10 @@ from leginorma import LegifranceRequestError
 from back_office.components import error_component
 from back_office.components.diff import diff_component
 from back_office.helpers.aida import extract_aida_am
+from back_office.helpers.diff import compute_am_diff
+from back_office.helpers.legifrance import extract_legifrance_am
 from back_office.routing import Endpoint, Page
-from back_office.utils import DATA_FETCHER, compute_am_diff, ensure_not_none, extract_legifrance_am
+from back_office.utils import DATA_FETCHER, ensure_not_none
 
 _PREFIX = __file__.split('/')[-1].replace('.py', '').replace('_', '-')
 _ARGS = _PREFIX + '-args'
@@ -40,7 +42,7 @@ def _legifrance_diff(am: ArreteMinisteriel) -> Component:
     if not md:
         return error_component('AM Metadata not found')
     try:
-        legifrance_version = extract_legifrance_am(md.cid)
+        legifrance_version = extract_legifrance_am(md.cid, fallback_to_non_consolidated=True)
     except LegifranceRequestError as exc:
         return error_component(f'Erreur lors de la récupération de la version Légifrance: {str(exc)}')
     return _diff_component(legifrance_version, am, 'Version Légifrance')

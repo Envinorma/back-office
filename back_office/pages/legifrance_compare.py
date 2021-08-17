@@ -13,8 +13,9 @@ from leginorma import LegifranceRequestError
 
 from back_office.components import error_component
 from back_office.components.diff import diff_component
+from back_office.helpers.diff import compute_am_diff
+from back_office.helpers.legifrance import NoConsolidationError, extract_legifrance_am
 from back_office.routing import Page
-from back_office.utils import compute_am_diff, extract_legifrance_am
 
 _PREFIX = __file__.split('/')[-1].replace('.py', '').replace('_', '-')
 _DATE_BEFORE = f'{_PREFIX}-before-date'
@@ -105,6 +106,12 @@ def _callbacks(app: Dash) -> None:
             return html.Div(), _safe_handle_submit(am_id, date_before, date_after)
         except _FormError as exc:
             return error_component(f'Erreur dans le formulaire: {str(exc)}'), html.Div()
+        except NoConsolidationError:
+            message = (
+                'Impossible de comparer deux versions de cet arrêté, la version '
+                "consolidée n'existe pas sur Légifrance."
+            )
+            return error_component(message), html.Div()
         except LegifranceRequestError as exc:
             return error_component(f'Erreur dans l\'API Légifrance: {str(exc)}'), html.Div()
         except Exception:

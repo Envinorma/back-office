@@ -24,19 +24,14 @@ from back_office.components.summary_component import summary_component
 from back_office.components.table import ExtendedComponent, table_component
 from back_office.config import ENVIRONMENT_TYPE, EnvironmentType
 from back_office.helpers.generate_final_am import generate_and_dump_am_version, load_am_versions
+from back_office.helpers.slack import SlackChannel, send_slack_notification
+from back_office.helpers.texts import get_traversed_titles, safe_get_section
 from back_office.pages.edit_am.am_init_edition import router as am_init_router
 from back_office.pages.edit_am.am_init_tab import am_init_tab
 from back_office.pages.edit_am.structure_edition import router as structure_router
 from back_office.pages.parametrization_edition import router as parametrization_router
 from back_office.routing import Endpoint
-from back_office.utils import (
-    DATA_FETCHER,
-    AMOperation,
-    SlackChannel,
-    get_traversed_titles,
-    safe_get_section,
-    send_slack_notification,
-)
+from back_office.utils import DATA_FETCHER, AMOperation
 
 _PREFIX = __file__.split('/')[-1].replace('.py', '').replace('_', '-')
 _VALIDATE_INITIALIZATION = f'{_PREFIX}-validate-init'

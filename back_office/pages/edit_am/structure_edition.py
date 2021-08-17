@@ -19,8 +19,9 @@ from envinorma.topics.simple_topics import add_simple_topics
 from back_office.app_init import app
 from back_office.components import error_component, success_component
 from back_office.components.am_component import table_to_component
+from back_office.helpers.texts import get_truncated_str
 from back_office.routing import build_am_page
-from back_office.utils import DATA_FETCHER, AMOperation, RouteParsingError, assert_str, get_truncated_str
+from back_office.utils import DATA_FETCHER, AMOperation, RouteParsingError, assert_str
 
 _TOC_COMPONENT = 'structure-edition-toc'
 _TEXT_AREA_COMPONENT = 'structure-edition-text-area-component'

@@ -20,8 +20,9 @@ from envinorma.parametrization import (
 from envinorma.parametrization.exceptions import ParametrizationError
 
 from back_office.app_init import app
+from back_office.helpers.texts import get_truncated_str
 from back_office.routing import build_am_page
-from back_office.utils import DATA_FETCHER, AMOperation, get_truncated_str
+from back_office.utils import DATA_FETCHER, AMOperation
 
 from . import page_ids
 from .condition_form import ConditionFormValues, condition_form

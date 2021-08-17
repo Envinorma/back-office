@@ -27,12 +27,14 @@ def _delete_modal() -> Component:
         [
             dbc.ModalHeader('Confirmation'),
             dbc.ModalBody('Êtes-vous sûr de vouloir supprimer le contenu de cet AM ? Cette action est irréversible.'),
-            dbc.ModalFooter(html.Button('Supprimer', id=_CONFIRM_DELETE, className='ml-auto btn btn-danger')),
+            dbc.ModalFooter(
+                html.Button('Supprimer le contenu', id=_CONFIRM_DELETE, className='ml-auto btn btn-danger')
+            ),
         ],
         id=_MODAL,
     )
     return html.Div(
-        [html.Button('Supprimer', id=_DELETE_BUTTON, className='btn btn-danger'), modal],
+        [html.Button('Supprimer le contenu', id=_DELETE_BUTTON, className='btn btn-danger'), modal],
         style={'display': 'inline-block'},
     )
 

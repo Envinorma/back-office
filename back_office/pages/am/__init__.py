@@ -1,12 +1,14 @@
 from typing import Callable, List, Optional, Tuple
 
 import dash_bootstrap_components as dbc
+import dash_core_components as dcc
 import dash_html_components as html
 from dash import Dash
+from dash.dependencies import Input, Output, State
 from dash.development.base_component import Component
 from envinorma.models.am_metadata import AMMetadata, AMState
 
-from back_office.routing import Page
+from back_office.routing import Endpoint, Page
 from back_office.utils import DATA_FETCHER
 
 from .am_versions_tab import TAB as am_versions_tab
@@ -18,6 +20,8 @@ from .topics_tab import TAB as topics_tab
 
 _Tab = Tuple[str, Callable[[AMMetadata], Component], Callable[[Dash, str], None]]
 _TABS: List[_Tab] = [metadata_tab, default_content_tab, am_versions_tab, parametrization_tab, compare_tab, topics_tab]
+
+_AM_ID = 'am-tabs-am-id'
 
 
 def _warning(am_metadata: AMMetadata) -> Component:
@@ -55,12 +59,18 @@ def _layout(am_id: str, tab: Optional[str] = None) -> Component:
     am = DATA_FETCHER.load_am_metadata(am_id)
     if not am:
         return html.Div('404')
-    return html.Div([html.H3(f'AM {am.cid}'), _warning(am), _tabs(am, tab)])
+    return html.Div([dcc.Store(data=am_id, id=_AM_ID), html.H3(f'AM {am.cid}'), _warning(am), _tabs(am, tab)])
 
 
 def _callbacks(app: Dash) -> None:
     for tab_rank, (_, _, callbacks) in enumerate(_TABS):
         callbacks(app, str(tab_rank))
+
+    @app.callback(
+        Output('url', 'href'), Input('am-tabs', 'active_tab'), State(_AM_ID, 'data'), prevent_initial_call=True
+    )
+    def load_main_component(active_tab: str, am_id: str):
+        return f'/{Endpoint.AM}/{am_id}/{active_tab}'
 
 
 PAGE = Page(_layout, _callbacks)

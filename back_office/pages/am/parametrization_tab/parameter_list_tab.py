@@ -33,49 +33,63 @@ def _random_id(size: int = 12) -> str:
     return ''.join([random.choice(string.ascii_letters) for _ in range(size)])  # noqa: S311
 
 
-def _condition_component(condition: Condition) -> Component:
+def _toggler_component(condition_name: str, condition_hash: str) -> Component:
     return html.Div(
-        condition.to_str(),
+        condition_name,
         className='alert alert-secondary font-size-sm condition-block',
         style={'font-size': '0.8em'},
-        id=_condition_id(str(hash(condition))),
+        id=_condition_id(condition_hash),
     )
 
 
+_ConditionOrWarning = Union[Condition, str]
+
+
+def _condition_component(condition_or_warning: _ConditionOrWarning) -> Component:
+    if isinstance(condition_or_warning, str):
+        return _toggler_component(f'Warning: {condition_or_warning}', str(hash(condition_or_warning)))
+    return _toggler_component(condition_or_warning.to_str(), str(hash(condition_or_warning)))
+
+
+def _extract_conditions_with_occurrences(parametrization: Parametrization) -> List[Tuple[_ConditionOrWarning, int]]:
+    warnings = [warning.text for warnings_ in parametrization.path_to_warnings.values() for warning in warnings_]
+    condition_or_warnings = [*parametrization.extract_conditions(), *warnings]
+    return Counter(condition_or_warnings).most_common()
+
+
 def _conditions_component(parametrization: Parametrization) -> Component:
-    counter: List[Tuple[Condition, int]] = Counter(parametrization.extract_conditions()).most_common()
-    conditions: List[Condition] = [cd for cd, _ in sorted(counter, key=lambda x: -x[1])]
-    condition_items = [_condition_component(condition) for condition in conditions]
+    conditions_with_occurrences = _extract_conditions_with_occurrences(parametrization)
+    condition_items = [
+        _condition_component(condition) for condition, _ in sorted(conditions_with_occurrences, key=lambda x: -x[-1])
+    ]
 
     return html.Div(
-        [html.H3('Conditions'), html.Div(condition_items if condition_items else 'Pas de conditions.')],
+        [html.H3('Conditions et warnings'), html.Div(condition_items if condition_items else 'Pas de conditions.')],
         style={'height': '75vh', 'overflow-y': 'auto'},
     )
 
 
-def _condition_badge(condition: Condition, operation: str) -> Component:
+def _condition_badge(condition_id: str, operation: str) -> Component:
     id_ = _badge_id(_random_id())
-    return html.Span(
-        operation, id=id_, className='badge badge-secondary ml-1', **{'data-condition-id': str(hash(condition))}
-    )
+    return html.Span(operation, id=id_, className='badge badge-secondary ml-1', **{'data-condition-id': condition_id})
 
 
 def _condition_badges(
     inapplicabilities: List[InapplicableSection], alternatives: List[AlternativeSection], warnings: List[AMWarning]
 ) -> Component:
-    badges_1 = [_condition_badge(inap.condition, 'inapplicable') for inap in inapplicabilities]
-    badges_2 = [_condition_badge(alt.condition, 'section modifiée') for alt in alternatives]
-    badges_3: List[Component] = [html.Span('warning', className='badge badge-secondary ml-1') for _ in warnings]
+    badges_1 = [_condition_badge(str(hash(inap.condition)), 'inapplicable') for inap in inapplicabilities]
+    badges_2 = [_condition_badge(str(hash(alt.condition)), 'section modifiée') for alt in alternatives]
+    badges_3 = [_condition_badge(str(hash(warning.text)), 'warning') for warning in warnings]
     return html.Span(badges_1 + badges_2 + badges_3)
 
 
-def _title(section: StructuredText, path: Ints, parametrization: Parametrization) -> Component:
+def _title(title: str, path: Ints, parametrization: Parametrization) -> Component:
     badges = _condition_badges(
         parametrization.path_to_conditions.get(path) or [],
         parametrization.path_to_alternative_sections.get(path) or [],
         parametrization.path_to_warnings.get(path) or [],
     )
-    return html.Span([f'{section.title.text} ', badges], style={'font-size': '0.8em'})
+    return html.Span([f'{title} ', badges], style={'font-size': '0.8em'})
 
 
 def _section_summary(
@@ -84,7 +98,7 @@ def _section_summary(
     common_style = {'border-left': '3px solid #007bff', 'padding-left': '25px'}
     return html.Div(
         [
-            _title(section, id_to_path[section.id], parametrization),
+            _title(section.title.text, id_to_path[section.id], parametrization),
             *[_section_summary(sub, id_to_path, parametrization) for sub in section.sections],
         ],
         style=common_style,
@@ -106,7 +120,12 @@ def _id_to_path(section: _Section, prefix: Ints = ()) -> Dict[str, Ints]:
 
 def _am_summary(am: ArreteMinisteriel, parametrization: Parametrization) -> Component:
     id_to_path = _id_to_path(am)
-    return html.Div([_section_summary(section, id_to_path, parametrization) for section in am.sections])
+    return html.Div(
+        [
+            _title('ARRÊTÉ', (), parametrization),
+            *[_section_summary(section, id_to_path, parametrization) for section in am.sections],
+        ]
+    )
 
 
 def _am_summary_column(am: ArreteMinisteriel, parametrization: Parametrization) -> Component:

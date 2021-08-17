@@ -18,8 +18,9 @@ from leginorma import LegifranceRequestError
 from back_office.app_init import app
 from back_office.components import error_component, success_component
 from back_office.helpers.aida import extract_aida_am
+from back_office.helpers.legifrance import NoConsolidationError, extract_legifrance_am
 from back_office.routing import build_am_page
-from back_office.utils import DATA_FETCHER, AMOperation, RouteParsingError, ensure_not_none, extract_legifrance_am
+from back_office.utils import DATA_FETCHER, AMOperation, RouteParsingError, ensure_not_none
 
 _AM_TITLE = 'am-init-am-title'
 _AM_CONTENT = 'am-init-am-content'
@@ -196,7 +197,9 @@ def _fetch_parse_and_save_legifrance_text(am_id: str) -> Component:
     try:
         am = extract_legifrance_am(am_id)
     except LegifranceRequestError as exc:
-        return error_component(f'Erreur lors de la récupération du text: {exc}')
+        return error_component(f'Erreur lors de la récupération du texte: {exc}')
+    except NoConsolidationError:
+        return error_component("Impossible de récuperer cet arrêté sur Légifrance, la version consolidée n'existe pas.")
     except Exception:
         return error_component(f'Erreur inattendue: \n{traceback.format_exc()}')
     return _save_and_get_component(am_id, am)

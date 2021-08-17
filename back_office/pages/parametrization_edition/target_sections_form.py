@@ -11,8 +11,9 @@ from envinorma.models import Ints, StructuredText, dump_path, load_path
 from envinorma.parametrization import AlternativeSection, AMWarning, InapplicableSection, ParameterObject
 
 from back_office.app_init import app
+from back_office.helpers.texts import get_section, safe_get_section, safe_get_subsection
 from back_office.pages.parametrization_edition import page_ids
-from back_office.utils import DATA_FETCHER, AMOperation, get_section, safe_get_section, safe_get_subsection
+from back_office.utils import DATA_FETCHER, AMOperation
 
 DropdownOptions = List[Dict[str, Any]]
 
