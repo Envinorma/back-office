@@ -43,6 +43,7 @@ def _metadata(am: AMMetadata) -> Component:
             _row(('Id', am.cid)),
             _row(('Titre', am.title)),
             _row(('Date de signature', date_)),
+            _row(('Transverse', 'OUI' if am.is_transverse else 'NON')),
             _row(('NOR', am.nor or '')),
             _row(('Initialisé via', am.source.value)),
             _row(('État', _state(am.state))),
@@ -76,7 +77,7 @@ def _edit_content_button(am_id: str) -> Component:
 
 
 def _reinit_button(am_id: str) -> Component:
-    return dcc.Link(dbc.Button("Réinitialiser l'arrêté", color='primary'), href=f'/edit_am/{am_id}')
+    return dcc.Link(dbc.Button("Éditer le paramétrage", color='primary'), href=f'/edit_am/{am_id}')
 
 
 def _delete_button(am_id: str) -> Component:

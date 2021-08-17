@@ -141,6 +141,7 @@ def _build_reason_deleted(am_state: Optional[str], reason_deleted: Optional[str]
 def _extract_am_metadata(
     am_id: Optional[str],
     title: Optional[str],
+    is_transverse: bool,
     aida_page: Optional[str],
     am_state: Optional[str],
     am_source: Optional[str],
@@ -160,12 +161,14 @@ def _extract_am_metadata(
         _build_source(am_source),
         _build_nor(nor_id),
         _build_reason_deleted(am_state, reason_deleted),
+        is_transverse,
     )
 
 
 def handle_form(
     am_id: Optional[str],
     title: Optional[str],
+    is_transverse: bool,
     aida_page: Optional[str],
     am_state: Optional[str],
     am_source: Optional[str],
@@ -179,6 +182,7 @@ def handle_form(
         new_am_metadata = _extract_am_metadata(
             am_id,
             title,
+            is_transverse,
             aida_page,
             am_state,
             am_source,

@@ -1,6 +1,7 @@
 from collections import Counter
 from typing import Any, Dict, List, Optional, Union
 
+import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.development.base_component import Component
@@ -30,6 +31,11 @@ def _normal_td(content: Union[Component, str, int]) -> Component:
     return html.Td(content, className='align-middle', style={'font-size': '0.85em'})
 
 
+def _is_transverse_cell(is_transverse: bool) -> Component:
+    content = '☑️' if is_transverse else ''
+    return html.Td(content, className='table-success' if is_transverse else '')
+
+
 def _get_row(rank: int, am_state: Optional[AMStatus], am_metadata: AMMetadata, occurrences: int) -> Component:
     am_step = am_state.step() if am_state else -1
     rows = [
@@ -37,6 +43,7 @@ def _get_row(rank: int, am_state: Optional[AMStatus], am_metadata: AMMetadata, o
         _normal_td(dcc.Link(am_metadata.cid, href=f'/{Endpoint.AM}/{am_metadata.cid}')),
         _normal_td(str(am_metadata.nor)),
         _normal_td(am_metadata.date_of_signature.strftime('%d/%m/%y')),
+        _is_transverse_cell(am_metadata.is_transverse),
         _normal_td(_get_str_classements(am_metadata.classements)),
         _normal_td(am_metadata.source.value),
         _normal_td(occurrences),
@@ -47,8 +54,15 @@ def _get_row(rank: int, am_state: Optional[AMStatus], am_metadata: AMMetadata, o
     return html.Tr(rows, className='table-danger' if not am_state else '')
 
 
-def _th(str_: str) -> Component:
+def _th(str_: Union[str, Component]) -> Component:
     return html.Th(str_, style={'font-size': '0.85em'})
+
+
+def _th_with_tooltip(content: str, tooltip_content: str) -> Component:
+    id_ = f'tooltip-{tooltip_content}'
+    return _th(
+        html.Span([dbc.Tooltip(tooltip_content, target=id_), html.Span(content, id=id_, style={'cursor': 'pointer'})])
+    )
 
 
 def _get_header() -> Component:
@@ -58,12 +72,13 @@ def _get_header() -> Component:
             _th('N° CID'),
             _th('N° NOR'),
             _th('Date'),
+            _th_with_tooltip('Tr.', 'Transverse'),
             _th('Classements'),
             _th('Source'),
             _th('Occs.'),
-            _th('Initialisé'),
-            _th('Structuré'),
-            _th('Paramétré'),
+            _th_with_tooltip('ℹ️', 'Initialisé'),
+            _th_with_tooltip('ℹ️', 'Structuré'),
+            _th_with_tooltip('ℹ️', 'Paramétré'),
         ]
     )
 
@@ -72,7 +87,11 @@ def _build_am_table(
     id_to_state: Dict[str, AMStatus], id_to_am_metadata: Dict[str, AMMetadata], id_to_occurrences: Dict[str, int]
 ) -> Component:
     header = _get_header()
-    sorted_ids = sorted(id_to_am_metadata, key=lambda x: id_to_occurrences.get(x, 0), reverse=True)
+    sorted_ids = sorted(
+        id_to_am_metadata,
+        key=lambda x: (not id_to_am_metadata[x].is_transverse, id_to_occurrences.get(x, 0)),
+        reverse=True,
+    )
     rows = [
         _get_row(rank, id_to_state.get(am_id), id_to_am_metadata[am_id], id_to_occurrences.get(am_id, 0))
         for rank, am_id in enumerate(sorted_ids)

@@ -12,7 +12,8 @@ from envinorma.topics.patterns import TopicName
 from back_office.components.am_component import table_to_component
 from back_office.components.diff import diff_component
 from back_office.components.summary_component import summary_component
-from back_office.utils import assert_str, compute_text_diff
+from back_office.helpers.diff import compute_text_diff
+from back_office.utils import assert_str
 
 _Warning = Tuple[Applicability, str]
 

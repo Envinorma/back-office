@@ -6,7 +6,7 @@ from envinorma.models import AMMetadata
 from .am_apply_parameters_tab import TAB as am_apply_parameters_tab
 from .parameter_list_tab import TAB as parameter_list_tab
 
-_SUB_TABS = [am_apply_parameters_tab, parameter_list_tab]
+_SUB_TABS = [parameter_list_tab, am_apply_parameters_tab]
 
 
 def _tabs(am: AMMetadata) -> Component:

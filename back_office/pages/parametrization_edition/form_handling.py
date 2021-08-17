@@ -25,10 +25,11 @@ from envinorma.parametrization import (
     ensure_mono_conditions,
 )
 
+from back_office.helpers.texts import safe_get_section
 from back_office.pages.parametrization_edition import page_ids
 from back_office.pages.parametrization_edition.condition_form import ConditionFormValues
 from back_office.pages.parametrization_edition.target_sections_form import TargetSectionFormValues
-from back_office.utils import DATA_FETCHER, AMOperation, ensure_not_none, safe_get_section
+from back_office.utils import DATA_FETCHER, AMOperation, ensure_not_none
 
 
 class FormHandlingError(Exception):

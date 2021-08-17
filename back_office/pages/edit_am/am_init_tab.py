@@ -27,12 +27,14 @@ def _delete_modal() -> Component:
         [
             dbc.ModalHeader('Confirmation'),
             dbc.ModalBody('Êtes-vous sûr de vouloir supprimer le contenu de cet AM ? Cette action est irréversible.'),
-            dbc.ModalFooter(html.Button('Supprimer', id=_CONFIRM_DELETE, className='ml-auto btn btn-danger')),
+            dbc.ModalFooter(
+                html.Button('Supprimer le contenu', id=_CONFIRM_DELETE, className='ml-auto btn btn-danger')
+            ),
         ],
         id=_MODAL,
     )
     return html.Div(
-        [html.Button('Supprimer', id=_DELETE_BUTTON, className='btn btn-danger'), modal],
+        [html.Button('Supprimer le contenu', id=_DELETE_BUTTON, className='btn btn-danger'), modal],
         style={'display': 'inline-block'},
     )
 
@@ -57,7 +59,7 @@ def _buttons(am_page: str) -> Component:
 def _get_am_row(am: ArreteMinisteriel) -> Component:
     am_row = html.Div(
         [
-            html.Div([summary_component(am.to_text(), False)], className='col-3'),
+            html.Div([summary_component(am.to_text(), True, False)], className='col-3'),
             html.Div(am_component(am, [], 3), className='col-9'),
         ],
         className='row',

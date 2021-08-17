@@ -4,7 +4,7 @@ import dash_html_components as html
 from dash.development.base_component import Component
 from envinorma.models import StructuredText
 
-from back_office.utils import get_truncated_str
+from back_office.helpers.texts import get_truncated_str
 
 
 def _topic_name(section: StructuredText) -> Optional[str]:

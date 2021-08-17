@@ -1,7 +1,6 @@
-import difflib
 import traceback
 import warnings
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
@@ -10,45 +9,33 @@ from dash.dependencies import MATCH, Input, Output, State
 from dash.development.base_component import Component
 from dash.exceptions import PreventUpdate
 from envinorma.io.markdown import extract_markdown_text
-from envinorma.models import AMMetadata, ArreteMinisteriel, Ints, StructuredText, Table
+from envinorma.models import AMMetadata, ArreteMinisteriel, Ints
 from envinorma.parametrization import AlternativeSection, AMWarning, InapplicableSection, Parametrization
 from envinorma.parametrization.resync import UndefinedTitlesSequencesError, add_titles_sequences, regenerate_paths
 from envinorma.topics.simple_topics import add_simple_topics
 from envinorma.utils import AMStatus
 
 from back_office.app_init import app
-from back_office.components import ButtonState, button, error_component, link_button, surline_text
+from back_office.components import ButtonState, button, error_component, link_button
 from back_office.components.am_component import am_component
-from back_office.components.parametric_am_list import parametric_am_list_callbacks, parametric_am_list_component
+from back_office.components.parametric_am_list import parametric_am_list_callbacks
 from back_office.components.summary_component import summary_component
 from back_office.components.table import ExtendedComponent, table_component
 from back_office.config import ENVIRONMENT_TYPE, EnvironmentType
-from back_office.helpers.generate_final_am import generate_and_dump_am_version, load_am_versions
+from back_office.helpers.slack import SlackChannel, send_slack_notification
+from back_office.helpers.texts import get_traversed_titles, safe_get_section
 from back_office.pages.edit_am.am_init_edition import router as am_init_router
 from back_office.pages.edit_am.am_init_tab import am_init_tab
 from back_office.pages.edit_am.structure_edition import router as structure_router
 from back_office.pages.parametrization_edition import router as parametrization_router
 from back_office.routing import Endpoint
-from back_office.utils import (
-    DATA_FETCHER,
-    AMOperation,
-    SlackChannel,
-    get_traversed_titles,
-    safe_get_section,
-    send_slack_notification,
-)
+from back_office.utils import DATA_FETCHER, AMOperation
 
 _PREFIX = __file__.split('/')[-1].replace('.py', '').replace('_', '-')
 _VALIDATE_INITIALIZATION = f'{_PREFIX}-validate-init'
 _VALIDATE_STRUCTURE = f'{_PREFIX}-validate-structure'
 _VALIDATE_PARAMETRIZATION = f'{_PREFIX}-validate-parametrization'
 _LOADER = f'{_PREFIX}-loading-output'
-_STRUCTURE_TABS_AM_TAB = _PREFIX + '-structure-tabs-am-tab'
-_STRUCTURE_TABS_DIFF_TAB = _PREFIX + '-structure-tabs-diff-tab'
-_STRUCTURE_TABS_AM = _PREFIX + '-structure-tabs-am'
-_STRUCTURE_TABS_DIFF = _PREFIX + '-structure-tabs-diff'
-_STRUCTURE_TABS_AM_TAB = _PREFIX + '-structure-tabs-am-tab'
-_STRUCTURE_TABS_DIFF_TAB = _PREFIX + '-structure-tabs-diff-tab'
 
 
 def _modal_confirm_button_id(step: Optional[str] = None) -> Dict[str, Any]:
@@ -81,7 +68,7 @@ def _get_edit_structure_button(parent_page: str) -> Component:
     return link_button('Éditer la structure', href, state=ButtonState.NORMAL_LINK)
 
 
-def _get_am_initialization_buttons() -> Tuple[Optional[Component], Optional[Component]]:
+def _am_initialization_buttons() -> Tuple[Optional[Component], Optional[Component]]:
     return (None, button('Valider le texte initial', id_=_VALIDATE_INITIALIZATION, state=ButtonState.NORMAL))
 
 
@@ -112,7 +99,7 @@ def _get_reset_structure_button() -> Component:
     return _get_confirmation_modal('Réinitialiser le texte', modal_content, 'reset-structure', 'btn btn-danger')
 
 
-def _get_structure_validation_buttons(parent_page: str) -> Tuple[Optional[Component], Optional[Component]]:
+def _structure_validation_buttons(parent_page: str) -> Tuple[Optional[Component], Optional[Component]]:
     modal_content = (
         'Êtes-vous sûr de vouloir retourner à la phase d\'initialisation du texte ? Ceci est '
         'déconseillé lorsque l\'AM provient de Légifrance ou que la structure a déjà été modifiée.'
@@ -128,7 +115,7 @@ def _get_structure_validation_buttons(parent_page: str) -> Tuple[Optional[Compon
     )
 
 
-def _get_parametrization_edition_buttons() -> Tuple[Optional[Component], Optional[Component]]:
+def _parametrization_edition_buttons() -> Tuple[Optional[Component], Optional[Component]]:
     modal_content = (
         'Êtes-vous sûr de vouloir retourner à la phase de structuration du texte ? Si des paramètres '
         'ont déjà été renseignés, cela peut désaligner certains paramétrages.'
@@ -139,11 +126,6 @@ def _get_parametrization_edition_buttons() -> Tuple[Optional[Component], Optiona
     )
 
 
-def _get_validated_buttons() -> Tuple[Optional[Component], Optional[Component]]:
-    modal_content = 'Retourner au paramétrage ?'
-    return (_get_confirmation_modal('Étape précédente', modal_content, 'validated', 'btn btn-light'), None)
-
-
 def _inline_buttons(button_left: Optional[Component], button_right: Optional[Component]) -> List[Component]:
     left = html.Div(button_left, style={'display': 'inline-block', 'float': 'left'})
     right = html.Div(button_right, style={'display': 'inline-block', 'float': 'right'})
@@ -152,11 +134,11 @@ def _inline_buttons(button_left: Optional[Component], button_right: Optional[Com
 
 def _get_buttons(am_status: AMStatus, parent_page: str) -> Component:
     successive_buttons = [
-        _get_am_initialization_buttons(),
-        _get_structure_validation_buttons(parent_page),
-        _get_parametrization_edition_buttons(),
-        _get_validated_buttons(),
+        _am_initialization_buttons(),
+        _structure_validation_buttons(parent_page),
+        _parametrization_edition_buttons(),
     ]
+    visibility = [am_status.step() == 0, am_status.step() == 1, am_status.step() >= 2]
     style = {
         'position': 'fixed',
         'bottom': '0px',
@@ -168,10 +150,8 @@ def _get_buttons(am_status: AMStatus, parent_page: str) -> Component:
     }
     return html.Div(
         [
-            html.Div(
-                html.Div(_inline_buttons(*buttons), className='container'), hidden=i != am_status.step(), style=style
-            )
-            for i, buttons in enumerate(successive_buttons)
+            html.Div(html.Div(_inline_buttons(*buttons), className='container'), hidden=not visible, style=style)
+            for buttons, visible in zip(successive_buttons, visibility)
         ]
     )
 
@@ -327,7 +307,7 @@ def _add_warning_button(parent_page: str, status: AMStatus) -> Component:
 def _get_am_component_with_toc(am: ArreteMinisteriel) -> Component:
     return html.Div(
         [
-            html.Div([summary_component(am.to_text(), True)], className='col-3'),
+            html.Div([summary_component(am.to_text(), True, False)], className='col-3'),
             html.Div(am_component(am, [], 5), className='col-9'),
         ],
         className='row',
@@ -338,12 +318,13 @@ def _get_am_component_with_toc(am: ArreteMinisteriel) -> Component:
 def _get_parametrization_summary(
     parent_page: str, status: AMStatus, parametrization: Parametrization, am: Optional[ArreteMinisteriel]
 ) -> Component:
-    if status != AMStatus.PENDING_PARAMETRIZATION:
+    if status not in (AMStatus.PENDING_PARAMETRIZATION, AMStatus.VALIDATED):
         return html.Div([])
     if not am:
         return error_component('AM introuvable, impossible d\'afficher les paramètres.')
     return html.Div(
         [
+            dcc.Link("< Retour à l'arrêté", href=f'/{Endpoint.AM}/{am.id}'),
             html.H4('Sections potentiellement inapplicables'),
             _get_inapplicable_sections_table(parametrization, am, parent_page),
             _get_add_condition_button(parent_page, status),
@@ -366,103 +347,6 @@ def _get_parametrization_summary(
     )
 
 
-def _keep_defined_and_join(elements: List[Optional[Union[str, Component]]]) -> List[Union[str, Component]]:
-    return [el_lb for el in elements if el is not None for el_lb in (el, html.Br())]
-
-
-def _extract_char_positions(str_: str, char: str) -> Set[int]:
-    return {i for i, ch in enumerate(str_) if ch == char}
-
-
-def _diffline_is_special(line: Optional[str]) -> bool:
-    return bool(line and line[:1] in ('-', '+', '?'))
-
-
-def _extract_diff_component(diff: str, next_diff: Optional[str]) -> Optional[Union[Component, str]]:
-    if diff[:1] == '+':
-        symbol = '+'
-        strong_color = '#acf2bd'
-        light_color = '#e6ffec'
-    elif diff[:1] == '-':
-        symbol = '-'
-        strong_color = '#fdb8c0'
-        light_color = '#feeef0'
-    else:
-        raise ValueError(f'Expecting diff to start with "+" or "-", received {diff[:1]}')
-    to_surline = _extract_char_positions(next_diff, symbol) if next_diff and next_diff[0] == '?' else set()
-    rich_diff = surline_text(diff, to_surline, {'background-color': strong_color})
-    return html.Span(rich_diff, style={'background-color': light_color})
-
-
-def _ellipse() -> Component:
-    return html.Span('[...]', style={'color': 'grey'})
-
-
-def _diff_to_component(
-    diff: str, previous_diff: Optional[str], next_diff: Optional[str]
-) -> Optional[Union[Component, str]]:
-    if not _diffline_is_special(diff):
-        if _diffline_is_special(previous_diff):
-            if _diffline_is_special(next_diff):
-                return diff
-            return html.Span([diff, html.Br(), _ellipse()])
-        if _diffline_is_special(next_diff):
-            return diff
-        return None
-    if diff[:1] in ('+', '-'):
-        return _extract_diff_component(diff, next_diff)
-    if diff[:1] == '?':
-        return None
-    raise ValueError(f'Unexpected diff format "{diff}"')
-
-
-def _build_diff_component(text_1: List[str], text_2: List[str]) -> Component:
-    diffs = list(difflib.Differ().compare(text_1, text_2))
-    components = _keep_defined_and_join(
-        [
-            _diff_to_component(diff, previous, next_)
-            for diff, previous, next_ in zip(diffs, [None, *diffs[:-1]], [*diffs[1:], None])
-        ]
-    )
-    if not components:
-        return html.P('Pas de différences.')
-    return html.Div(components)
-
-
-def _extract_tables(text: Union[ArreteMinisteriel, StructuredText]) -> List[Table]:
-    in_sections = [tb for sec in text.sections for tb in _extract_tables(sec)]
-    if isinstance(text, ArreteMinisteriel):
-        return in_sections
-    return [al.table for al in text.outer_alineas if al.table] + in_sections
-
-
-def _extract_nb_cells(table: Table) -> int:
-    return sum([len(row.cells) for row in table.rows])
-
-
-def _build_difference_in_tables_component(initial_am: ArreteMinisteriel, current_am: ArreteMinisteriel) -> Component:
-    initial_tables_nb_cells = list(map(_extract_nb_cells, _extract_tables(initial_am)))
-    current_tables_nb_cells = list(map(_extract_nb_cells, _extract_tables(current_am)))
-    if initial_tables_nb_cells == current_tables_nb_cells:
-        return html.Div()
-    return html.Div(
-        [
-            html.H4('Différences liées aux tableaux'),
-            error_component(
-                'Les tableaux du texte transformé sont différents des tableaux d\'origine.'
-                f'\nNombre de cellules par tableau dans le texte d\'origine: {initial_tables_nb_cells}'
-                f'\nNombre de cellules par tableau dans le texte transformé: {current_tables_nb_cells}'
-            ),
-        ]
-    )
-
-
-def _build_am_diff_component(initial_am: ArreteMinisteriel, current_am: ArreteMinisteriel) -> Component:
-    diff_tables = _build_difference_in_tables_component(initial_am, current_am)
-    diff_lines = _build_diff_component(initial_am.to_text().text_lines(), current_am.to_text().text_lines())
-    return html.Div([diff_tables, diff_lines])
-
-
 def _structure_am_component(am: ArreteMinisteriel) -> Component:
     style = {
         'position': 'sticky',
@@ -472,43 +356,13 @@ def _structure_am_component(am: ArreteMinisteriel) -> Component:
         'overflow-y': 'auto',
     }
     return html.Div(
-        [html.H4('Version actuelle de l\'AM'), html.Div([_get_am_component_with_toc(am)], style=style)],
-        hidden=False,
-        id=_STRUCTURE_TABS_AM,
+        [html.H4('Version actuelle de l\'AM'), html.Div([_get_am_component_with_toc(am)], style=style)], hidden=False
     )
-
-
-def _diff_tab_content(initial_am: ArreteMinisteriel, current_am: Optional[ArreteMinisteriel]) -> Component:
-    if not current_am:
-        child = 'Pas de modifications de structuration par rapport à l\'arrêté d\'origine.'
-    else:
-        child = _build_am_diff_component(initial_am, current_am)
-    return html.Div(
-        [html.H4('Liste des différences avec le texte d\'origine'), child], hidden=True, id=_STRUCTURE_TABS_DIFF
-    )
-
-
-def _nav(tab_title_and_ids: List[Tuple[str, str]]) -> Component:
-    tabs = [
-        html.A(title, href='#', id=id_, className='nav-link' + (' active' if i == 0 else ''))
-        for i, (title, id_) in enumerate(tab_title_and_ids)
-    ]
-    return html.Div([html.Div(tabs, className='nav flex-column nav-pills me-3')], className='d-flex align-items-start')
 
 
 def _structure_tabs(initial_am: ArreteMinisteriel, current_am: Optional[ArreteMinisteriel]) -> Component:
     am_to_display = current_am or initial_am
-    tabs = [('AM', _STRUCTURE_TABS_AM_TAB), ('Diff', _STRUCTURE_TABS_DIFF_TAB)]
-    nav = _nav(tabs)
-    return html.Div(
-        [
-            html.Div(nav, className='col-1'),
-            html.Div(
-                [_diff_tab_content(initial_am, current_am), _structure_am_component(am_to_display)], className='col-11'
-            ),
-        ],
-        className='row',
-    )
+    return html.Div(_structure_am_component(am_to_display), className='row')
 
 
 def _get_structure_validation_diff(am_id: str, status: AMStatus) -> Component:
@@ -520,34 +374,12 @@ def _get_structure_validation_diff(am_id: str, status: AMStatus) -> Component:
     return _structure_tabs(initial_am, DATA_FETCHER.load_structured_am(am_id))
 
 
-def _list_parametric_texts(am_id: str, am_status: AMStatus) -> Component:
-    if am_status != AMStatus.VALIDATED:
-        return html.Div()
-    return parametric_am_list_component(load_am_versions(am_id, True), _PREFIX)
-
-
-def _link_to_am(am_id: str) -> Component:
-    return html.Div(dcc.Link('< Retour à l\'AM', href=f'/{Endpoint.AM}/{am_id}'), className='mb-3')
-
-
-def _final_parametric_texts_component(am_id: str, am_status: AMStatus) -> Component:
-    return html.Div([_link_to_am(am_id), html.H3('Versions finales'), _list_parametric_texts(am_id, am_status)])
-
-
-def _get_final_parametric_texts_component(am_id: str, am_status: AMStatus) -> Component:
-    return html.Div([_final_parametric_texts_component(am_id, am_status)], hidden=am_status != AMStatus.VALIDATED)
-
-
 def _get_initial_am_component(
     am_id: str, am_status: AMStatus, am: Optional[ArreteMinisteriel], am_page: str
 ) -> Component:
     if am_status != AMStatus.PENDING_INITIALIZATION:
         return html.Div()
     return am_init_tab(am_id, am, am_page)
-
-
-def _deduce_step_classname(rank: int, status: AMStatus) -> str:
-    return 'breadcrumb-item' + (' ' if rank == status.step() else ' active') + (' ' if rank < status.step() else '')
 
 
 def _build_component_based_on_status(
@@ -559,7 +391,6 @@ def _build_component_based_on_status(
                 _get_initial_am_component(am_id, am_status, am, parent_page),
                 _get_structure_validation_diff(am_id, am_status),
                 _get_parametrization_summary(parent_page, am_status, parametrization, am),
-                _get_final_parametric_texts_component(am_id, am_status),
             ],
             style={'margin-bottom': '100px'},
         ),
@@ -574,9 +405,13 @@ def _make_am_index_component(
     return _build_component_based_on_status(am_id, parent_page, am_status, parametrization, am)
 
 
+def _add_suffix(rank: int, text: str, status: AMStatus) -> str:
+    return text + (' ☑️' if rank < status.step() else '')
+
+
 def _get_nav(status: AMStatus) -> Component:
-    texts = ['1. Initilisation', '2. Structuration', '3. Paramétrage', '4. Relecture']
-    lis = [html.Li(text, className=_deduce_step_classname(i, status)) for i, text in enumerate(texts)]
+    texts = ['1. Initilisation', '2. Structuration', '3. Paramétrage']
+    lis = [html.Li(_add_suffix(i, text, status), className='breadcrumb-item') for i, text in enumerate(texts)]
     return html.Ol(
         className='breadcrumb',
         children=lis,
@@ -649,7 +484,6 @@ def _add_titles_sequences(am_id: str) -> None:
 
 
 def _handle_validate_parametrization(am_id: str) -> None:
-    generate_and_dump_am_version(am_id)
     _add_titles_sequences(am_id)
 
 
@@ -721,7 +555,6 @@ _BUTTON_IDS = [
     _modal_confirm_button_id('parametrization'),
     _modal_confirm_button_id('reset-structure'),
     _VALIDATE_PARAMETRIZATION,
-    _modal_confirm_button_id('validated'),
 ]
 _INPUTS = [Input(id_, 'n_clicks') for id_ in _BUTTON_IDS] + [
     Input(f'{_PREFIX}-am-id', 'children'),
@@ -739,6 +572,8 @@ def _handle_click(*args):
                 _handle_clicked_button(id_, am_id)
             except Exception:  # pylint: disable = broad-except
                 return error_component(traceback.format_exc())
+            if id_ == _VALIDATE_PARAMETRIZATION:
+                return dcc.Location(id='redirect-to-am', href=f'/{Endpoint.AM}/{am_id}')
             return _page_with_spinner(am_id, current_page)
     raise PreventUpdate
 
@@ -754,22 +589,6 @@ def _toggle_modal(n_clicks, n_clicks_close, is_open):
     if n_clicks or n_clicks_close:
         return not is_open
     return False
-
-
-@app.callback(
-    Output(_STRUCTURE_TABS_AM, 'hidden'),
-    Output(_STRUCTURE_TABS_DIFF, 'hidden'),
-    Output(_STRUCTURE_TABS_AM_TAB, 'className'),
-    Output(_STRUCTURE_TABS_DIFF_TAB, 'className'),
-    Input(_STRUCTURE_TABS_AM_TAB, 'n_clicks_timestamp'),
-    Input(_STRUCTURE_TABS_DIFF_TAB, 'n_clicks_timestamp'),
-    prevent_initial_call=True,
-)
-def _structure_tabs_click_handler(click_timestamp_am_tab, click_timestamp_diff_tab):
-    if (click_timestamp_am_tab or 0) > (click_timestamp_diff_tab or 0):
-        return False, True, 'nav-link active', 'nav-link'
-    else:
-        return True, False, 'nav-link', 'nav-link active'
 
 
 parametric_am_list_callbacks(app, _PREFIX)
