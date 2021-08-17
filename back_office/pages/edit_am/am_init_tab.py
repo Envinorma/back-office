@@ -59,7 +59,7 @@ def _buttons(am_page: str) -> Component:
 def _get_am_row(am: ArreteMinisteriel) -> Component:
     am_row = html.Div(
         [
-            html.Div([summary_component(am.to_text(), False)], className='col-3'),
+            html.Div([summary_component(am.to_text(), True, False)], className='col-3'),
             html.Div(am_component(am, [], 3), className='col-9'),
         ],
         className='row',

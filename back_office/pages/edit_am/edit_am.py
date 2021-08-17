@@ -314,7 +314,7 @@ def _add_warning_button(parent_page: str, status: AMStatus) -> Component:
 def _get_am_component_with_toc(am: ArreteMinisteriel) -> Component:
     return html.Div(
         [
-            html.Div([summary_component(am.to_text(), True)], className='col-3'),
+            html.Div([summary_component(am.to_text(), True, True)], className='col-3'),
             html.Div(am_component(am, [], 5), className='col-9'),
         ],
         className='row',
