@@ -58,14 +58,12 @@ def _legifrance_id_form(am_id: Optional[str]) -> Component:
 
 
 def _nor_form(am_metadata: Optional[AMMetadata]) -> Component:
+    default_value = am_metadata.nor if am_metadata else ''
     return dbc.FormGroup(
         [
             html.Label('Numéro NOR', className='form-label'),
             dcc.Input(
-                value=am_metadata.nor if am_metadata else '',
-                placeholder='ex: DEVP0123456A',
-                id=page_ids.NOR_ID,
-                className='form-control',
+                value=default_value, placeholder='ex: DEVP0123456A', id=page_ids.NOR_ID, className='form-control'
             ),
         ]
     )
@@ -82,6 +80,17 @@ def _title(am_metadata: Optional[AMMetadata]) -> Component:
                 className='form-control',
             ),
             dbc.FormText('Format attendu : "Arrêté du jj/mm/yy relatif..." ou "Arrêté du jj/mm/yy fixant..."'),
+        ]
+    )
+
+
+def _nickname(am_metadata: Optional[AMMetadata]) -> Component:
+    default_value = am_metadata.nickname if am_metadata else False
+    return dbc.FormGroup(
+        [
+            html.Label('Surnom', className='form-label'),
+            dcc.Input(value=default_value, placeholder='Ex: GEREP', id=page_ids.NICKNAME, className='form-control'),
+            dbc.FormText('Peut être laissé vide, est utilisé principalement pour les AM transverses.'),
         ]
     )
 
@@ -227,6 +236,7 @@ def _metadata_form(am_metadata: Optional[AMMetadata]) -> Component:
             _warning(am_metadata),
             _nor_form(am_metadata),
             _title(am_metadata),
+            _nickname(am_metadata),
             _is_transverse_checkbox(am_metadata),
             _aida_page_form(am_metadata),
             _classements_form(am_metadata),
@@ -309,6 +319,7 @@ def _add_callbacks(app: dash.Dash) -> None:
         Input(page_ids.SUBMIT_BUTTON, 'n_clicks'),
         State(page_ids.AM_ID, 'data'),
         State(page_ids.TITLE, 'value'),
+        State(page_ids.NICKNAME, 'value'),
         State(page_ids.IS_TRANSVERSE_CHECKBOX, 'checked'),
         State(page_ids.AIDA_PAGE, 'value'),
         State(page_ids.AM_STATE, 'value'),
@@ -324,6 +335,7 @@ def _add_callbacks(app: dash.Dash) -> None:
         _,
         am_id: Optional[str],
         title: Optional[str],
+        nickname: Optional[str],
         is_transverse: bool,
         aida_page: Optional[str],
         am_state: Optional[str],
@@ -338,6 +350,7 @@ def _add_callbacks(app: dash.Dash) -> None:
         return handle_form(
             am_id,
             title,
+            nickname,
             is_transverse,
             aida_page,
             am_state,

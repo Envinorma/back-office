@@ -43,6 +43,7 @@ def _metadata(am: AMMetadata) -> Component:
             _row(('Id', am.cid)),
             _row(('Titre', am.title)),
             _row(('Date de signature', date_)),
+            _row(('Surnom', am.nickname or '')),
             _row(('Transverse', 'OUI' if am.is_transverse else 'NON')),
             _row(('NOR', am.nor or '')),
             _row(('Initialisé via', am.source.value)),
