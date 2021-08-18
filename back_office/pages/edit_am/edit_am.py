@@ -63,6 +63,10 @@ def _extract_am_id_and_operation(pathname: str) -> Tuple[str, Optional[AMOperati
     return pieces[0], AMOperation(pieces[1]), '/'.join(pieces[2:])
 
 
+def _structuration_done(status: AMStatus) -> bool:
+    return status in (AMStatus.PENDING_PARAMETRIZATION, AMStatus.VALIDATED)
+
+
 def _get_edit_structure_button(parent_page: str) -> Component:
     href = f'{parent_page}/{AMOperation.EDIT_STRUCTURE.value}'
     return link_button('Éditer la structure', href, state=ButtonState.NORMAL_LINK)
@@ -271,13 +275,13 @@ def _get_alternative_section_table(
 
 
 def _get_add_condition_button(parent_page: str, status: AMStatus) -> Component:
-    state = ButtonState.NORMAL_LINK if status == status.PENDING_PARAMETRIZATION else ButtonState.HIDDEN
+    state = ButtonState.NORMAL_LINK if _structuration_done(status) else ButtonState.HIDDEN
     href = f'{parent_page}/{AMOperation.ADD_CONDITION.value}'
     return html.Div(link_button('+ Nouveau', href, state), style={'margin-bottom': '35px'})
 
 
 def _get_add_alternative_section_button(parent_page: str, status: AMStatus) -> Component:
-    state = ButtonState.NORMAL_LINK if status == status.PENDING_PARAMETRIZATION else ButtonState.HIDDEN
+    state = ButtonState.NORMAL_LINK if _structuration_done(status) else ButtonState.HIDDEN
     href = f'{parent_page}/{AMOperation.ADD_ALTERNATIVE_SECTION.value}'
     return html.Div(link_button('+ Nouveau', href, state), style={'margin-bottom': '35px'})
 
@@ -299,7 +303,7 @@ def _warnings_table(parametrization: Parametrization, am: ArreteMinisteriel, cur
 
 
 def _add_warning_button(parent_page: str, status: AMStatus) -> Component:
-    state = ButtonState.NORMAL_LINK if status == status.PENDING_PARAMETRIZATION else ButtonState.HIDDEN
+    state = ButtonState.NORMAL_LINK if _structuration_done(status) else ButtonState.HIDDEN
     href = f'{parent_page}/{AMOperation.ADD_WARNING.value}'
     return html.Div(link_button('+ Nouveau', href, state), style={'margin-bottom': '35px'})
 
@@ -318,7 +322,7 @@ def _get_am_component_with_toc(am: ArreteMinisteriel) -> Component:
 def _get_parametrization_summary(
     parent_page: str, status: AMStatus, parametrization: Parametrization, am: Optional[ArreteMinisteriel]
 ) -> Component:
-    if status not in (AMStatus.PENDING_PARAMETRIZATION, AMStatus.VALIDATED):
+    if not _structuration_done(status):
         return html.Div([])
     if not am:
         return error_component('AM introuvable, impossible d\'afficher les paramètres.')
