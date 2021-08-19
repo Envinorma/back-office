@@ -25,6 +25,7 @@ def test_extract_am_metadata():
         'aida_page': '5619',
         'am_state': 'VIGUEUR',
         'am_source': 'LEGIFRANCE',
+        'nor_exists': True,
         'nor_id': 'DEVP0123456A',
         'reason_deleted': None,
         'rubriques': ['5000'],

@@ -69,6 +69,17 @@ def _nor_form(am_metadata: Optional[AMMetadata]) -> Component:
     )
 
 
+def _nor_exists(am_metadata: Optional[AMMetadata]) -> Component:
+    default_value = bool(am_metadata.nor) if am_metadata else True
+    return dbc.FormGroup(
+        [
+            dbc.Checkbox(checked=default_value, id=page_ids.NOR_EXISTS, className='mr-2'),
+            html.Label('Existence du numéro NOR ?', className='form-label'),
+            dbc.FormText('Il existe le plus souvent, mais peut ne pas exister pour les vieux arrêtés.'),
+        ]
+    )
+
+
 def _title(am_metadata: Optional[AMMetadata]) -> Component:
     return dbc.FormGroup(
         [
@@ -234,6 +245,7 @@ def _metadata_form(am_metadata: Optional[AMMetadata]) -> Component:
     return html.Div(
         [
             _warning(am_metadata),
+            _nor_exists(am_metadata),
             _nor_form(am_metadata),
             _title(am_metadata),
             _nickname(am_metadata),
@@ -322,6 +334,7 @@ def _add_callbacks(app: dash.Dash) -> None:
         State(page_ids.AIDA_PAGE, 'value'),
         State(page_ids.AM_STATE, 'value'),
         State(page_ids.AM_SOURCE, 'value'),
+        State(page_ids.NOR_EXISTS, 'checked'),
         State(page_ids.NOR_ID, 'value'),
         State(page_ids.REASON_DELETED, 'value'),
         State(page_ids.rubrique_input_id(cast(int, ALL)), 'value'),
@@ -338,6 +351,7 @@ def _add_callbacks(app: dash.Dash) -> None:
         aida_page: Optional[str],
         am_state: Optional[str],
         am_source: Optional[str],
+        nor_exists: bool,
         nor_id: Optional[str],
         reason_deleted: Optional[str],
         rubriques: List[Optional[str]],
@@ -353,6 +367,7 @@ def _add_callbacks(app: dash.Dash) -> None:
             aida_page,
             am_state,
             am_source,
+            nor_exists,
             nor_id,
             reason_deleted,
             rubriques,

@@ -118,7 +118,11 @@ def _build_source(am_source: Optional[str]) -> AMSource:
         raise FormHandlingError('La source de l\'AM est invalide.')
 
 
-def _build_nor(nor_id: Optional[str]) -> str:
+def _build_nor(nor_exists: bool, nor_id: Optional[str]) -> str:
+    if not nor_exists:
+        if nor_id:
+            raise FormHandlingError("Le numéro NOR doit être laissé vide s'il n'existe pas")
+        return ''
     if nor_id is None:
         raise FormHandlingError('Le numéro NOR doit être défini.')
     if len(nor_id) != 12:
@@ -147,6 +151,7 @@ def _extract_am_metadata(
     aida_page: Optional[str],
     am_state: Optional[str],
     am_source: Optional[str],
+    nor_exists: bool,
     nor_id: Optional[str],
     reason_deleted: Optional[str],
     rubriques: List[Optional[str]],
@@ -161,7 +166,7 @@ def _extract_am_metadata(
         _build_state(am_state),
         _build_date_of_signature(title),
         _build_source(am_source),
-        _build_nor(nor_id),
+        _build_nor(nor_exists, nor_id),
         _build_reason_deleted(am_state, reason_deleted),
         is_transverse,
         nickname=nickname,
@@ -176,6 +181,7 @@ def handle_form(
     aida_page: Optional[str],
     am_state: Optional[str],
     am_source: Optional[str],
+    nor_exists: bool,
     nor_id: Optional[str],
     reason_deleted: Optional[str],
     rubriques: List[Optional[str]],
@@ -191,6 +197,7 @@ def handle_form(
             aida_page,
             am_state,
             am_source,
+            nor_exists,
             nor_id,
             reason_deleted,
             rubriques,
