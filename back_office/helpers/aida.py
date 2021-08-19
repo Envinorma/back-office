@@ -45,9 +45,7 @@ def _parse_aida_text(document_id: str) -> Optional[StructuredText]:
 def _extract_section(text: StructuredText) -> StructuredText:
     if len(text.sections) == 1:
         return text.sections[0]
-    raise NotImplementedError(
-        f'Cannot handle more than one section when extracting text from AIDA. Got {len(text.sections)}'
-    )
+    return text
 
 
 def _remove_sections_before_visa(sections: List[StructuredText]) -> List[StructuredText]:
@@ -96,6 +94,15 @@ def _clean_section(text: StructuredText) -> StructuredText:
     return _remove_empty_alineas(_truncate_unneccessarily_long_titles(new_text))
 
 
+def _build_am(section: StructuredText, am_id: str) -> ArreteMinisteriel:
+    if section.outer_alineas:
+        new_sections = [StructuredText(EnrichedString(''), section.outer_alineas, [], None)] + section.sections
+    else:
+        new_sections = section.sections
+    title = EnrichedString(section.title.text or 'Arrêté du 01/01/01 relatif à...')
+    return ArreteMinisteriel(title=title, sections=new_sections, visa=[], id=am_id)
+
+
 def extract_aida_am(page_id: str, am_id: str) -> Optional[ArreteMinisteriel]:
     text = _parse_aida_text(page_id)
     if not text:
@@ -103,11 +110,3 @@ def extract_aida_am(page_id: str, am_id: str) -> Optional[ArreteMinisteriel]:
     main_section = _extract_section(text)
     clean_section = _clean_section(main_section)
     return _build_am(clean_section, am_id)
-
-
-def _build_am(section: StructuredText, am_id: str) -> ArreteMinisteriel:
-    if section.outer_alineas:
-        new_sections = [StructuredText(EnrichedString(''), section.outer_alineas, [], None)] + section.sections
-    else:
-        new_sections = section.sections
-    return ArreteMinisteriel(title=section.title, sections=new_sections, visa=[], id=am_id)
