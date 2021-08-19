@@ -35,9 +35,8 @@ def _status(status: AMStatus) -> Component:
     return dbc.Badge(status.value, color='success' if status == AMStatus.VALIDATED else 'danger')
 
 
-def _metadata(am: AMMetadata) -> Component:
+def _metadata(am: AMMetadata, status: AMStatus) -> Component:
     date_ = am.date_of_signature.strftime('%d/%m/%y')
-    status = DATA_FETCHER.load_am_status(am.cid)
     return html.Table(
         [
             _row(('Id', am.cid)),
@@ -77,22 +76,23 @@ def _edit_content_button(am_id: str) -> Component:
     )
 
 
-def _reinit_button(am_id: str) -> Component:
-    return dcc.Link(dbc.Button("Éditer le paramétrage", color='primary'), href=f'/edit_am/{am_id}')
+def _reinit_button(am_id: str, am_status: AMStatus) -> Component:
+    button_wording = "Initialiser l'arrêté" if am_status == AMStatus.PENDING_INITIALIZATION else 'Éditer le paramétrage'
+    return dcc.Link(dbc.Button(button_wording, color='primary'), href=f'/edit_am/{am_id}')
 
 
 def _delete_button(am_id: str) -> Component:
     return dcc.Link(dbc.Button("Supprimer l'arrêté", color='danger'), href=f'/{Endpoint.DELETE_AM}/{am_id}')
 
 
-def _edition(am_id: str) -> Component:
+def _edition(am_id: str, am_status: AMStatus) -> Component:
     return html.Div(
         [
             html.H3('Édition'),
             _alert(),
             html.Div(_edit_metadata_button(am_id), className='pb-2'),
             html.Div(_edit_content_button(am_id), className='pb-2'),
-            html.Div(_reinit_button(am_id), className='pb-2'),
+            html.Div(_reinit_button(am_id, am_status), className='pb-2'),
             html.Div(_delete_button(am_id), className='pb-2'),
         ],
         style={'background-color': '#EEEEEE', 'border-radius': '5px'},
@@ -101,10 +101,11 @@ def _edition(am_id: str) -> Component:
 
 
 def _layout(am: AMMetadata) -> Component:
+    status = DATA_FETCHER.load_am_status(am.cid)
     return html.Div(
         [
-            html.Div(className='col-8', children=_metadata(am)),
-            html.Div(className='col-4', children=_edition(am.cid)),
+            html.Div(className='col-8', children=_metadata(am, status)),
+            html.Div(className='col-4', children=_edition(am.cid, status)),
         ],
         className='row',
     )

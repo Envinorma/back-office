@@ -76,7 +76,7 @@ def _aida_form(am_metadata: AMMetadata) -> Component:
 def _am_loaders(am_id: str) -> Component:
     return html.Div(
         [
-            html.Div('Pas d\'arrêté pour le moment.', className='alert alert-primary'),
+            html.Div("Arrêté en attente d'initialisation.", className='alert alert-primary'),
             html.H5('Charger depuis AIDA'),
             _aida_form(ensure_not_none(DATA_FETCHER.load_am_metadata(am_id))),
             dbc.Spinner(html.Div(), id=_AIDA_FORM_OUTPUT),
