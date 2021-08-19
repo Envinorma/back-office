@@ -16,6 +16,7 @@ from envinorma.models import (
 )
 
 from back_office.pages.parametrization_edition.form_handling import FormHandlingError
+from back_office.routing import Endpoint
 from back_office.utils import DATA_FETCHER
 
 from . import create_am_ids as page_ids
@@ -201,6 +202,10 @@ def handle_form(
         return dbc.Alert(f'Erreur dans le formulaire :\n{exc}', color='danger')
     except Exception as exc:
         return dbc.Alert(f'Erreur inattendue :\n{exc}', color='danger')
+    redirect_target = f'/{Endpoint.AM}/{new_am_metadata.cid}'
     return html.Div(
-        [dbc.Alert('Enregistrement réussi.', color='success'), dcc.Location(href='/', id=page_ids.SUCCESS_REDIRECT)]
+        [
+            dbc.Alert('Enregistrement réussi.', color='success'),
+            dcc.Location(href=redirect_target, id=page_ids.SUCCESS_REDIRECT),
+        ]
     )
