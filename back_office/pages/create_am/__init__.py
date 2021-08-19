@@ -85,7 +85,7 @@ def _title(am_metadata: Optional[AMMetadata]) -> Component:
 
 
 def _nickname(am_metadata: Optional[AMMetadata]) -> Component:
-    default_value = am_metadata.nickname if am_metadata else False
+    default_value = am_metadata.nickname if am_metadata else ''
     return dbc.FormGroup(
         [
             html.Label('Surnom', className='form-label'),
@@ -249,24 +249,22 @@ def _metadata_form(am_metadata: Optional[AMMetadata]) -> Component:
     )
 
 
-def _metadata_row(am_id: Optional[str]) -> Component:
+def _metadata_row(am_id: Optional[str], metadata: Optional[AMMetadata]) -> Component:
     if not am_id:
         return html.Div()
-    return _metadata_form(DATA_FETCHER.load_am_metadata(am_id))
+    return _metadata_form(metadata)
 
 
-def _form(am_id: Optional[str]) -> Component:
+def _form(am_id: Optional[str], metadata: Optional[AMMetadata]) -> Component:
     return html.Div(
-        [
-            _legifrance_id_form(am_id),
-            _metadata_row(am_id),
-            dcc.Store(data=am_id, id=page_ids.AM_ID),
-        ]
+        [_legifrance_id_form(am_id), _metadata_row(am_id, metadata), dcc.Store(data=am_id, id=page_ids.AM_ID)]
     )
 
 
 def _page_if_logged(am_id: Optional[str]) -> Component:
-    return html.Div([html.H2('Nouvel arrêté ministériel.'), _form(am_id)])
+    metadata = DATA_FETCHER.load_am_metadata(am_id) if am_id else None
+    title = 'Nouvel arrêté ministériel.' if not metadata else f"Modification de l'arrêté ministériel {am_id}."
+    return html.Div([html.H2(title), _form(am_id, metadata)])
 
 
 def _page(am_id: Optional[str] = None) -> Component:
