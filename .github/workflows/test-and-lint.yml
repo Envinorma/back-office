@@ -22,9 +22,18 @@ jobs:
           pip install -r requirements-dev.txt
       - name: Test with pytest
         run: |
-          pytest --mypy-ignore-missing-imports
+          pytest --mypy-ignore-missing-imports tests
         env:
           PYTHONPATH: .
+          LEGIFRANCE_CLIENT_ID: client_id
+          LEGIFRANCE_CLIENT_SECRET: client_secret
+          STORAGE_AM_DATA_FOLDER: folder
+          STORAGE_PSQL_DSN: postgres://user@adress:port/dbname
+          SLACK_ENRICHMENT_NOTIFICATION_URL: url
+          ENVIRONMENT_TYPE: dev
+          LOGIN_USERNAME: username
+          LOGIN_PASSWORD: password
+          LOGIN_SECRET_KEY: password
 
   lint:
     runs-on: ubuntu-latest
@@ -41,10 +50,10 @@ jobs:
           pip install -r requirements-dev.txt
       - name: Lint with flake8
         run: |
-          flake8 --count --verbose --show-source --statistics
+          flake8 --count --verbose --show-source --statistics back_office
       - name: Check with black
         run: |
-          black . --check -S -l 120
+          black back_office --check -S -l 120
       - name: Check imports are sorted
         run: |
-          isort . --profile black -l 120
+          isort back_office --profile black -l 120
