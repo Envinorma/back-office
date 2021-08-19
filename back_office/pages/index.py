@@ -32,8 +32,7 @@ def _normal_td(content: Union[Component, str, int]) -> Component:
 
 
 def _is_transverse_cell(is_transverse: bool) -> Component:
-    content = '☑️' if is_transverse else ''
-    return html.Td(content, className='table-success' if is_transverse else '')
+    return html.Td('☑️' if is_transverse else '')
 
 
 def _get_row(rank: int, am_state: Optional[AMStatus], am_metadata: AMMetadata, occurrences: int) -> Component:
@@ -51,7 +50,8 @@ def _get_row(rank: int, am_state: Optional[AMStatus], am_metadata: AMMetadata, o
         html.Td('', className=_class_name_from_bool(am_step >= 2)),
         html.Td('', className=_class_name_from_bool(am_step >= 3)),
     ]
-    return html.Tr(rows, className='table-danger' if not am_state else '')
+    style = {'text-decoration': 'line-through'} if am_metadata.state != AMState.VIGUEUR else {}
+    return html.Tr(rows, style=style)
 
 
 def _th(str_: Union[str, Component]) -> Component:
@@ -171,14 +171,14 @@ def _inforced_am_row(
     )
 
 
-def _deleted_am_row(id_to_am_metadata: Dict[str, AMMetadata]) -> Component:
+def _deleted_am_row(id_to_state: Dict[str, AMStatus], id_to_am_metadata: Dict[str, AMMetadata]) -> Component:
     deleted_am = {id_: metadata for id_, metadata in id_to_am_metadata.items() if metadata.state != AMState.VIGUEUR}
     return html.Div(
         [
             html.H2('Arrêtés supprimés ou abrogés.', className='mt-5'),
             html.P('Ces arrêtés ne sont pas exploités dans l\'application envinorma.'),
-            _build_am_table({}, deleted_am, {}),
-        ]
+            _build_am_table(id_to_state, deleted_am, {}),
+        ],
     )
 
 
@@ -188,7 +188,7 @@ def _index_component(
     return html.Div(
         [
             _inforced_am_row(id_to_state, id_to_am_metadata, id_to_occurrences),
-            _deleted_am_row(id_to_am_metadata),
+            _deleted_am_row(id_to_state, id_to_am_metadata),
         ]
     )
 

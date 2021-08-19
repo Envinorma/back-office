@@ -61,7 +61,7 @@ def _am_id(am_id: Optional[str]) -> Component:
 def _diff(am_id: str, date_before: date, date_after: date) -> Component:
     am_before = extract_legifrance_am(am_id, date_before)
     am_after = extract_legifrance_am(am_id, date_after)
-    diff = compute_am_diff(am_before, am_after)
+    diff = compute_am_diff(am_before, am_after, False)
     return diff_component(diff, 'Version de référence', 'Version comparée')
 
 
