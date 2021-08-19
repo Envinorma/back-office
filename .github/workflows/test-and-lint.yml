@@ -23,6 +23,8 @@ jobs:
       - name: Test with pytest
         run: |
           pytest --mypy-ignore-missing-imports
+        env:
+          PYTHONPATH: .
 
   lint:
     runs-on: ubuntu-latest
