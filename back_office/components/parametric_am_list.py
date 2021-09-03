@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, Optional
 
 import dash
 import dash_bootstrap_components as dbc
@@ -6,9 +6,10 @@ import dash_html_components as html
 from dash.dependencies import MATCH, Input, Output, State
 from dash.development.base_component import Component
 from envinorma.models import ArreteMinisteriel
+from envinorma.parametrization.apply_parameter_values import AMWithApplicability
 
 from back_office.components.parametric_am import parametric_am_callbacks, parametric_am_component
-from back_office.components.table import ExtendedComponent, table_component
+from back_office.components.table import table_component
 
 
 def _close_modal_button_id(page_id: str, key: Optional[str]) -> Dict[str, Any]:
@@ -23,11 +24,11 @@ def _modal_trigger_id(page_id: str, key: Optional[str]) -> Dict[str, Any]:
     return {'type': f'{page_id}-param-am-modal-trigger', 'key': key or MATCH}
 
 
-_AMModalGenerator = Callable[[str, str, ArreteMinisteriel], Component]
+_AMModalGenerator = Callable[[str, str, AMWithApplicability], Component]
 
 
 def _get_am_modal_generator(page_id: str) -> _AMModalGenerator:
-    def _am_modal(button_content: str, id_: str, am: ArreteMinisteriel) -> Component:
+    def _am_modal(button_content: str, id_: str, am: AMWithApplicability) -> Component:
         modal = dbc.Modal(
             [
                 dbc.ModalBody(parametric_am_component(am, page_id)),
@@ -45,31 +46,14 @@ def _get_am_modal_generator(page_id: str) -> _AMModalGenerator:
     return _am_modal
 
 
-def _generate_am_row(
-    am: ArreteMinisteriel, _am_modal_generator: _AMModalGenerator, rank: int
-) -> List[ExtendedComponent]:
-    link = _am_modal_generator('Consulter', f'am-{rank}', am)
-    if not am.version_descriptor:
-        raise ValueError('Expecting non null version descriptor.')
-    aed_left_date = str(am.version_descriptor.aed_date.left_value) or ''
-    aed_right_date = str(am.version_descriptor.aed_date.right_value) or ''
-    installation_left_date = str(am.version_descriptor.date_de_mise_en_service.left_value) or ''
-    installation_right_date = str(am.version_descriptor.date_de_mise_en_service.right_value) or ''
-    return [link, am.id or '', aed_left_date, aed_right_date, installation_left_date, installation_right_date]
-
-
 def _generate_am_table(
-    filename_to_am: Dict[str, ArreteMinisteriel], _am_modal_generator: _AMModalGenerator
+    filename_to_am: Dict[str, AMWithApplicability], _am_modal_generator: _AMModalGenerator
 ) -> Component:
-    header = [
-        f'{len(filename_to_am)} versions',
-        'CID',
-        'Date d\'AED postérieure à',
-        'Date d\'AED antérieure à',
-        'Date d\'installation postérieure à',
-        'Date d\'installation antérieure à',
+    header = [f'{len(filename_to_am)} versions', 'CID', 'Nom de la version']
+    rows = [
+        [_am_modal_generator('Consulter', f'am-{i}', am), am.arrete.id or '', filename]
+        for i, (filename, am) in enumerate(sorted(filename_to_am.items()))
     ]
-    rows = [_generate_am_row(am, _am_modal_generator, i) for i, (_, am) in enumerate(sorted(filename_to_am.items()))]
     return table_component([header], rows)
 
 
@@ -89,5 +73,5 @@ def parametric_am_list_callbacks(app: dash.Dash, page_id: str) -> None:
     parametric_am_callbacks(app, page_id)
 
 
-def parametric_am_list_component(name_to_am: Dict[str, ArreteMinisteriel], page_id: str) -> Component:
+def parametric_am_list_component(name_to_am: Dict[str, AMWithApplicability], page_id: str) -> Component:
     return _generate_am_table(name_to_am, _get_am_modal_generator(page_id))

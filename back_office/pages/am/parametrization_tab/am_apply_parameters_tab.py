@@ -11,7 +11,7 @@ from dash.development.base_component import Component
 from dash.exceptions import PreventUpdate
 from envinorma.models import AMMetadata, ArreteMinisteriel, Regime, add_metadata
 from envinorma.parametrization import Parameter, ParameterEnum, ParameterType, Parametrization
-from envinorma.parametrization.apply_parameter_values import apply_parameter_values_to_am
+from envinorma.parametrization.apply_parameter_values import AMWithApplicability, apply_parameter_values_to_am, build_am_with_applicability
 from envinorma.utils import random_id
 
 from back_office.components import error_component
@@ -33,13 +33,13 @@ def _input(parameter_id: Any) -> Dict[str, Any]:
     return {'type': _PREFIX + '-input', 'key': parameter_id}
 
 
-def _am_component(am: ArreteMinisteriel) -> Component:
-    if not am.legifrance_url:
-        am = add_metadata(am, ensure_not_none(DATA_FETCHER.load_am_metadata(am.id or '')))
+def _am_component(am: AMWithApplicability) -> Component:
+    if not am.arrete.legifrance_url:
+        am.arrete = add_metadata(am.arrete, ensure_not_none(DATA_FETCHER.load_am_metadata(am.arrete.id or '')))
     return parametric_am_component(am, _PREFIX)
 
 
-def _am_component_with_toc(am: Optional[ArreteMinisteriel]) -> Component:
+def _am_component_with_toc(am: Optional[AMWithApplicability]) -> Component:
     if not am:
         warning = 'Choisir un jeu de paramètres pour afficher la version correspondante.'
         component = dbc.Alert(warning, color='warning', className='mb-3 mt-3')
@@ -205,12 +205,12 @@ def _callbacks(app: Dash) -> None:
             raise PreventUpdate
         try:
             parameter_values = _extract_parameter_values(parameter_ids, parameter_values)
-            am = apply_parameter_values_to_am(am, parametrization, parameter_values)
+            am_with_applicability = build_am_with_applicability(am, parametrization, parameter_values)
         except _FormError as exc:
             return html.Div(), error_component(str(exc))
         except Exception:
             return html.Div(), error_component(traceback.format_exc())
-        return _am_component(am), dbc.Alert('AM filtré.', color='success', dismissable=True)
+        return _am_component(am_with_applicability), dbc.Alert('AM filtré.', color='success', dismissable=True)
 
     parametric_am_callbacks(app, _PREFIX)
 

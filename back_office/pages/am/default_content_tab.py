@@ -7,7 +7,7 @@ from dash import Dash
 from dash.dependencies import Input, Output, State
 from dash.development.base_component import Component
 from envinorma.models import AMMetadata, ArreteMinisteriel, add_metadata
-from envinorma.parametrization.apply_parameter_values import apply_parameter_values_to_am
+from envinorma.parametrization.apply_parameter_values import AMWithApplicability, apply_parameter_values_to_am, build_am_with_applicability
 
 from back_office.components.parametric_am import parametric_am_callbacks, parametric_am_component
 from back_office.utils import DATA_FETCHER, ensure_not_none
@@ -18,24 +18,24 @@ _TAB = f'{_PREFIX}-tab'
 _AM_ID = f'{_PREFIX}-am-id'
 
 
-def _am_component(am: ArreteMinisteriel, am_metadata: AMMetadata) -> Component:
-    if not am.legifrance_url:
-        am = add_metadata(am, ensure_not_none(am_metadata))
+def _am_component(am: AMWithApplicability, am_metadata: AMMetadata) -> Component:
+    if not am.arrete.legifrance_url:
+        am.arrete = add_metadata(am.arrete, ensure_not_none(am_metadata))
     return parametric_am_component(am, _PREFIX)
 
 
-def _am_component_with_toc(am: Optional[ArreteMinisteriel], am_metadata: AMMetadata) -> Component:
+def _am_component_with_toc(am: Optional[AMWithApplicability], am_metadata: AMMetadata) -> Component:
     if not am:
         return dbc.Alert('404 - AM non initialisé.', color='warning', className='mb-3 mt-3')
     return html.Div(_am_component(am, am_metadata), id=_AM)
 
 
-def _load_default_am(am_id) -> Optional[ArreteMinisteriel]:
+def _load_default_am(am_id) -> Optional[AMWithApplicability]:
     am = DATA_FETCHER.load_most_advanced_am(am_id)
     if not am:
         return None
     parametrization = DATA_FETCHER.load_or_init_parametrization(am_id)
-    return apply_parameter_values_to_am(am, parametrization, {})
+    return build_am_with_applicability(am, parametrization, {})
 
 
 def _main_component(am_id: str) -> Component:

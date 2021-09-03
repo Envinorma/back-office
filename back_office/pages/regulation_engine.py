@@ -1,22 +1,21 @@
 import json
-import math
 import os
 import random
-from datetime import date
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 import dash_bootstrap_components as dbc
 import dash_html_components as html
 from dash import Dash
 from dash.development.base_component import Component
-from envinorma.models import ArreteMinisteriel, DateParameterDescriptor, DetailedClassement, Regime, VersionDescriptor
+from envinorma.models import ArreteMinisteriel, DetailedClassement, Parameter, ParameterEnum, Regime
+from envinorma.parametrization.apply_parameter_values import AMWithApplicability, build_am_with_applicability
 
 from back_office.components import replace_line_breaks
 from back_office.components.table import ExtendedComponent, table_component
 from back_office.routing import Page
-from back_office.utils import ensure_not_none
+from back_office.utils import DATA_FETCHER, ensure_not_none
 
-_FOLDER = '/Users/remidelbouys/EnviNorma/envinorma-web/db/seeds/enriched_arretes'
+_FOLDER = '/Users/remidelbouys/EnviNorma/envinorma-web/db/seeds/ams'
 _CLASSEMENTS_FILENAME = '/Users/remidelbouys/EnviNorma/envinorma-web/db/seeds/classements_idf.csv'
 
 
@@ -26,68 +25,40 @@ def _fetch_all_ams() -> List[ArreteMinisteriel]:
     return [ArreteMinisteriel.from_dict(json.load(open(path))) for path in paths]
 
 
-def _is_default(am: ArreteMinisteriel) -> bool:
-    version_descriptor: VersionDescriptor = ensure_not_none(am.version_descriptor)
-    unknown_date_1 = not version_descriptor.aed_date.unknown_classement_date_version
-    unknown_date_2 = not version_descriptor.date_de_mise_en_service.unknown_classement_date_version
-    return unknown_date_1 and unknown_date_2
+def _prepare_parameters(classements: List[DetailedClassement]) -> Dict[Parameter, Any]:
+    if len(classements) != 1:
+        return {}
+    classement = classements[0]
+    if classement.regime.to_regime() == Regime.A:
+        date_key = ParameterEnum.DATE_AUTORISATION
+    elif classement.regime.to_regime() == Regime.E:
+        date_key = ParameterEnum.DATE_ENREGISTREMENT
+    elif classement.regime.to_regime() == Regime.D:
+        date_key = ParameterEnum.DATE_DECLARATION
+    else:
+        raise ValueError(f'Unsupported regime: {classement.regime.to_regime()}')
+    return {
+        ParameterEnum.RUBRIQUE.value: classement.rubrique,
+        ParameterEnum.REGIME.value: classement.regime,
+        ParameterEnum.ALINEA.value: classement.alinea,
+        ParameterEnum.DATE_INSTALLATION.value: classement.date_mise_en_service,
+        date_key.value: classement.date_autorisation,
+    }
 
 
-def _date_match(parameter: DateParameterDescriptor, date_: Optional[date]) -> bool:
-    if not parameter.is_used_in_parametrization:
-        return True
-    if date_ and parameter.unknown_classement_date_version:
-        return False
-    if not date_:
-        if not parameter.unknown_classement_date_version:
-            return False
-        return True
-    left_value = parameter.left_value.toordinal() if parameter.left_value else -math.inf
-    right_value = parameter.right_value.toordinal() if parameter.right_value else math.inf
-    return left_value <= date_.toordinal() < right_value
+def _apply_parameters(classements: List[DetailedClassement], am: ArreteMinisteriel) -> AMWithApplicability:
+    parameters = _prepare_parameters(classements)
+    parametrization = DATA_FETCHER.load_or_init_parametrization(am.id or '')
+    return build_am_with_applicability(am, parametrization, parameters)
 
 
-def _dates_match(am: ArreteMinisteriel, aed_date: Optional[date], installation_date: Optional[date]) -> bool:
-    version: VersionDescriptor = ensure_not_none(am.version_descriptor)
-    return _date_match(version.aed_date, aed_date) and _date_match(version.date_de_mise_en_service, installation_date)
-
-
-def _choose_correct_version(classement: DetailedClassement, am_versions: List[ArreteMinisteriel]) -> ArreteMinisteriel:
-    if len(am_versions) == 1:
-        version: VersionDescriptor = ensure_not_none(am_versions[0].version_descriptor)
-        assert not version.aed_date.is_used_in_parametrization
-        assert not version.date_de_mise_en_service.is_used_in_parametrization
-    aed_date = classement.date_autorisation
-    installation_date = classement.date_mise_en_service
-    matches = [am for am in am_versions if _dates_match(am, aed_date, installation_date)]
-    if len(matches) != 1:
-        raise ValueError(f'There must be exactly one match, got {len(matches)}')
-    return matches[0]
-
-
-def _deduce_applicable_versions(
-    am_id_to_classements: Dict[str, List[DetailedClassement]],
-    default_ams: Dict[str, ArreteMinisteriel],
-    am_versions: Dict[str, List[ArreteMinisteriel]],
-) -> List[Tuple[ArreteMinisteriel, List[DetailedClassement]]]:
-    applicable_ams: List[Tuple[ArreteMinisteriel, List[DetailedClassement]]] = []
+def _compute_applicable_versions(
+    am_id_to_classements: Dict[str, List[DetailedClassement]], ams: Dict[str, ArreteMinisteriel]
+) -> List[Tuple[AMWithApplicability, List[DetailedClassement]]]:
+    applicable_ams: List[Tuple[AMWithApplicability, List[DetailedClassement]]] = []
     for am_id, classements in am_id_to_classements.items():
-        if len(classements) == 1:
-            am_version = _choose_correct_version(classements[0], am_versions[am_id])
-        else:
-            am_version = default_ams[am_id]
-        applicable_ams.append((am_version, classements))
+        applicable_ams.append((_apply_parameters(classements, ams[am_id]), classements))
     return applicable_ams
-
-
-def _group_by_id(ams: List[ArreteMinisteriel]) -> Dict[str, List[ArreteMinisteriel]]:
-    result: Dict[str, List[ArreteMinisteriel]] = {}
-    for am in ams:
-        am_id: str = ensure_not_none(am.id)
-        if am_id not in result:
-            result[am_id] = []
-        result[am_id].append(am)
-    return result
 
 
 def _am_simple_regime(regime: Regime) -> str:
@@ -106,10 +77,10 @@ def _match(am: ArreteMinisteriel, classement: DetailedClassement) -> bool:
 
 
 def _get_am_id_to_classements(
-    classements: List[DetailedClassement], default_ams: Dict[str, ArreteMinisteriel]
+    classements: List[DetailedClassement], ams: Dict[str, ArreteMinisteriel]
 ) -> Dict[str, List[DetailedClassement]]:
     applicable_pairs = [
-        (classement, am_id) for classement in classements for am_id, am in default_ams.items() if _match(am, classement)
+        (classement, am_id) for classement in classements for am_id, am in ams.items() if _match(am, classement)
     ]
     result: Dict[str, List[DetailedClassement]] = {}
     for classement, am_id in applicable_pairs:
@@ -121,11 +92,10 @@ def _get_am_id_to_classements(
 
 def _compute_arrete_list(
     classements: List[DetailedClassement],
-) -> List[Tuple[ArreteMinisteriel, List[DetailedClassement]]]:
+) -> List[Tuple[AMWithApplicability, List[DetailedClassement]]]:
     all_ams = _fetch_all_ams()
-    default_ams: Dict[str, ArreteMinisteriel] = {ensure_not_none(am.id): am for am in all_ams if _is_default(am)}
-    am_versions = _group_by_id(all_ams)
-    return _deduce_applicable_versions(_get_am_id_to_classements(classements, default_ams), default_ams, am_versions)
+    ams: Dict[str, ArreteMinisteriel] = {ensure_not_none(am.id): am for am in all_ams}
+    return _compute_applicable_versions(_get_am_id_to_classements(classements, ams), ams)
 
 
 def _row_to_classement(record: Dict[str, Any]) -> DetailedClassement:
@@ -194,17 +164,16 @@ def _tooltip(rank: int, warnings: List[str]) -> Component:
     )
 
 
-def _arrete_li(rank: int, arrete: ArreteMinisteriel, classements: List[DetailedClassement]) -> Component:
+def _arrete_li(rank: int, arrete: AMWithApplicability, classements: List[DetailedClassement]) -> Component:
     classement_hints = {f'{cl.rubrique} {cl.regime.value}' for cl in classements}
     to_append = html.Span(' - '.join(classement_hints), style={'color': 'grey'})
-    version: VersionDescriptor = ensure_not_none(arrete.version_descriptor)
     return html.Li(
         [
-            dbc.Checkbox(checked=version.applicable),
+            dbc.Checkbox(checked=arrete.applicable),
             html.Span(' '),
-            arrete.short_title + ' - ',
+            arrete.arrete.short_title + ' - ',
             to_append,
-            _tooltip(rank, version.applicability_warnings),
+            _tooltip(rank, arrete.warnings),
         ]
     )
 
@@ -231,12 +200,11 @@ def _regime_score(regime: Regime) -> int:
     return 0
 
 
-def _am_sort_score(am: ArreteMinisteriel) -> Tuple:
-    version: VersionDescriptor = ensure_not_none(am.version_descriptor)
-    return -version.applicable, -_regime_score(am.classements[0].regime), am.short_title
+def _am_sort_score(am_: AMWithApplicability) -> Tuple:
+    return -am_.applicable, -_regime_score(am_.arrete.classements[0].regime), am_.arrete.short_title
 
 
-def _ams_list(arretes: List[Tuple[ArreteMinisteriel, List[DetailedClassement]]]) -> Component:
+def _ams_list(arretes: List[Tuple[AMWithApplicability, List[DetailedClassement]]]) -> Component:
     sorted_arretes = sorted(arretes, key=lambda x: _am_sort_score(x[0]))
     return html.Ul(
         [_arrete_li(rank, arrete, classements) for rank, (arrete, classements) in enumerate(sorted_arretes)],
@@ -244,7 +212,7 @@ def _ams_list(arretes: List[Tuple[ArreteMinisteriel, List[DetailedClassement]]])
     )
 
 
-def _arretes_component(arretes: List[Tuple[ArreteMinisteriel, List[DetailedClassement]]]) -> Component:
+def _arretes_component(arretes: List[Tuple[AMWithApplicability, List[DetailedClassement]]]) -> Component:
     ams = html.Div([html.H4('Arrêtés ministériels associés'), _ams_list(arretes)], className='col mt-4')
     return html.Div([ams, _ap()], className='row')
 

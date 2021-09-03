@@ -23,8 +23,8 @@ def _get_str_classement(classement: Classement) -> str:
     return f'{classement.rubrique}-{classement.regime.value}'
 
 
-def _get_str_classements(classements: List[Classement]) -> str:
-    return ', '.join([_get_str_classement(classement) for classement in classements])
+def _am_descriptor(md: AMMetadata) -> str:
+    return ', '.join([_get_str_classement(classement) for classement in md.classements] + [md.nickname or ''])
 
 
 def _normal_td(content: Union[Component, str, int]) -> Component:
@@ -35,22 +35,22 @@ def _is_transverse_cell(is_transverse: bool) -> Component:
     return html.Td('☑️' if is_transverse else '')
 
 
-def _get_row(rank: int, am_state: Optional[AMStatus], am_metadata: AMMetadata, occurrences: int) -> Component:
+def _get_row(rank: int, am_state: Optional[AMStatus], am: AMMetadata, occurrences: int) -> Component:
     am_step = am_state.step() if am_state else -1
     rows = [
         _normal_td(rank),
-        _normal_td(dcc.Link(am_metadata.cid, href=f'/{Endpoint.AM}/{am_metadata.cid}')),
-        _normal_td(str(am_metadata.nor)),
-        _normal_td(am_metadata.date_of_signature.strftime('%d/%m/%y')),
-        _is_transverse_cell(am_metadata.is_transverse),
-        _normal_td(_get_str_classements(am_metadata.classements)),
-        _normal_td(am_metadata.source.value),
+        _normal_td(dcc.Link(am.cid, href=f'/{Endpoint.AM}/{am.cid}')),
+        _normal_td(str(am.nor)),
+        _normal_td(am.date_of_signature.strftime('%d/%m/%y')),
+        _is_transverse_cell(am.is_transverse),
+        _normal_td(_am_descriptor(am)),
+        _normal_td(am.source.value),
         _normal_td(occurrences),
         html.Td('', className=_class_name_from_bool(am_step >= 1)),
         html.Td('', className=_class_name_from_bool(am_step >= 2)),
         html.Td('', className=_class_name_from_bool(am_step >= 3)),
     ]
-    style = {'text-decoration': 'line-through'} if am_metadata.state != AMState.VIGUEUR else {}
+    style = {'text-decoration': 'line-through'} if am.state != AMState.VIGUEUR else {}
     return html.Tr(rows, style=style)
 
 

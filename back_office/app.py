@@ -14,7 +14,6 @@ from back_office.app_init import app
 from back_office.config import AM_DATA_FOLDER, LOGIN_SECRET_KEY
 from back_office.helpers.login import UNIQUE_USER, get_current_user
 from back_office.pages.am import PAGE as am_page
-from back_office.pages.am_old import PAGE as am_old_page
 from back_office.pages.create_am import PAGE as create_am_page
 from back_office.pages.delete_am import PAGE as delete_am_page
 from back_office.pages.edit_am.edit_am import router as edit_am_page_router
@@ -84,7 +83,6 @@ def _get_page_heading() -> Component:
 
 
 _ENDPOINT_TO_PAGE: Dict[str, Page] = {
-    Endpoint.AM_OLD.value: am_old_page,
     Endpoint.AM.value: am_page,
     Endpoint.LEGIFRANCE_COMPARE.value: legifrance_compare_page,
     Endpoint.EDIT_AM_CONTENT.value: edit_am_content_page,
