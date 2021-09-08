@@ -66,6 +66,15 @@ Visiter http://127.0.0.1:8050/
 
 ## 7. Déployer sur heroku
 
+- installer la CLI heroku : https://devcenter.heroku.com/articles/heroku-cli
+- s'identifier
+
 ```sh
-make heroku-deploy
+heroku login
+```
+
+- déployer :
+
+```sh
+git push heroku main:master
 ```
