@@ -27,7 +27,6 @@ jobs:
           PYTHONPATH: .
           LEGIFRANCE_CLIENT_ID: client_id
           LEGIFRANCE_CLIENT_SECRET: client_secret
-          STORAGE_AM_DATA_FOLDER: folder
           STORAGE_PSQL_DSN: postgres://user@adress:port/dbname
           SLACK_ENRICHMENT_NOTIFICATION_URL: url
           ENVIRONMENT_TYPE: dev

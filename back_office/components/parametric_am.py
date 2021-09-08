@@ -7,6 +7,7 @@ import dash_html_components as html
 from dash.dependencies import MATCH, Input, Output, State
 from dash.development.base_component import Component
 from envinorma.models import Applicability, ArreteMinisteriel, EnrichedString, StructuredText
+from envinorma.parametrization.apply_parameter_values import AMWithApplicability
 from envinorma.topics.patterns import TopicName
 
 from back_office.components.am_component import table_to_component
@@ -28,7 +29,7 @@ def _get_button_id(page_id: str, key: Optional[str]) -> Dict[str, Any]:
 
 def _alinea_to_component(alinea: EnrichedString) -> Component:
     if alinea.text:
-        return html.P(alinea.text, className='' if alinea.active else 'inactive')
+        return html.P(alinea.text, className='inactive' if alinea.inactive else '')
     if alinea.table:
         return table_to_component(alinea.table, None)
     return html.Span()
@@ -115,20 +116,19 @@ def _external_links(am: ArreteMinisteriel) -> Component:
     return html.Div()
 
 
-def _applicability_warnings(am: ArreteMinisteriel) -> Component:
+def _applicability_warnings(am: AMWithApplicability) -> Component:
     if not am:
         return html.Div()
-    if am.version_descriptor:
-        color = 'danger' if not am.version_descriptor.applicable else 'warning'
-        return html.Div([dbc.Alert(warning, color=color) for warning in am.version_descriptor.applicability_warnings])
-    return html.Div()
+    color = 'danger' if not am.applicable else 'warning'
+    return html.Div([dbc.Alert(warning, color=color) for warning in am.warnings])
 
 
-def _main_component(am: ArreteMinisteriel, text: StructuredText, warnings: List[_Warning], page_id: str) -> Component:
+def _main_component(am: AMWithApplicability, text: StructuredText, warnings: List[_Warning], page_id: str) -> Component:
+    arrete = am.arrete
     return html.Div(
         [
-            html.P(html.I(am.title.text)),
-            _external_links(am),
+            html.P(html.I(arrete.title.text)),
+            _external_links(arrete),
             _applicability_warnings(am),
             _warnings_component(warnings),
             _text_component(text, 0, page_id),
@@ -136,7 +136,7 @@ def _main_component(am: ArreteMinisteriel, text: StructuredText, warnings: List[
     )
 
 
-def _component(am: ArreteMinisteriel, text: StructuredText, warnings: List[_Warning], page_id: str) -> Component:
+def _component(am: AMWithApplicability, text: StructuredText, warnings: List[_Warning], page_id: str) -> Component:
     summary = summary_component(text, True)
     return html.Div(
         [
@@ -216,8 +216,7 @@ def parametric_am_callbacks(app: dash.Dash, page_id: str) -> None:
 
 
 def parametric_am_component(
-    am: ArreteMinisteriel, page_id: str, topics_to_keep: Optional[Set[TopicName]] = None
+    am: AMWithApplicability, page_id: str, topics_to_keep: Optional[Set[TopicName]] = None
 ) -> Component:
-
-    data = _build_component_data(am, topics_to_keep)
-    return _component(data.am, data.text, data.warnings, page_id)
+    data = _build_component_data(am.arrete, topics_to_keep)
+    return _component(AMWithApplicability(data.am, am.applicable, am.warnings), data.text, data.warnings, page_id)

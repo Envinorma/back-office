@@ -42,7 +42,6 @@ ROUTER: MapAdapter = Map(
             f'/{Endpoint.LEGIFRANCE_COMPARE}/id/<am_id>/<date_before>/<date_after>',
             endpoint=Endpoint.LEGIFRANCE_COMPARE.value,
         ),
-        Rule(f'/{Endpoint.AM_OLD}/<am_id>', endpoint=Endpoint.AM_OLD.value),
         Rule(f'/{Endpoint.AM}/<am_id>', endpoint=Endpoint.AM.value),
         Rule(f'/{Endpoint.AM}/<am_id>/<tab>', endpoint=Endpoint.AM.value),
         Rule(f'/{Endpoint.AM_COMPARE}/<am_id>/<compare_with>', endpoint=Endpoint.AM_COMPARE.value),

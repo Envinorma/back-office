@@ -1,4 +1,3 @@
-import os
 from typing import Dict, Optional
 from urllib.parse import quote_plus
 
@@ -11,10 +10,9 @@ from flask_login import LoginManager
 from werkzeug.exceptions import NotFound
 
 from back_office.app_init import app
-from back_office.config import AM_DATA_FOLDER, LOGIN_SECRET_KEY
+from back_office.config import LOGIN_SECRET_KEY
 from back_office.helpers.login import UNIQUE_USER, get_current_user
 from back_office.pages.am import PAGE as am_page
-from back_office.pages.am_old import PAGE as am_old_page
 from back_office.pages.create_am import PAGE as create_am_page
 from back_office.pages.delete_am import PAGE as delete_am_page
 from back_office.pages.edit_am.edit_am import router as edit_am_page_router
@@ -29,17 +27,6 @@ from back_office.pages.regulation_engine import PAGE as regulation_engine_page
 from back_office.pages.topic_detector import PAGE as topic_detector_page
 from back_office.routing import ROUTER, Endpoint, Page
 from back_office.utils import ensure_not_none, split_route
-
-
-def _create_tmp_am_folder():
-    if not os.path.exists(AM_DATA_FOLDER):
-        os.mkdir(AM_DATA_FOLDER)
-    parametric_folder = f'{AM_DATA_FOLDER}/parametric_texts'
-    if not os.path.exists(parametric_folder):
-        os.mkdir(parametric_folder)
-
-
-_create_tmp_am_folder()
 
 
 def _header_link(content: str, href: str, target: Optional[str] = None, hidden: bool = False) -> Component:
@@ -84,7 +71,6 @@ def _get_page_heading() -> Component:
 
 
 _ENDPOINT_TO_PAGE: Dict[str, Page] = {
-    Endpoint.AM_OLD.value: am_old_page,
     Endpoint.AM.value: am_page,
     Endpoint.LEGIFRANCE_COMPARE.value: legifrance_compare_page,
     Endpoint.EDIT_AM_CONTENT.value: edit_am_content_page,
