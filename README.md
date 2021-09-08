@@ -78,3 +78,18 @@ heroku login
 ```sh
 git push heroku main:master
 ```
+
+# Structure
+
+```
+back_office : sources files
+|-- app.py : entry point for server running
+|-- app_init.py : Dash initialization
+|-- config.py : environment variables handling
+|-- routing.py : routing
+|-- utils.py : various utils
+|-- assets : static assets
+|-- components : isolated components shared between pages (am, diff, table,...)
+|-- pages : pages mapped via router
+|-- helpers : various helpers
+```
