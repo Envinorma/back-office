@@ -15,8 +15,8 @@ from back_office.components.table import ExtendedComponent, table_component
 from back_office.routing import Page
 from back_office.utils import DATA_FETCHER, ensure_not_none
 
-_FOLDER = '/Users/remidelbouys/EnviNorma/envinorma-web/db/seeds/ams'
-_CLASSEMENTS_FILENAME = '/Users/remidelbouys/EnviNorma/envinorma-web/db/seeds/classements_idf.csv'
+_FOLDER = '[REPLACE]/envinorma-web/db/seeds/ams'
+_CLASSEMENTS_FILENAME = '[REPLACE]/envinorma-web/db/seeds/classements_idf.csv'
 
 
 def _fetch_all_ams() -> List[ArreteMinisteriel]:
