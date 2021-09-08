@@ -6,8 +6,8 @@ import dash_html_components as html
 from dash import Dash
 from dash.dependencies import Input, Output, State
 from dash.development.base_component import Component
-from envinorma.models import AMMetadata, ArreteMinisteriel, add_metadata
-from envinorma.parametrization.apply_parameter_values import AMWithApplicability, apply_parameter_values_to_am, build_am_with_applicability
+from envinorma.models import AMMetadata, add_metadata
+from envinorma.parametrization.apply_parameter_values import AMWithApplicability, build_am_with_applicability
 
 from back_office.components.parametric_am import parametric_am_callbacks, parametric_am_component
 from back_office.utils import DATA_FETCHER, ensure_not_none

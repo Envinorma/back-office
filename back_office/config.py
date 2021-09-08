@@ -3,7 +3,7 @@ import os
 from configparser import ConfigParser
 from enum import Enum
 from functools import lru_cache
-from typing import Optional, Tuple
+from typing import Optional
 
 
 def _config_filename() -> str:
@@ -42,23 +42,6 @@ def _load_from_file_or_env(key: str) -> str:
     return candidate
 
 
-def get_parametric_ams_folder(am_id: str) -> str:
-    return f'{AM_DATA_FOLDER}/parametric_texts/{am_id}'
-
-
-def generate_parametric_descriptor(version_descriptor: Tuple[str, ...]) -> str:
-    if not version_descriptor:
-        return 'no_date_version'
-    return '_AND_'.join(version_descriptor).replace(' ', '_')
-
-
-def create_folder_and_generate_parametric_filename(am_id: str, version_descriptor: Tuple[str, ...]) -> str:
-    folder_name = get_parametric_ams_folder(am_id)
-    if not os.path.exists(folder_name):
-        os.makedirs(folder_name)
-    return get_parametric_ams_folder(am_id) + '/' + generate_parametric_descriptor(version_descriptor) + '.json'
-
-
 LEGIFRANCE_CLIENT_ID = _load_from_file_or_env('legifrance.client_id')
 LEGIFRANCE_CLIENT_SECRET = _load_from_file_or_env('legifrance.client_secret')
 LOGIN_USERNAME = _load_from_file_or_env('login.username')
@@ -66,7 +49,6 @@ LOGIN_PASSWORD = _load_from_file_or_env('login.password')
 LOGIN_SECRET_KEY = _load_from_file_or_env('login.secret_key')
 SLACK_ENRICHMENT_NOTIFICATION_URL = _load_from_file_or_env('slack.enrichment_notification_url')
 AIDA_URL = 'https://aida.ineris.fr/consultation_document/'
-AM_DATA_FOLDER = _load_from_file_or_env('storage.am_data_folder')
 PSQL_DSN = _load_from_file_or_env('storage.psql_dsn')
 
 

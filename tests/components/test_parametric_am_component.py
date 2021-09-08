@@ -10,7 +10,7 @@ from back_office.components.parametric_am import _extract_text_warnings
 def _get_simple_text(active: bool, modified: bool, sections: Optional[List[StructuredText]] = None) -> StructuredText:
     als = [estr('al 1'), estr('al 2')]
     if not active:
-        als = [replace(al, active=False) for al in als]
+        als = [replace(al, inactive=True) for al in als]
     if not modified:
         return StructuredText(estr('txt'), als, sections or [], Applicability())
     return StructuredText(

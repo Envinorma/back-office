@@ -18,7 +18,6 @@ from envinorma.utils import AMStatus
 from back_office.app_init import app
 from back_office.components import ButtonState, button, error_component, link_button
 from back_office.components.am_component import am_component
-from back_office.components.parametric_am_list import parametric_am_list_callbacks
 from back_office.components.summary_component import summary_component
 from back_office.components.table import ExtendedComponent, table_component
 from back_office.config import ENVIRONMENT_TYPE, EnvironmentType
@@ -593,9 +592,6 @@ def _toggle_modal(n_clicks, n_clicks_close, is_open):
     if n_clicks or n_clicks_close:
         return not is_open
     return False
-
-
-parametric_am_list_callbacks(app, _PREFIX)
 
 
 def router(parent_page: str, route: str) -> Component:
