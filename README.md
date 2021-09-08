@@ -73,7 +73,13 @@ Visiter http://127.0.0.1:8050/
 heroku login
 ```
 
-- déployer :
+- ajouter le dépôt distant Heroku
+
+```sh
+heroku git:remote -a envinorma-back-office
+```
+
+- déployer 
 
 ```sh
 git push heroku main:master
