@@ -25,6 +25,7 @@ from back_office.pages.login import PAGE as login_page
 from back_office.pages.logout import PAGE as logout_page
 from back_office.pages.regulation_engine import PAGE as regulation_engine_page
 from back_office.pages.topic_detector import PAGE as topic_detector_page
+from back_office.pages.upload_ams import PAGE as upload_ams_page
 from back_office.routing import ROUTER, Endpoint, Page
 from back_office.utils import ensure_not_none, split_route
 
@@ -40,6 +41,7 @@ def _header_link(content: str, href: str, target: Optional[str] = None, hidden: 
 
 def _get_nav() -> Component:
     guide_url = 'https://www.notion.so/Guide-d-enrichissement-3874408245dc474ca8181a3d1d50f78e'
+    user_not_auth = not get_current_user().is_authenticated
     nav = html.Span(
         [
             _header_link('Liste des arrêtés', href='/'),
@@ -48,7 +50,8 @@ def _get_nav() -> Component:
                 'Historique Légifrance',
                 href=f'/{Endpoint.LEGIFRANCE_COMPARE}/id/JORFTEXT000034429274/2020-01-20/2021-02-20',
             ),
-            _header_link('Se déconnecter', href=f'/{Endpoint.LOGOUT}', hidden=not get_current_user().is_authenticated),
+            _header_link('Exportation des AMs', href=f'/{Endpoint.UPLOAD_AMS}', hidden=user_not_auth),
+            _header_link('Se déconnecter', href=f'/{Endpoint.LOGOUT}', hidden=user_not_auth),
         ],
         style={'display': 'inline-block'},
     )
@@ -83,6 +86,7 @@ _ENDPOINT_TO_PAGE: Dict[str, Page] = {
     Endpoint.CREATE_AM.value: create_am_page,
     Endpoint.REGULATION_ENGINE.value: regulation_engine_page,
     Endpoint.TOPIC_DETECTOR.value: topic_detector_page,
+    Endpoint.UPLOAD_AMS.value: upload_ams_page,
 }
 
 

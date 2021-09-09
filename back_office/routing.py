@@ -23,6 +23,7 @@ class Endpoint(Enum):
     LOGIN = 'login'
     LOGOUT = 'logout'
     EDIT_TOPICS = 'edit_topics'
+    UPLOAD_AMS = 'upload_ams'
     REGULATION_ENGINE = 'regulation_engine'
     TOPIC_DETECTOR = 'topic_detector'
 
@@ -52,6 +53,7 @@ ROUTER: MapAdapter = Map(
         Rule(f'/{Endpoint.DELETE_AM}/<am_id>', endpoint=Endpoint.DELETE_AM.value),
         Rule(f'/{Endpoint.CREATE_AM}', endpoint=Endpoint.CREATE_AM.value),
         Rule(f'/{Endpoint.CREATE_AM}/<am_id>', endpoint=Endpoint.CREATE_AM.value),
+        Rule(f'/{Endpoint.UPLOAD_AMS}', endpoint=Endpoint.UPLOAD_AMS.value),
         Rule(f'/{Endpoint.EDIT_TOPICS}/<am_id>', endpoint=Endpoint.EDIT_TOPICS.value),
         Rule(f'/{Endpoint.EDIT_AM_CONTENT}/<am_id>', endpoint=Endpoint.EDIT_AM_CONTENT.value),
         Rule(f'/{Endpoint.EDIT_AM_CONTENT}/<am_id>/<with_buttons>', endpoint=Endpoint.EDIT_AM_CONTENT.value),

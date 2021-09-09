@@ -79,7 +79,7 @@ heroku login
 heroku git:remote -a envinorma-back-office
 ```
 
-- déployer 
+- déployer
 
 ```sh
 git push heroku main:master
