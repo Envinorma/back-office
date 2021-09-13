@@ -21,7 +21,7 @@ class _TextAreaHandlingError(Exception):
     pass
 
 
-def _count_prefix_hashtags(line: str) -> int:
+def count_prefix_hashtags(line: str) -> int:
     for i, char in enumerate(line):
         if char != '#':
             return i
@@ -29,7 +29,7 @@ def _count_prefix_hashtags(line: str) -> int:
 
 
 def _build_title(line: str) -> Title:
-    nb_hastags = _count_prefix_hashtags(line)
+    nb_hastags = count_prefix_hashtags(line)
     return Title(line[nb_hastags:].strip(), level=nb_hastags)
 
 

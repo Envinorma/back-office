@@ -13,6 +13,7 @@ from back_office.helpers.texts import get_truncated_str
 from back_office.utils import DATA_FETCHER
 
 from .. import ids
+from .save_callback import count_prefix_hashtags
 
 
 def _extract_lines_with_potential_id(html: BeautifulSoup) -> List[Tuple[str, Optional[str]]]:
@@ -26,15 +27,10 @@ def _extract_lines_with_potential_id(html: BeautifulSoup) -> List[Tuple[str, Opt
     return strs
 
 
-def _count_prefix_hashtags(line: str) -> int:
-    for i, char in enumerate(line):
-        if char != '#':
-            return i
-    return len(line)
 
 
 def _make_title(line: str, id_: Optional[str]) -> Title:
-    nb_hashtags = _count_prefix_hashtags(line)
+    nb_hashtags = count_prefix_hashtags(line)
     trunc_title = line[nb_hashtags:].strip()
     return Title(trunc_title, level=nb_hashtags, id=id_)
 
