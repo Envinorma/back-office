@@ -1,6 +1,6 @@
 from typing import List, Optional, Tuple
 
-import dash_html_components as html
+from dash import html
 from dash.development.base_component import Component
 from envinorma.models import ArreteMinisteriel, StructuredText, Table
 from envinorma.models.text_elements import Cell, Row, TextElement, Title

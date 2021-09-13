@@ -2,11 +2,8 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from typing import Any, List, Optional, Tuple, Union, cast
 
-import dash
 import dash_bootstrap_components as dbc
-import dash_core_components as dcc
-import dash_html_components as html
-from dash.dependencies import ALL, MATCH, Input, Output, State
+from dash import ALL, MATCH, Dash, Input, Output, State, dcc, html
 from dash.development.base_component import Component
 from envinorma.models import Regime, ensure_rubrique
 from envinorma.parametrization import (
@@ -227,7 +224,7 @@ class ConditionFormValues:
     merge: str
 
 
-def _add_callbacks(app: dash.Dash):
+def _add_callbacks(app: Dash):
     @app.callback(
         Output(page_ids.condition_block(cast(int, MATCH)), 'children'),
         Input(page_ids.delete_condition_button(cast(int, MATCH)), 'n_clicks'),

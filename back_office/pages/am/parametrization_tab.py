@@ -5,9 +5,7 @@ from collections import Counter
 from typing import Any, Dict, List, Tuple, Union
 
 import dash
-import dash_html_components as html
-from dash import Dash
-from dash.dependencies import ALL, Input, Output, State
+from dash import ALL, Dash, Input, Output, State, html
 from dash.development.base_component import Component
 from envinorma.models import AMMetadata, ArreteMinisteriel, Ints, StructuredText
 from envinorma.parametrization.models import (

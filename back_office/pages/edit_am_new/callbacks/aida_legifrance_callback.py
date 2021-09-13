@@ -2,7 +2,7 @@ import traceback
 from typing import List, Tuple, cast
 
 import dash
-from dash.dependencies import Input, Output, State
+from dash import Input, Output, State
 from dash.development.base_component import Component
 from envinorma.models import ArreteMinisteriel
 
@@ -58,4 +58,4 @@ def add_callbacks(app: dash.Dash) -> None:
             error_message = str(exc)
         except Exception:  # pylint: disable=broad-except
             error_message = f'Erreur inattendue: \n{traceback.format_exc()}'
-        return '', error_component(error_message), cast(Component, dash.no_update)
+        return '', error_component(error_message), cast(list, dash.no_update)

@@ -3,10 +3,7 @@ from datetime import date
 from typing import Optional, Tuple
 
 import dash_bootstrap_components as dbc
-import dash_core_components as dcc
-import dash_html_components as html
-from dash import Dash
-from dash.dependencies import Input, Output, State
+from dash import Dash, Input, Output, State, dcc, html
 from dash.development.base_component import Component
 from dash.exceptions import PreventUpdate
 from leginorma import LegifranceRequestError

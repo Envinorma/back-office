@@ -1,10 +1,7 @@
 from typing import List, Optional, cast
 
-import dash
 import dash_bootstrap_components as dbc
-import dash_core_components as dcc
-import dash_html_components as html
-from dash.dependencies import ALL, MATCH, Input, Output, State
+from dash import ALL, MATCH, Dash, Input, Output, State, dcc, html
 from dash.development.base_component import Component
 from envinorma.models import AMMetadata, AMSource, AMState, Classement, Regime
 from envinorma.utils import AIDA_URL
@@ -46,7 +43,7 @@ def _legifrance_id_form(am_id: Optional[str]) -> Component:
         ],
         className='input-group',
     )
-    return dbc.FormGroup(
+    return html.Div(
         [
             html.Label('Identifiant Légifrance', className='form-label'),
             input_,
@@ -57,7 +54,7 @@ def _legifrance_id_form(am_id: Optional[str]) -> Component:
 
 def _nor_form(am_metadata: Optional[AMMetadata]) -> Component:
     default_value = am_metadata.nor if am_metadata else ''
-    return dbc.FormGroup(
+    return html.Div(
         [
             html.Label('Numéro NOR', className='form-label'),
             dcc.Input(
@@ -69,7 +66,7 @@ def _nor_form(am_metadata: Optional[AMMetadata]) -> Component:
 
 def _nor_exists(am_metadata: Optional[AMMetadata]) -> Component:
     default_value = bool(am_metadata.nor) if am_metadata else True
-    return dbc.FormGroup(
+    return html.Div(
         [
             dbc.Checkbox(checked=default_value, id=page_ids.NOR_EXISTS, className='mr-2'),
             html.Label('Existence du numéro NOR ?', className='form-label'),
@@ -79,7 +76,7 @@ def _nor_exists(am_metadata: Optional[AMMetadata]) -> Component:
 
 
 def _title(am_metadata: Optional[AMMetadata]) -> Component:
-    return dbc.FormGroup(
+    return html.Div(
         [
             html.Label('Titre', className='form-label'),
             dcc.Textarea(
@@ -95,7 +92,7 @@ def _title(am_metadata: Optional[AMMetadata]) -> Component:
 
 def _nickname(am_metadata: Optional[AMMetadata]) -> Component:
     default_value = am_metadata.nickname if am_metadata else ''
-    return dbc.FormGroup(
+    return html.Div(
         [
             html.Label('Surnom', className='form-label'),
             dcc.Input(value=default_value, placeholder='Ex: GEREP', id=page_ids.NICKNAME, className='form-control'),
@@ -106,7 +103,7 @@ def _nickname(am_metadata: Optional[AMMetadata]) -> Component:
 
 def _is_transverse_checkbox(am_metadata: Optional[AMMetadata]) -> Component:
     default_value = am_metadata.is_transverse if am_metadata else False
-    return dbc.FormGroup(
+    return html.Div(
         [
             dbc.Checkbox(checked=default_value, id=page_ids.IS_TRANSVERSE_CHECKBOX, className='mr-2'),
             html.Label('AM transverse', className='form-label'),
@@ -116,7 +113,7 @@ def _is_transverse_checkbox(am_metadata: Optional[AMMetadata]) -> Component:
 
 def _aida_page_form(am_metadata: Optional[AMMetadata]) -> Component:
     default_value = am_metadata.aida_page if am_metadata else ''
-    return dbc.FormGroup(
+    return html.Div(
         [
             html.Label('Page AIDA', className='form-label'),
             dcc.Input(value=default_value, placeholder='ex: 1234', id=page_ids.AIDA_PAGE, className='form-control'),
@@ -168,12 +165,12 @@ def _classement_row(classement: Optional[Classement], rank: int) -> Component:
         _alinea_input(rank, classement.alinea if classement else None),
         _delete_classement_button(rank),
     ]
-    return dbc.FormGroup(classement_elements, style={'display': 'flex'}, id=page_ids.classement_row_id(rank))
+    return html.Div(classement_elements, style={'display': 'flex'}, id=page_ids.classement_row_id(rank))
 
 
 def _classements_form(am_metadata: Optional[AMMetadata]) -> Component:
     classements = am_metadata.classements if am_metadata else [None]
-    return dbc.FormGroup(
+    return html.Div(
         [
             html.Label('Classements', className='form-label'),
             html.Div(
@@ -189,7 +186,7 @@ def _classements_form(am_metadata: Optional[AMMetadata]) -> Component:
 
 def _am_state(am_metadata: Optional[AMMetadata]) -> Component:
     default_value = am_metadata.state.value if am_metadata else None
-    return dbc.FormGroup(
+    return html.Div(
         [
             html.Label('Statut', className='form-label'),
             dcc.Dropdown(value=default_value, options=_AM_STATE_OPTIONS, id=page_ids.AM_STATE, placeholder='Statut'),
@@ -206,7 +203,7 @@ def _am_state(am_metadata: Optional[AMMetadata]) -> Component:
 
 def _am_source(am_metadata: Optional[AMMetadata]) -> Component:
     default_value = am_metadata.source.value if am_metadata else None
-    return dbc.FormGroup(
+    return html.Div(
         [
             html.Label('Source', className='form-label'),
             dcc.Dropdown(value=default_value, options=_AM_SOURCE_OPTIONS, id=page_ids.AM_SOURCE, placeholder='Source'),
@@ -220,7 +217,7 @@ def _am_source(am_metadata: Optional[AMMetadata]) -> Component:
 
 def _reason_deleted(am_metadata: Optional[AMMetadata]) -> Component:
     default_value = am_metadata.reason_deleted if am_metadata else None
-    return dbc.FormGroup(
+    return html.Div(
         [
             html.Label('Raison de suppression ', className='form-label'),
             dbc.Input(value=default_value, type='text', id=page_ids.REASON_DELETED),
@@ -281,7 +278,7 @@ def _page(am_id: Optional[str] = None) -> Component:
     return _page_if_logged(am_id)
 
 
-def _add_callbacks(app: dash.Dash) -> None:
+def _add_callbacks(app: Dash) -> None:
     @app.callback(
         Output(page_ids.SUBMIT_LEGIFRANCE_OUTPUT, 'children'),
         Input(page_ids.SUBMIT_LEGIFRANCE_ID, 'n_clicks'),

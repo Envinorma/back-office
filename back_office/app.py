@@ -1,9 +1,7 @@
 from typing import Any, Dict, Mapping, Tuple
 from urllib.parse import quote_plus
 
-import dash_core_components as dcc
-import dash_html_components as html
-from dash.dependencies import Input, Output
+from dash import Input, Output, dcc, html
 from dash.development.base_component import Component
 from flask.app import Flask
 from flask_login import LoginManager

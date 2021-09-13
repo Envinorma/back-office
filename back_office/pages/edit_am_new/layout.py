@@ -1,9 +1,8 @@
 from typing import Optional
 
 import dash_bootstrap_components as dbc
-import dash_core_components as dcc
 import dash_editable_div as ded
-import dash_html_components as html
+from dash import dcc, html
 from dash.development.base_component import Component
 from envinorma.models import AMMetadata, ArreteMinisteriel
 

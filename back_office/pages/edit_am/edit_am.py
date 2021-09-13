@@ -3,9 +3,7 @@ import warnings
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import dash_bootstrap_components as dbc
-import dash_core_components as dcc
-import dash_html_components as html
-from dash.dependencies import MATCH, Input, Output, State
+from dash import MATCH, Input, Output, State, dcc, html
 from dash.development.base_component import Component
 from dash.exceptions import PreventUpdate
 from envinorma.io.markdown import extract_markdown_text
@@ -186,7 +184,7 @@ def _get_inapplicable_sections_table(
         _application_condition_to_row(row, am, rank, current_page)
         for rank, row in enumerate(parametrization.inapplicable_sections)
     ]
-    return table_component([header], rows, 'table-sm')
+    return table_component([header], rows, 'table-sm')  # type: ignore
 
 
 def _get_target_section_id(path: Ints, am: ArreteMinisteriel) -> Optional[str]:
@@ -267,7 +265,7 @@ def _get_alternative_section_table(
         _alternative_section_to_row(row, am, rank, current_page)
         for rank, row in enumerate(parametrization.alternative_sections)
     ]
-    return table_component([header], rows, class_name='table-sm')
+    return table_component([header], rows, class_name='table-sm')  # type: ignore
 
 
 def _get_add_condition_button(parent_page: str, status: AMStatus) -> Component:
@@ -295,7 +293,7 @@ def _warning_to_row(warning: AMWarning, am: ArreteMinisteriel, rank: int, curren
 def _warnings_table(parametrization: Parametrization, am: ArreteMinisteriel, current_page: str) -> Component:
     header = ['#', 'Paragraphe visé', 'Contenu', '', '']
     rows = [_warning_to_row(row, am, rank, current_page) for rank, row in enumerate(parametrization.warnings)]
-    return table_component([header], rows, class_name='table-sm')
+    return table_component([header], rows, class_name='table-sm')  # type: ignore
 
 
 def _add_warning_button(parent_page: str, status: AMStatus) -> Component:

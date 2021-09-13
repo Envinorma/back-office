@@ -2,8 +2,7 @@ import traceback
 from typing import List, Optional
 
 from bs4 import BeautifulSoup
-from dash.dash import Dash
-from dash.dependencies import Input, Output, State
+from dash import Dash, Input, Output, State
 from dash.development.base_component import Component
 from dash.exceptions import PreventUpdate
 from envinorma.io.parse_html import extract_text_elements

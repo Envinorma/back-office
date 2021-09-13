@@ -1,7 +1,6 @@
 from typing import Optional
 
-import dash_core_components as dcc
-import dash_html_components as html
+from dash import dcc, html
 from dash.development.base_component import Component
 
 from back_office.helpers.login import get_current_user

@@ -2,8 +2,7 @@ from collections import Counter
 from typing import Any, Dict, List, Optional, Union
 
 import dash_bootstrap_components as dbc
-import dash_core_components as dcc
-import dash_html_components as html
+from dash import dcc, html
 from dash.development.base_component import Component
 from envinorma.models import AMMetadata, AMState, Classement
 from envinorma.utils import AMStatus

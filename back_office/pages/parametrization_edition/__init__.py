@@ -1,6 +1,6 @@
 from typing import List, Optional, Tuple, Union
 
-import dash_html_components as html
+from dash import html
 from dash.development.base_component import Component
 from envinorma.models import ArreteMinisteriel
 from envinorma.parametrization import (

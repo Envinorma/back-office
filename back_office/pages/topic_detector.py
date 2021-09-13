@@ -5,10 +5,7 @@ from typing import Any, Dict, List, Optional
 
 import dash
 import dash_bootstrap_components as dbc
-import dash_core_components as dcc
-import dash_html_components as html
-from dash import Dash
-from dash.dependencies import ALL, Input, Output
+from dash import ALL, Dash, Input, Output, dcc, html
 from dash.development.base_component import Component
 from envinorma.models.arrete_ministeriel import ArreteMinisteriel
 from envinorma.models.structured_text import StructuredText

@@ -1,12 +1,8 @@
 import json
 from typing import Any, Dict, List, Optional, Union
 
-import dash
 import dash_bootstrap_components as dbc
-import dash_core_components as dcc
-import dash_html_components as html
-from dash import Dash
-from dash.dependencies import ALL, Input, Output, State
+from dash import ALL, Dash, Input, Output, State, callback_context, dcc, html
 from dash.development.base_component import Component
 from envinorma.models import Annotations, ArreteMinisteriel, StructuredText
 from envinorma.topics.patterns import TopicName
@@ -187,7 +183,7 @@ def _callbacks(app: Dash) -> None:
         prevent_initial_call=True,
     )
     def _edit_topic(_, dropdown_value, am_structure, am_id):
-        section_ids = _extract_trigger_keys(dash.callback_context.triggered)
+        section_ids = _extract_trigger_keys(callback_context.triggered)
         target_section = _keep_deepest_id(section_ids, am_structure)
         try:
             am = _edit_am_topic(am_id, target_section, dropdown_value)

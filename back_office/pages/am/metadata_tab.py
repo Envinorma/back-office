@@ -1,13 +1,12 @@
 from typing import List, Tuple
 
 import dash_bootstrap_components as dbc
-import dash_core_components as dcc
-import dash_html_components as html
-from dash import Dash
+from dash import Dash, dcc, html
 from dash.development.base_component import Component
 from envinorma.models import AMMetadata, AMState, Classement
 from envinorma.utils import AMStatus
 
+from back_office.components import ExtendedComponent
 from back_office.helpers.login import get_current_user
 from back_office.routing import Endpoint
 from back_office.utils import DATA_FETCHER
@@ -23,7 +22,7 @@ def _get_str_classements(classements: List[Classement]) -> str:
     return ', '.join([_get_str_classement(classement) for classement in classements])
 
 
-def _row(contents: Tuple[str, str]) -> Component:
+def _row(contents: Tuple[str, ExtendedComponent]) -> Component:
     return html.Tr([html.Td(contents[0], className='font-weight-bold'), html.Td(contents[1])])
 
 

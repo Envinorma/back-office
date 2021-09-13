@@ -2,10 +2,11 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Set, Union
 
 import dash_bootstrap_components as dbc
-import dash_core_components as dcc
-import dash_html_components as html
+from dash import dcc, html
 from dash.development.base_component import Component
 from typing_extensions import Literal
+
+from .table import ExtendedComponent  # noqa: F401
 
 
 def replace_line_breaks(message: str) -> List[Union[str, Component]]:

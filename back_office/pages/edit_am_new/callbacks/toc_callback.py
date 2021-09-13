@@ -1,9 +1,7 @@
 from typing import List, Optional, Tuple
 
-import dash_html_components as html
 from bs4 import BeautifulSoup
-from dash.dash import Dash
-from dash.dependencies import Input, Output
+from dash import Dash, Input, Output, callback, html
 from dash.development.base_component import Component
 from envinorma.io.parse_html import extract_text_elements
 from envinorma.models.text_elements import Title
@@ -25,8 +23,6 @@ def _extract_lines_with_potential_id(html: BeautifulSoup) -> List[Tuple[str, Opt
         elif isinstance(element, str):
             strs.append((element, None))
     return strs
-
-
 
 
 def _make_title(line: str, id_: Optional[str]) -> Title:
@@ -64,7 +60,7 @@ def _toc_from_am(am_id: str) -> Component:
 
 
 def add_callbacks(app: Dash) -> None:
-    @app.callback(
+    @callback(
         Output(ids.TOC_COMPONENT, 'children'), [Input(ids.TEXT_AREA_COMPONENT, 'value'), Input(ids.AM_ID, 'data')]
     )
     def _(text_area_content, am_id):

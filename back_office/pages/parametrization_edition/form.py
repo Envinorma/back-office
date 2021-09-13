@@ -2,11 +2,8 @@ import json
 import traceback
 from typing import List, Optional, Tuple, Type, cast
 
-import dash
 import dash_bootstrap_components as dbc
-import dash_core_components as dcc
-import dash_html_components as html
-from dash.dependencies import ALL, Input, Output, State
+from dash import ALL, Dash, Input, Output, State, dcc, html
 from dash.development.base_component import Component
 from envinorma.models import Ints, StructuredText, dump_path
 from envinorma.parametrization import (
@@ -304,7 +301,7 @@ def _handle_delete(n_clicks: int, operation_str: str, am_id: str, parameter_rank
     )
 
 
-def _add_callbacks(app: dash.Dash):
+def _add_callbacks(app: Dash):
     @app.callback(
         Output('param-edition-upsert-output', 'children'),
         Input('submit-val-param-edition', 'n_clicks'),
