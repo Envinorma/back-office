@@ -23,9 +23,6 @@ from back_office.components.table import ExtendedComponent, table_component
 from back_office.config import ENVIRONMENT_TYPE, EnvironmentType
 from back_office.helpers.slack import SlackChannel, send_slack_notification
 from back_office.helpers.texts import get_traversed_titles, safe_get_section
-from back_office.pages.edit_am.am_init_edition import router as am_init_router
-from back_office.pages.edit_am.am_init_tab import am_init_tab
-from back_office.pages.edit_am.structure_edition import router as structure_router
 from back_office.pages.parametrization_edition import router as parametrization_router
 from back_office.routing import Endpoint
 from back_office.utils import DATA_FETCHER, AMOperation
@@ -377,21 +374,12 @@ def _get_structure_validation_diff(am_id: str, status: AMStatus) -> Component:
     return _structure_tabs(initial_am, DATA_FETCHER.load_structured_am(am_id))
 
 
-def _get_initial_am_component(
-    am_id: str, am_status: AMStatus, am: Optional[ArreteMinisteriel], am_page: str
-) -> Component:
-    if am_status != AMStatus.PENDING_INITIALIZATION:
-        return html.Div()
-    return am_init_tab(am_id, am, am_page)
-
-
 def _build_component_based_on_status(
     am_id: str, parent_page: str, am_status: AMStatus, parametrization: Parametrization, am: Optional[ArreteMinisteriel]
 ) -> Component:
     children = [
         html.Div(
             [
-                _get_initial_am_component(am_id, am_status, am, parent_page),
                 _get_structure_validation_diff(am_id, am_status),
                 _get_parametrization_summary(parent_page, am_status, parametrization, am),
             ],
@@ -444,12 +432,8 @@ def _get_body_component(
 
 
 def _get_subpage_content(route: str, operation_id: AMOperation) -> Component:
-    if operation_id == AMOperation.INIT:
-        return am_init_router(route)
     if operation_id in (AMOperation.ADD_ALTERNATIVE_SECTION, AMOperation.ADD_CONDITION, AMOperation.ADD_WARNING):
         return parametrization_router(route)
-    if operation_id == AMOperation.EDIT_STRUCTURE:
-        return structure_router(route)
     raise NotImplementedError(f'Operation {operation_id} not handled')
 
 

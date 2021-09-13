@@ -217,7 +217,7 @@ def _arretes_component(arretes: List[Tuple[AMWithApplicability, List[DetailedCla
     return html.Div([ams, _ap()], className='row')
 
 
-def layout() -> Component:
+def _layout() -> Component:
     all_classements = _classements()
     classements = random.sample(all_classements, k=15)
     arretes = _compute_arrete_list(classements)
@@ -230,4 +230,4 @@ def _callbacks(app: Dash) -> None:
     ...
 
 
-PAGE = Page(layout, _callbacks)
+PAGE = Page(_layout, _callbacks, False)

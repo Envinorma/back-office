@@ -12,4 +12,4 @@ def _layout() -> Component:
     return dcc.Location(pathname='/', id='back_home')
 
 
-PAGE = Page(_layout, None)
+PAGE = Page(_layout, None, False)

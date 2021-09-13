@@ -1,24 +1,21 @@
 import traceback
 from typing import List
-from urllib.parse import quote_plus
 
 import dash_bootstrap_components as dbc
-import dash_core_components as dcc
 import dash_html_components as html
 from dash import Dash
 from dash.dependencies import Input, Output
 from dash.development.base_component import Component
 
-from back_office.helpers.login import get_current_user
 from back_office.helpers.upload_ams import upload_ams
-from back_office.routing import Endpoint, Page
+from back_office.routing import Page
 from back_office.utils import generate_id
 
 _BUTTON = generate_id('upload-ams', 'trigger-upload')
 _EXPORT_OUTPUT = generate_id('upload-ams', 'export-output')
 
 
-def _layout_if_logged() -> Component:
+def _layout() -> Component:
     return html.Div(
         [
             html.H3('Exporter la base des arrêtés ministériels'),
@@ -31,13 +28,6 @@ def _layout_if_logged() -> Component:
 
 def _replace_linebreaks(text: str) -> List[Component]:
     return [html.P(line) for line in text.split('\n')]
-
-
-def _layout() -> Component:
-    if not get_current_user().is_authenticated:
-        origin = quote_plus(f'/{Endpoint.UPLOAD_AMS}')
-        return dcc.Location(pathname=f'/{Endpoint.LOGIN}/{origin}', id='login-redirect')
-    return _layout_if_logged()
 
 
 def _callbacks(app: Dash) -> None:
@@ -57,4 +47,4 @@ def _callbacks(app: Dash) -> None:
             ]
 
 
-PAGE = Page(_layout, _callbacks)
+PAGE = Page(_layout, _callbacks, True)

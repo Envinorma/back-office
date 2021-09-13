@@ -97,7 +97,7 @@ def _intro() -> Component:
     return html.Div('Thèmes associés par le détecteur de thèmes à chaque AM de la base.', className='mb-3')
 
 
-def layout() -> Component:
+def _layout() -> Component:
     return html.Div([html.H3('Détecteur de thèmes.'), _intro(), _topics()])
 
 
@@ -108,4 +108,4 @@ def _callbacks(app: Dash) -> None:
         return _topics_tabs(batch_index)
 
 
-PAGE = Page(layout, _callbacks)
+PAGE = Page(_layout, _callbacks, True)

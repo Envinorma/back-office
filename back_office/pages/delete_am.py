@@ -104,4 +104,4 @@ def _add_callbacks(app: dash.Dash) -> None:
         return _handle_submit_deletion(am_id, delete_reason or '')
 
 
-PAGE = Page(_page, _add_callbacks)
+PAGE = Page(_page, _add_callbacks, True)

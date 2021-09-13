@@ -88,4 +88,4 @@ def _callbacks(app: Dash):
         return no_update, ''
 
 
-PAGE = Page(_layout, _callbacks)
+PAGE = Page(_layout, _callbacks, False)

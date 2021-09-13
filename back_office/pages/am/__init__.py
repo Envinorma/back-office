@@ -73,4 +73,4 @@ def _callbacks(app: Dash) -> None:
         return f'/{Endpoint.AM}/{am_id}/{active_tab}'
 
 
-PAGE = Page(_layout, _callbacks)
+PAGE = Page(_layout, _callbacks, False)

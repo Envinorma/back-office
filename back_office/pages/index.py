@@ -199,4 +199,4 @@ def _layout() -> Component:
     return _index_component(id_to_state, id_to_metadata, AM_ID_TO_NB_CLASSEMENTS)
 
 
-PAGE = Page(_layout, None)
+PAGE = Page(_layout, None, False)

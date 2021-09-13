@@ -104,4 +104,4 @@ def _callbacks(app_: Dash) -> None:
         return _build_component(*args)
 
 
-PAGE = Page(_layout, _callbacks)
+PAGE = Page(_layout, _callbacks, False)

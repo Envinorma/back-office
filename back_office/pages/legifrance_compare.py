@@ -118,7 +118,7 @@ def _callbacks(app: Dash) -> None:
             return error_component(f'Erreur inattendue:\n{traceback.format_exc()}'), html.Div()
 
 
-def layout(
+def _layout(
     am_id: Optional[str] = None, date_before: Optional[str] = None, date_after: Optional[str] = None
 ) -> Component:
     return html.Div(
@@ -130,4 +130,4 @@ def layout(
     )
 
 
-PAGE = Page(layout, _callbacks)
+PAGE = Page(_layout, _callbacks, False)

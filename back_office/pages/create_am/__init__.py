@@ -1,5 +1,4 @@
 from typing import List, Optional, cast
-from urllib.parse import quote_plus
 
 import dash
 import dash_bootstrap_components as dbc
@@ -10,7 +9,6 @@ from dash.development.base_component import Component
 from envinorma.models import AMMetadata, AMSource, AMState, Classement, Regime
 from envinorma.utils import AIDA_URL
 
-from back_office.helpers.login import get_current_user
 from back_office.routing import Endpoint, Page
 from back_office.utils import DATA_FETCHER
 
@@ -280,9 +278,6 @@ def _page_if_logged(am_id: Optional[str]) -> Component:
 
 
 def _page(am_id: Optional[str] = None) -> Component:
-    if not get_current_user().is_authenticated:
-        origin = quote_plus(f'/{Endpoint.CREATE_AM}/{am_id}' if am_id else f'/{Endpoint.CREATE_AM}')
-        return dcc.Location(pathname=f'/{Endpoint.LOGIN}/{origin}', id='login-redirect')
     return _page_if_logged(am_id)
 
 
@@ -376,4 +371,4 @@ def _add_callbacks(app: dash.Dash) -> None:
         )
 
 
-PAGE = Page(_page, _add_callbacks)
+PAGE = Page(_page, _add_callbacks, True)

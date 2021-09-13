@@ -1,6 +1,5 @@
 import json
 from typing import Any, Dict, List, Optional, Union
-from urllib.parse import quote_plus
 
 import dash
 import dash_bootstrap_components as dbc
@@ -13,7 +12,6 @@ from envinorma.models import Annotations, ArreteMinisteriel, StructuredText
 from envinorma.topics.patterns import TopicName
 from envinorma.topics.simple_topics import SIMPLE_ONTOLOGY
 
-from back_office.helpers.login import get_current_user
 from back_office.routing import Endpoint, Page
 from back_office.utils import DATA_FETCHER, ensure_not_none, generate_id
 
@@ -118,9 +116,6 @@ def _layout_if_logged(am_id: str) -> Component:
 
 
 def _layout(am_id: str) -> Component:
-    if not get_current_user().is_authenticated:
-        origin = quote_plus(f'/{Endpoint.EDIT_TOPICS}/{am_id}')
-        return dcc.Location(pathname=f'/{Endpoint.LOGIN}/{origin}', id='login-redirect')
     return _layout_if_logged(am_id)
 
 
@@ -202,4 +197,4 @@ def _callbacks(app: Dash) -> None:
         return dbc.Alert(f'Section {target_section} affectée au thème {dropdown_value}.'), _am_topics(am)
 
 
-PAGE = Page(_layout, _callbacks)
+PAGE = Page(_layout, _callbacks, True)
