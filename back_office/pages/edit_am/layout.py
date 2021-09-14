@@ -54,16 +54,25 @@ def _am_component(am: Optional[ArreteMinisteriel]) -> Component:
     return _get_main_row(am)
 
 
-def _save_button() -> Component:
-    return html.Button('Enregistrer', id=ids.SAVE_BUTTON, className='btn btn-primary save-button')
+def _diff_modal() -> Component:
+    modal_components = [
+        dbc.ModalHeader('Vérifier les différences et enregistrer'),
+        dbc.ModalBody(html.Div('BONJOUR', id=ids.DIFF)),
+        dbc.ModalFooter(html.Button('Valider', id=ids.SAVE_BUTTON, className='btn btn-primary')),
+    ]
+    modal = dbc.Modal(modal_components, id=ids.MODAL, size='xl')
+    trigger_button = html.Button(
+        'Consulter les différences et enregistrer', id=ids.DIFF_BUTTON, className='btn btn-primary save-button'
+    )
+    return html.Div([trigger_button, modal])
 
 
 def _save_output() -> Component:
-    return html.Div('', id=ids.SAVE_OUTPUT)
+    return html.Div('', id=ids.SAVE_OUTPUT, className='aida-output')
 
 
 def _save() -> Component:
-    return html.Div([_save_button(), _save_output()], className='save-zone')
+    return html.Div(_diff_modal(), className='save-zone')
 
 
 def _aida_output() -> Component:
@@ -73,7 +82,7 @@ def _aida_output() -> Component:
 def _page_content(am_id: str, am: Optional[ArreteMinisteriel]) -> Component:
     am_id_store = dcc.Store(id=ids.AM_ID, data=am_id)
     component = _am_component(am)
-    return html.Div([component, _save(), _aida_output(), am_id_store])
+    return html.Div([component, _save(), _aida_output(), _save_output(), am_id_store])
 
 
 def layout(am_id: str) -> Component:

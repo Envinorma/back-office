@@ -20,8 +20,6 @@ from envinorma.parametrization import (
     ensure_mono_conditions,
 )
 
-from back_office.app_init import app
-
 from . import page_ids
 
 _CONDITION_VARIABLES = page_ids.CONDITION_VARIABLES
@@ -224,7 +222,7 @@ class ConditionFormValues:
     merge: str
 
 
-def _add_callbacks(app: Dash):
+def add_callbacks(app: Dash):
     @app.callback(
         Output(page_ids.condition_block(cast(int, MATCH)), 'children'),
         Input(page_ids.delete_condition_button(cast(int, MATCH)), 'n_clicks'),
@@ -244,6 +242,3 @@ def _add_callbacks(app: Dash):
         new_rank = (max([cast(int, id_['rank']) for id_ in ids]) + 1) if ids else 0
         new_block = _condition_block(rank=new_rank, default_condition=None)
         return children + [new_block]
-
-
-_add_callbacks(app)

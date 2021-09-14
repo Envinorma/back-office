@@ -73,8 +73,6 @@ def write_json(obj: Union[Dict, List], filename: str, safe: bool = False, pretty
 
 
 class AMOperation(Enum):
-    INIT = 'init'
-    EDIT_STRUCTURE = 'edit_structure'
     ADD_CONDITION = 'add_condition'
     ADD_ALTERNATIVE_SECTION = 'add_alternative_section'
     ADD_WARNING = 'ADD_WARNING'

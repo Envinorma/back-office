@@ -8,7 +8,6 @@ from dash.development.base_component import Component
 from envinorma.models import Ints, StructuredText, dump_path, load_path
 from envinorma.parametrization import AlternativeSection, AMWarning, InapplicableSection, ParameterObject
 
-from back_office.app_init import app
 from back_office.helpers.texts import get_section, safe_get_section, safe_get_subsection
 from back_office.pages.parametrization_edition import page_ids
 from back_office.utils import DATA_FETCHER, AMOperation
@@ -212,7 +211,7 @@ class TargetSectionFormValues:
     target_alineas: List[List[int]]
 
 
-def _add_callbacks(app: dash.Dash):
+def add_callbacks(app: dash.Dash):
     @app.callback(
         Output(page_ids.new_text(cast(int, MATCH)), 'children'),
         Input(page_ids.target_section(cast(int, MATCH)), 'value'),
@@ -259,6 +258,3 @@ def _add_callbacks(app: dash.Dash):
     )
     def delete_section(_):
         return html.Div()
-
-
-_add_callbacks(app)

@@ -1,5 +1,4 @@
 from envinorma.models import ArreteMinisteriel, EnrichedString, StructuredText
-from envinorma.utils import AMStatus
 
 from back_office.helpers.texts import get_section_title, get_traversed_titles
 
@@ -32,8 +31,3 @@ def test_get_traversed_titles():
     assert get_traversed_titles((0, 2), am) is None
     assert get_traversed_titles((0, 0, 0), am) == ['All sections', 'Section 1', 'Section 1.1']
     assert get_traversed_titles((0, 0, 0, 1, 1), am) is None
-
-
-def test_am_status_step():
-    for element in AMStatus:
-        assert isinstance(element.step(), int)

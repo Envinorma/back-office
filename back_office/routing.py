@@ -6,19 +6,15 @@ import dash
 from werkzeug.routing import Map, MapAdapter, Rule
 
 
-def build_am_page(am_id: str) -> str:  # TODO : remove
-    return '/edit_am/' + am_id
-
-
 class Endpoint(Enum):
     INDEX = ''
     AM = 'am'
     AM_OLD = 'am_old'
     AM_COMPARE = 'am_compare'
     LEGIFRANCE_COMPARE = 'compare'
+    EDIT_PARAMETRIZATION = 'edit_parametrization'
     EDIT_AM = 'edit_am'
-    EDIT_AM_NEW = 'edit_am_new'
-    EDIT_AM_CONTENT = 'edit_am_content'
+    EDIT_AM_CONTENT = 'edit_am_content'  # TODO: potentially deprecate
     DELETE_AM = 'delete_am'
     CREATE_AM = 'create_am'
     LOGIN = 'login'
@@ -27,6 +23,9 @@ class Endpoint(Enum):
     UPLOAD_AMS = 'upload_ams'
     REGULATION_ENGINE = 'regulation_engine'
     TOPIC_DETECTOR = 'topic_detector'
+    ADD_WARNING = 'add_warning'
+    ADD_CONDITION = 'add_condition'
+    ADD_ALTERNATIVE_SECTION = 'add_alternative_section'
 
     def __repr__(self):
         return self.value
@@ -46,10 +45,14 @@ _ENDPOINT_TO_ROUTES: Dict[Endpoint, List[str]] = {
     Endpoint.CREATE_AM: ['/{}', '/{}/<am_id>'],
     Endpoint.UPLOAD_AMS: ['/{}'],
     Endpoint.EDIT_TOPICS: ['/{}/<am_id>'],
-    Endpoint.EDIT_AM_NEW: ['/{}/<am_id>'],
+    Endpoint.EDIT_PARAMETRIZATION: ['/{}/<am_id>'],
+    Endpoint.EDIT_AM: ['/{}/<am_id>'],
     Endpoint.EDIT_AM_CONTENT: ['/{}/<am_id>', '/{}/<am_id>/<with_buttons>'],
     Endpoint.REGULATION_ENGINE: ['/{}'],
     Endpoint.TOPIC_DETECTOR: ['/{}'],
+    Endpoint.ADD_WARNING: ['/{}/<am_id>', '/{}/<am_id>/<rank>', '/{}/<am_id>/<rank>/copy'],
+    Endpoint.ADD_CONDITION: ['/{}/<am_id>', '/{}/<am_id>/<rank>', '/{}/<am_id>/<rank>/copy'],
+    Endpoint.ADD_ALTERNATIVE_SECTION: ['/{}/<am_id>', '/{}/<am_id>/<rank>', '/{}/<am_id>/<rank>/copy'],
 }
 
 ROUTER: MapAdapter = Map(

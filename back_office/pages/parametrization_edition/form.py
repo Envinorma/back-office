@@ -16,15 +16,18 @@ from envinorma.parametrization import (
 )
 from envinorma.parametrization.exceptions import ParametrizationError
 
-from back_office.app_init import app
 from back_office.helpers.texts import get_truncated_str
-from back_office.routing import build_am_page
+from back_office.routing import Endpoint
 from back_office.utils import DATA_FETCHER, AMOperation
 
-from . import page_ids
-from .condition_form import ConditionFormValues, condition_form
+from . import page_ids as ids
+from .condition_form import ConditionFormValues
+from .condition_form import add_callbacks as condition_form_callbacks
+from .condition_form import condition_form
 from .form_handling import FormHandlingError, extract_and_upsert_new_parameter
-from .target_sections_form import DropdownOptions, TargetSectionFormValues, target_section_form
+from .target_sections_form import DropdownOptions, TargetSectionFormValues
+from .target_sections_form import add_callbacks as target_section_form_callbacks
+from .target_sections_form import target_section_form
 
 
 def _title(operation: AMOperation, is_edition: bool, rank: int) -> str:
@@ -34,8 +37,6 @@ def _title(operation: AMOperation, is_edition: bool, rank: int) -> str:
         return f'Paragraphe alternatif n°{rank}' if is_edition else 'Nouveau paragraphe alternatif'
     if operation == AMOperation.ADD_WARNING:
         return f'Avertissement n°{rank}' if is_edition else 'Nouvel avertissement'
-    if operation in (AMOperation.EDIT_STRUCTURE, AMOperation.INIT):
-        raise ValueError(f'Unexpected operation {operation}')
     raise NotImplementedError(f'Unhandled operation {operation}')
 
 
@@ -43,11 +44,13 @@ def _main_title(operation: AMOperation, is_edition: bool, rank: int) -> Componen
     return html.H4(_title(operation, is_edition, rank))
 
 
-def _go_back_button(parent_page: str) -> Component:
-    return dcc.Link(html.Button('Retour', className='btn btn-link center'), href=parent_page)
+def _go_back_button(am_id: str) -> Component:
+    return dcc.Link(
+        html.Button('Retour', className='btn btn-link center'), href=f'/{Endpoint.EDIT_PARAMETRIZATION}/{am_id}'
+    )
 
 
-def _buttons(parent_page: str) -> Component:
+def _buttons(am_id: str) -> Component:
     return html.Div(
         [
             html.Button(
@@ -57,7 +60,7 @@ def _buttons(parent_page: str) -> Component:
                 style={'margin-right': '5px'},
                 n_clicks=0,
             ),
-            _go_back_button(parent_page),
+            _go_back_button(am_id),
         ],
         style={'margin-top': '10px', 'margin-bottom': '100px'},
     )
@@ -78,9 +81,7 @@ def _get_source_form(
         default_value = dump_path(_extract_source(loaded_parameter).reference.section.path)
     else:
         default_value = ''
-    dropdown_source = dcc.Dropdown(
-        value=default_value, options=options, id=page_ids.SOURCE, style={'font-size': '0.8em'}
-    )
+    dropdown_source = dcc.Dropdown(value=default_value, options=options, id=ids.SOURCE, style={'font-size': '0.8em'})
     return html.Div([html.H5('Source'), dropdown_source], hidden=operation == AMOperation.ADD_WARNING)
 
 
@@ -97,7 +98,7 @@ def _get_delete_button(is_edition: bool) -> Component:
 
 def _add_block_button(is_edition: bool) -> Component:
     txt = 'Ajouter un paragraphe'
-    btn = html.Button(txt, className='mt-2 mb-2 btn btn-light btn-sm', id=page_ids.ADD_TARGET_BLOCK)
+    btn = html.Button(txt, className='mt-2 mb-2 btn btn-light btn-sm', id=ids.ADD_TARGET_BLOCK)
     return html.Div(btn, hidden=is_edition)
 
 
@@ -110,7 +111,7 @@ def _get_target_section_block(
 ) -> Component:
     blocks = [target_section_form(operation, text_title_options, loaded_parameter, text, 0, is_edition)]
     return html.Div(
-        [html.H5('Paragraphes visés'), html.Div(blocks, id=page_ids.TARGET_BLOCKS), _add_block_button(is_edition)]
+        [html.H5('Paragraphes visés'), html.Div(blocks, id=ids.TARGET_BLOCKS), _add_block_button(is_edition)]
     )
 
 
@@ -143,7 +144,7 @@ def _extract_warning_default_value(loaded_parameter: Optional[ParameterObject]) 
 def _warning_content_text_area(loaded_parameter: Optional[ParameterObject]) -> Component:
     default_value = _extract_warning_default_value(loaded_parameter)
     return dcc.Textarea(
-        id=page_ids.WARNING_CONTENT,
+        id=ids.WARNING_CONTENT,
         className='form-control',
         value=default_value,
         style={'min-height': '300px'},
@@ -180,9 +181,9 @@ def _fields(
 
 
 def _make_form(
+    am_id: str,
     text_title_options: DropdownOptions,
     operation: AMOperation,
-    parent_page: str,
     loaded_parameter: Optional[ParameterObject],
     destination_rank: int,
     text: StructuredText,
@@ -192,8 +193,8 @@ def _make_form(
             _fields(text_title_options, operation, loaded_parameter, destination_rank, text),
             html.Div(id='param-edition-upsert-output', className='mt-2'),
             html.Div(id='param-edition-delete-output'),
-            dcc.Store(id=page_ids.DROPDOWN_OPTIONS, data=json.dumps(text_title_options)),
-            _buttons(parent_page),
+            dcc.Store(id=ids.DROPDOWN_OPTIONS, data=json.dumps(text_title_options)),
+            _buttons(am_id),
         ]
     )
 
@@ -223,9 +224,9 @@ def _get_instructions() -> Component:
 
 
 def form(
+    am_id: str,
     text: StructuredText,
     operation: AMOperation,
-    parent_page: str,
     loaded_parameter: Optional[ParameterObject],
     destination_rank: int,
 ) -> Component:
@@ -233,7 +234,7 @@ def form(
     return html.Div(
         [
             _get_instructions(),
-            _make_form(dropdown_values, operation, parent_page, loaded_parameter, destination_rank, text),
+            _make_form(am_id, dropdown_values, operation, loaded_parameter, destination_rank, text),
         ]
     )
 
@@ -270,7 +271,7 @@ def _handle_submit(
     return html.Div(
         [
             dbc.Alert('Enregistrement réussi.', color='success'),
-            dcc.Location(pathname=build_am_page(am_id), id='param-edition-success-redirect'),
+            dcc.Location(pathname=f'/{Endpoint.EDIT_PARAMETRIZATION}/{am_id}', id='param-edition-success-redirect'),
         ]
     )
 
@@ -296,28 +297,31 @@ def _handle_delete(n_clicks: int, operation_str: str, am_id: str, parameter_rank
     return html.Div(
         [
             dbc.Alert('Suppression réussie.', color='success'),
-            dcc.Location(pathname=build_am_page(am_id), id='param-edition-success-redirect'),
+            dcc.Location(pathname=f'/{Endpoint.EDIT_PARAMETRIZATION}/{am_id}', id='param-edition-success-redirect'),
         ]
     )
 
 
-def _add_callbacks(app: Dash):
+def add_callbacks(app: Dash):
+    condition_form_callbacks(app)
+    target_section_form_callbacks(app)
+
     @app.callback(
         Output('param-edition-upsert-output', 'children'),
         Input('submit-val-param-edition', 'n_clicks'),
-        State(page_ids.AM_OPERATION, 'children'),
-        State(page_ids.AM_ID, 'children'),
-        State(page_ids.PARAMETER_RANK, 'children'),
-        State(page_ids.SOURCE, 'value'),
-        State(page_ids.WARNING_CONTENT, 'value'),
-        State(page_ids.new_text_title(cast(int, ALL)), 'value'),
-        State(page_ids.new_text_content(cast(int, ALL)), 'value'),
-        State(page_ids.target_section(cast(int, ALL)), 'value'),
-        State(page_ids.target_alineas(cast(int, ALL)), 'value'),
-        State(page_ids.condition_parameter(cast(int, ALL)), 'value'),
-        State(page_ids.condition_operation(cast(int, ALL)), 'value'),
-        State(page_ids.condition_value(cast(int, ALL)), 'value'),
-        State(page_ids.CONDITION_MERGE, 'value'),
+        State(ids.AM_OPERATION, 'children'),
+        State(ids.AM_ID, 'children'),
+        State(ids.PARAMETER_RANK, 'children'),
+        State(ids.SOURCE, 'value'),
+        State(ids.WARNING_CONTENT, 'value'),
+        State(ids.new_text_title(cast(int, ALL)), 'value'),
+        State(ids.new_text_content(cast(int, ALL)), 'value'),
+        State(ids.target_section(cast(int, ALL)), 'value'),
+        State(ids.target_alineas(cast(int, ALL)), 'value'),
+        State(ids.condition_parameter(cast(int, ALL)), 'value'),
+        State(ids.condition_operation(cast(int, ALL)), 'value'),
+        State(ids.condition_value(cast(int, ALL)), 'value'),
+        State(ids.CONDITION_MERGE, 'value'),
         prevent_initial_call=True,
     )
     def handle_submit(
@@ -355,19 +359,19 @@ def _add_callbacks(app: Dash):
     @app.callback(
         Output('param-edition-delete-output', 'children'),
         Input('param-edition-delete-button', 'n_clicks'),
-        State(page_ids.AM_OPERATION, 'children'),
-        State(page_ids.AM_ID, 'children'),
-        State(page_ids.PARAMETER_RANK, 'children'),
+        State(ids.AM_OPERATION, 'children'),
+        State(ids.AM_ID, 'children'),
+        State(ids.PARAMETER_RANK, 'children'),
     )
     def handle_delete(n_clicks, operation, am_id, parameter_rank):
         return _handle_delete(n_clicks, operation, am_id, parameter_rank)
 
     @app.callback(
-        Output(page_ids.TARGET_BLOCKS, 'children'),
-        Input(page_ids.ADD_TARGET_BLOCK, 'n_clicks'),
-        State(page_ids.TARGET_BLOCKS, 'children'),
-        State(page_ids.AM_OPERATION, 'children'),
-        State(page_ids.DROPDOWN_OPTIONS, 'data'),
+        Output(ids.TARGET_BLOCKS, 'children'),
+        Input(ids.ADD_TARGET_BLOCK, 'n_clicks'),
+        State(ids.TARGET_BLOCKS, 'children'),
+        State(ids.AM_OPERATION, 'children'),
+        State(ids.DROPDOWN_OPTIONS, 'data'),
         prevent_initial_call=True,
     )
     def add_block(n_clicks, children, operation_str, options_str):
@@ -375,6 +379,3 @@ def _add_callbacks(app: Dash):
             AMOperation(operation_str), json.loads(options_str), None, None, n_clicks + 1, False
         )
         return children + [new_block]
-
-
-_add_callbacks(app)

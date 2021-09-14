@@ -2,7 +2,7 @@ import traceback
 from typing import List, Optional
 
 from bs4 import BeautifulSoup
-from dash import Dash, Input, Output, State
+from dash import Dash, Input, Output, State, dcc, html
 from dash.development.base_component import Component
 from dash.exceptions import PreventUpdate
 from envinorma.io.parse_html import extract_text_elements
@@ -11,6 +11,7 @@ from envinorma.models.text_elements import TextElement, Title
 from envinorma.structure import build_structured_text
 
 from back_office.components import error_component, success_component
+from back_office.routing import Endpoint
 from back_office.utils import DATA_FETCHER
 
 from .. import ids
@@ -72,7 +73,7 @@ def _create_new_text(new_am_str: str) -> StructuredText:
     return new_text
 
 
-def _structure_text(am_id: str, new_am: str) -> List[StructuredText]:
+def extract_text_from_html(new_am: str) -> List[StructuredText]:
     new_text = _create_new_text(new_am)
     return new_text.sections
 
@@ -81,7 +82,7 @@ def _parse_and_save_text(am_id: str, new_am: str):
     am = DATA_FETCHER.load_most_advanced_am(am_id)
     if not am:
         raise _TextAreaHandlingError(f'L\'arrete ministériel {am_id} n\'existe pas.')
-    am.sections = _structure_text(am_id, new_am)
+    am.sections = extract_text_from_html(new_am)
     DATA_FETCHER.upsert_structured_am(am_id, am)
 
 
@@ -95,7 +96,12 @@ def _extract_form_value_and_save_text(am_id: str, text_area_content: str) -> Com
             f'Erreur inattendue pendant l\'enregistrement. Détails de l\'erreur:\n{traceback.format_exc()}'
         )
         return component
-    return success_component('Enregistrement réussi.')
+    return html.Div(
+        [
+            success_component('Enregistrement réussi.'),
+            dcc.Location(id='redirect-save-callback', pathname=f'/{Endpoint.AM}/{am_id}'),
+        ]
+    )
 
 
 def add_callbacks(app: Dash) -> None:
@@ -109,5 +115,4 @@ def add_callbacks(app: Dash) -> None:
     def _save_callback(_, text_area_value: Optional[str], am_id: str) -> Component:
         if not text_area_value:
             raise PreventUpdate
-        print('yoyo <table><tr><td>TABLEAU</td></tr></table>')
         return _extract_form_value_and_save_text(am_id, text_area_value)

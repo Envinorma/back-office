@@ -4,12 +4,10 @@ import dash_bootstrap_components as dbc
 from dash import Dash, dcc, html
 from dash.development.base_component import Component
 from envinorma.models import AMMetadata, AMState, Classement
-from envinorma.utils import AMStatus
 
 from back_office.components import ExtendedComponent
 from back_office.helpers.login import get_current_user
 from back_office.routing import Endpoint
-from back_office.utils import DATA_FETCHER
 
 
 def _get_str_classement(classement: Classement) -> str:
@@ -30,11 +28,7 @@ def _state(state: AMState) -> Component:
     return dbc.Badge(state.value, color='success' if state == AMState.VIGUEUR else 'danger')
 
 
-def _status(status: AMStatus) -> Component:
-    return dbc.Badge(status.value, color='success' if status == AMStatus.VALIDATED else 'danger')
-
-
-def _metadata(am: AMMetadata, status: AMStatus) -> Component:
+def _metadata(am: AMMetadata) -> Component:
     date_ = am.date_of_signature.strftime('%d/%m/%y')
     return html.Table(
         [
@@ -46,7 +40,6 @@ def _metadata(am: AMMetadata, status: AMStatus) -> Component:
             _row(('NOR', am.nor or '')),
             _row(('Initialisé via', am.source.value)),
             _row(('État', _state(am.state))),
-            _row(('Statut', _status(status))),
             _row(('Classements', _get_str_classements(am.classements))),
         ],
         className='table table-bordered',
@@ -69,29 +62,28 @@ def _edit_metadata_button(am_id: str) -> Component:
     return dcc.Link(dbc.Button('Modifier les metadonnées', color='primary'), href=f'/{Endpoint.CREATE_AM}/{am_id}')
 
 
+def _edit_parameters_button(am_id: str) -> Component:
+    button_wording = 'Éditer le paramétrage'
+    return dcc.Link(dbc.Button(button_wording, color='primary'), href=f'/{Endpoint.EDIT_PARAMETRIZATION}/{am_id}')
+
+
 def _edit_content_button(am_id: str) -> Component:
-    return dcc.Link(
-        dbc.Button("Modifier le contenu de l'arrêté", color='primary'), href=f'/{Endpoint.EDIT_AM_CONTENT}/{am_id}'
-    )
-
-
-def _reinit_button(am_id: str, am_status: AMStatus) -> Component:
-    button_wording = "Initialiser l'arrêté" if am_status == AMStatus.PENDING_INITIALIZATION else 'Éditer le paramétrage'
-    return dcc.Link(dbc.Button(button_wording, color='primary'), href=f'/edit_am/{am_id}')
+    button_wording = "Éditer le contenu de l'arrêté"
+    return dcc.Link(dbc.Button(button_wording, color='primary'), href=f'/{Endpoint.EDIT_AM}/{am_id}')
 
 
 def _delete_button(am_id: str) -> Component:
     return dcc.Link(dbc.Button("Supprimer l'arrêté", color='danger'), href=f'/{Endpoint.DELETE_AM}/{am_id}')
 
 
-def _edition(am_id: str, am_status: AMStatus) -> Component:
+def _edition(am_id: str) -> Component:
     return html.Div(
         [
             html.H3('Édition'),
             _alert(),
             html.Div(_edit_metadata_button(am_id), className='pb-2'),
             html.Div(_edit_content_button(am_id), className='pb-2'),
-            html.Div(_reinit_button(am_id, am_status), className='pb-2'),
+            html.Div(_edit_parameters_button(am_id), className='pb-2'),
             html.Div(_delete_button(am_id), className='pb-2'),
         ],
         style={'background-color': '#EEEEEE', 'border-radius': '5px'},
@@ -100,11 +92,10 @@ def _edition(am_id: str, am_status: AMStatus) -> Component:
 
 
 def _layout(am: AMMetadata) -> Component:
-    status = DATA_FETCHER.load_am_status(am.cid)
     return html.Div(
         [
-            html.Div(className='col-8', children=_metadata(am, status)),
-            html.Div(className='col-4', children=_edition(am.cid, status)),
+            html.Div(className='col-8', children=_metadata(am)),
+            html.Div(className='col-4', children=_edition(am.cid)),
         ],
         className='row',
     )
