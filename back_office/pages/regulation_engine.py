@@ -168,7 +168,7 @@ def _arrete_li(rank: int, arrete: AMWithApplicability, classements: List[Detaile
     to_append = html.Span(' - '.join(classement_hints), style={'color': 'grey'})
     return html.Li(
         [
-            dbc.Checkbox(checked=arrete.applicable),
+            dbc.Checkbox(value=arrete.applicable),
             html.Span(' '),
             arrete.arrete.short_title + ' - ',
             to_append,
