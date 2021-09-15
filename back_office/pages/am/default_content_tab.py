@@ -3,7 +3,8 @@ from typing import Optional
 import dash_bootstrap_components as dbc
 from dash import Dash, Input, Output, State, dcc, html
 from dash.development.base_component import Component
-from envinorma.models import AMMetadata, add_metadata
+from envinorma.models import AMMetadata
+from envinorma.enriching import add_metadata
 from envinorma.parametrization.apply_parameter_values import AMWithApplicability, build_am_with_applicability
 
 from back_office.components.parametric_am import parametric_am_callbacks, parametric_am_component

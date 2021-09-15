@@ -7,17 +7,18 @@ from dash.development.base_component import Component
 from dash.exceptions import PreventUpdate
 from envinorma.io.parse_html import extract_text_elements
 from envinorma.models import StructuredText
+from envinorma.models.lost_topic import LostTopic
 from envinorma.models.text_elements import TextElement, Title
 from envinorma.structure import build_structured_text
 
-from back_office.components import error_component, success_component
+from back_office.components import alert, error_component, success_component
 from back_office.routing import Endpoint
 from back_office.utils import DATA_FETCHER
 
 from .. import ids
 
 
-class _TextAreaHandlingError(Exception):
+class TextAreaHandlingError(Exception):
     pass
 
 
@@ -65,11 +66,19 @@ def _build_new_elements(am_soup: BeautifulSoup) -> List[TextElement]:
     return _remove_hashtags_from_elements(elements)
 
 
+def _ensure_no_outer_alineas(new_text: StructuredText) -> None:
+    if new_text.outer_alineas:
+        raise TextAreaHandlingError(
+            'Les premiers alinéas ne doivent pas être placés avant le titre. '
+            'Enlever les alinéas ou ajouter un titre.'
+        )
+
+
 def _create_new_text(new_am_str: str) -> StructuredText:
     new_am_soup = BeautifulSoup(new_am_str, 'html.parser')
     new_elements = _build_new_elements(new_am_soup)
     new_text = build_structured_text('', new_elements)
-    # _ensure_no_outer_alineas(new_text) # TODO
+    _ensure_no_outer_alineas(new_text)
     return new_text
 
 
@@ -78,24 +87,42 @@ def extract_text_from_html(new_am: str) -> List[StructuredText]:
     return new_text.sections
 
 
-def _parse_and_save_text(am_id: str, new_am: str):
+def _parse_and_save_text(am_id: str, new_am_text: str) -> List[LostTopic]:
     am = DATA_FETCHER.load_most_advanced_am(am_id)
     if not am:
-        raise _TextAreaHandlingError(f'L\'arrete ministériel {am_id} n\'existe pas.')
-    am.sections = extract_text_from_html(new_am)
-    DATA_FETCHER.upsert_structured_am(am_id, am)
+        raise TextAreaHandlingError(f'L\'arrete ministériel {am_id} n\'existe pas.')
+    new_am, lost_topics = am.create_copy_with_new_content(extract_text_from_html(new_am_text))
+    DATA_FETCHER.upsert_structured_am(am_id, new_am)
+    return lost_topics
+
+
+def _stringify_lost_topic(lost_topic: LostTopic) -> str:
+    return '[{}], thème : {}'.format(' / '.join(lost_topic.section_titles), lost_topic.topic.value)
+
+
+def _stringify_lost_topics(lost_topics: List[LostTopic]) -> str:
+    return '\n'.join(map(_stringify_lost_topic, lost_topics))
+
+
+def _lost_topics_message(lost_topics: List[LostTopic]) -> str:
+    lost_topics_str = _stringify_lost_topics(lost_topics)
+    if len(lost_topics) > 1:
+        return f'Les {len(lost_topics)} thèmes suivants n\'ont pas pu être réaffectés :\n{lost_topics_str}. Pensez à les vérifier.'
+    return f'Le thème suivant n\'a pas pu être réaffecté :\n{lost_topics_str}. Pensez à le réaffecter si nécessaire.'
 
 
 def _extract_form_value_and_save_text(am_id: str, text_area_content: str) -> Component:
     try:
-        _parse_and_save_text(am_id, text_area_content)
-    except _TextAreaHandlingError as exc:
+        lost_topics = _parse_and_save_text(am_id, text_area_content)
+    except TextAreaHandlingError as exc:
         return error_component(f'Erreur pendant l\'enregistrement. Détails de l\'erreur:\n{str(exc)}')
     except Exception:  # pylint: disable=broad-except
         component = error_component(
             f'Erreur inattendue pendant l\'enregistrement. Détails de l\'erreur:\n{traceback.format_exc()}'
         )
         return component
+    if lost_topics:
+        return alert('Enregistrement réussi. ' + _lost_topics_message(lost_topics), 'warning')
     return html.Div(
         [
             success_component('Enregistrement réussi.'),

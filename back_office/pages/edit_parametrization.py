@@ -10,8 +10,6 @@ from envinorma.parametrization import AlternativeSection, AMWarning, Inapplicabl
 from envinorma.parametrization.resync import add_titles_sequences
 
 from back_office.components import ButtonState, button, error_component, link_button
-from back_office.components.am_component import am_component
-from back_office.components.summary_component import summary_component
 from back_office.components.table import ExtendedComponent, table_component
 from back_office.config import ENVIRONMENT_TYPE, EnvironmentType
 from back_office.helpers.slack import SlackChannel, send_slack_notification
@@ -165,17 +163,6 @@ def _add_warning_button(am_id: str) -> Component:
     return html.Div(link_button('+ Nouveau', href, ButtonState.NORMAL_LINK), style={'margin-bottom': '35px'})
 
 
-def _get_am_component_with_toc(am: ArreteMinisteriel) -> Component:
-    return html.Div(
-        [
-            html.Div([summary_component(am.to_text(), True, False)], className='col-3'),
-            html.Div(am_component(am, [], 5), className='col-9'),
-        ],
-        className='row',
-        style={'margin': '0px'},
-    )
-
-
 def _get_parametrization_summary(parametrization: Parametrization, am: Optional[ArreteMinisteriel]) -> Component:
     if not am:
         return error_component('AM introuvable, impossible d\'afficher les paramètres.')
@@ -192,16 +179,7 @@ def _get_parametrization_summary(parametrization: Parametrization, am: Optional[
             html.H4('Avertissements'),
             _warnings_table(parametrization, am),
             _add_warning_button(am_id),
-            html.H4('Texte'),
-            _get_am_component_with_toc(am),
-        ],
-        style={
-            'position': 'sticky',
-            'top': '0px',
-            'bottom': '0',
-            'height': '75vh',
-            'overflow-y': 'auto',
-        },
+        ]
     )
 
 

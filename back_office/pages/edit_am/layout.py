@@ -57,12 +57,12 @@ def _am_component(am: Optional[ArreteMinisteriel]) -> Component:
 def _diff_modal() -> Component:
     modal_components = [
         dbc.ModalHeader('Vérifier les différences et enregistrer'),
-        dbc.ModalBody(html.Div('BONJOUR', id=ids.DIFF)),
+        dbc.ModalBody(html.Div('', id=ids.DIFF)),
         dbc.ModalFooter(html.Button('Valider', id=ids.SAVE_BUTTON, className='btn btn-primary')),
     ]
     modal = dbc.Modal(modal_components, id=ids.MODAL, size='xl')
     trigger_button = html.Button(
-        'Consulter les différences et enregistrer', id=ids.DIFF_BUTTON, className='btn btn-primary save-button'
+        'Vérifier les différences et enregistrer', id=ids.DIFF_BUTTON, className='btn btn-primary save-button'
     )
     return html.Div([trigger_button, modal])
 
