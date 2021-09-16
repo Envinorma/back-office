@@ -49,10 +49,18 @@ def _remove_hashtags_from_elements(elements: List[TextElement]) -> List[TextElem
 
 def _parse_table(element: TextElement) -> TextElement:
     if isinstance(element, str) and '<table>' in element:
+        prefix = f"Erreur lors de l'extraction du tableau dans la ligne suivante :\n{element}"
         try:
-            return extract_text_elements(BeautifulSoup(element, 'html.parser'))[0]
+            elements = extract_text_elements(BeautifulSoup(element, 'html.parser'))
         except Exception:
-            return element
+            raise TextAreaHandlingError(f'{prefix}\n\nErreur complète:\n\n{traceback.format_exc()}')
+        if len(elements) == 0:
+            raise TextAreaHandlingError(f'{prefix}\nAucun élément n\'a été détecté.')
+        if len(elements) > 1:
+            element_types = ', '.join([el.__class__.__name__ for el in elements])
+            raise TextAreaHandlingError(
+                f'{prefix}\nPlusieurs éléments ont été détectés, dont voici les types :\n{element_types}'
+            )
     return element
 
 

@@ -12,3 +12,4 @@ SAVE_OUTPUT = generate_id(_prefix, 'save-output')
 DIFF = generate_id(_prefix, 'diff')
 MODAL = generate_id(_prefix, 'modal')
 DIFF_BUTTON = generate_id(_prefix, 'diff-button')
+HIDDEN_BUTTON = generate_id(_prefix, 'hidden-button')  # Only for triggering callback once

@@ -62,11 +62,6 @@ def _edit_metadata_button(am_id: str) -> Component:
     return dcc.Link(dbc.Button('Modifier les metadonnées', color='primary'), href=f'/{Endpoint.CREATE_AM}/{am_id}')
 
 
-def _edit_parameters_button(am_id: str) -> Component:
-    button_wording = 'Éditer le paramétrage'
-    return dcc.Link(dbc.Button(button_wording, color='primary'), href=f'/{Endpoint.EDIT_PARAMETRIZATION}/{am_id}')
-
-
 def _edit_content_button(am_id: str) -> Component:
     button_wording = "Éditer le contenu de l'arrêté"
     return dcc.Link(dbc.Button(button_wording, color='primary'), href=f'/{Endpoint.EDIT_AM}/{am_id}')
@@ -83,7 +78,6 @@ def _edition(am_id: str) -> Component:
             _alert(),
             html.Div(_edit_metadata_button(am_id), className='pb-2'),
             html.Div(_edit_content_button(am_id), className='pb-2'),
-            html.Div(_edit_parameters_button(am_id), className='pb-2'),
             html.Div(_delete_button(am_id), className='pb-2'),
         ],
         style={'background-color': '#EEEEEE', 'border-radius': '5px'},

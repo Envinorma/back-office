@@ -96,6 +96,6 @@ def _router_warning(am_id: str, parameter_id: Optional[str] = None, copy: bool =
 
 
 PAGE_CONDITION = Page(_router_condition, add_callbacks, True)
-# TODO: replace lambda x: None when switching to new callbacks
+# replace lambda x: None when switching to new callbacks
 PAGE_ALTERNATIVE_SECTION = Page(_router_alternative_section, lambda x: None, True)
 PAGE_WARNING = Page(_router_warning, lambda x: None, True)

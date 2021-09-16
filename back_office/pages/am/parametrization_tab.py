@@ -1,11 +1,13 @@
+from dash import dcc
+from back_office.routing import Endpoint
 import json
 import random
 import string
 from collections import Counter
 from typing import Any, Dict, List, Tuple, Union
+import dash_bootstrap_components as dbc
 
-import dash
-from dash import ALL, Dash, Input, Output, State, html
+from dash import ALL, Dash, Input, Output, State, html, callback_context
 from dash.development.base_component import Component
 from envinorma.models import AMMetadata, ArreteMinisteriel, StructuredText
 from envinorma.models.am_applicability import AMApplicability
@@ -50,20 +52,32 @@ def _condition_component(condition_or_warning: _ConditionOrWarning) -> Component
     return _toggler_component(condition_or_warning.to_str(), str(hash(condition_or_warning)))
 
 
-def _extract_conditions_with_occurrences(parametrization: Parametrization) -> List[Tuple[_ConditionOrWarning, int]]:
+def _extract_conditions_with_occurrences(
+    parametrization: Parametrization, am_applicability: AMApplicability
+) -> List[Tuple[_ConditionOrWarning, int]]:
     warnings = [warning.text for warnings_ in parametrization.id_to_warnings.values() for warning in warnings_]
-    condition_or_warnings = [*parametrization.extract_conditions(), *warnings]
+    condition_or_warnings = [*parametrization.extract_conditions(), *warnings, *am_applicability.warnings]
+    if am_applicability.condition_of_inapplicability:
+        condition_or_warnings.append(am_applicability.condition_of_inapplicability)
     return Counter(condition_or_warnings).most_common()
 
 
-def _conditions_component(parametrization: Parametrization) -> Component:
-    conditions_with_occurrences = _extract_conditions_with_occurrences(parametrization)
+def _edit_parameters_button(am_id: str) -> Component:
+    button_wording = 'Éditer le paramétrage'
+    return dcc.Link(dbc.Button(button_wording, color='primary'), href=f'/{Endpoint.EDIT_PARAMETRIZATION}/{am_id}')
+
+
+def _conditions_component(am_id: str, parametrization: Parametrization, am_applicability: AMApplicability) -> Component:
+    conditions_with_occurrences = _extract_conditions_with_occurrences(parametrization, am_applicability)
     condition_items = [
         _condition_component(condition) for condition, _ in sorted(conditions_with_occurrences, key=lambda x: -x[-1])
     ]
-
     return html.Div(
-        [html.H3('Conditions et warnings'), html.Div(condition_items if condition_items else 'Pas de conditions.')],
+        [
+            _edit_parameters_button(am_id),
+            html.H3('Conditions et warnings'),
+            html.Div(condition_items if condition_items else 'Pas de conditions.'),
+        ],
         style={'height': '75vh', 'overflow-y': 'auto'},
     )
 
@@ -96,9 +110,9 @@ def _title(title: str, section_id: str, parametrization: Parametrization) -> Com
 
 
 def _title_whole_am(applicability: AMApplicability) -> Component:
-    badges = [_condition_badge(str(hash(applicability.condition_of_inapplicability)), 'inapplicable')] + [
-        _condition_badge(str(hash(warning)), 'warning') for warning in applicability.warnings
-    ]
+    badges = [_condition_badge(str(hash(warning)), 'warning') for warning in applicability.warnings]
+    if applicability.condition_of_inapplicability:
+        badges.append(_condition_badge(str(hash(applicability.condition_of_inapplicability)), 'inapplicable'))
     return _title_with_badges('ARRÊTÉ', html.Span(badges))
 
 
@@ -134,9 +148,10 @@ def _layout(am_metadata: AMMetadata) -> Component:
     if not am:
         return html.Div('AM non initialisé.')
     parametrization = DATA_FETCHER.load_or_init_parametrization(am_metadata.cid)
+    am_applicability = am.applicability if am.applicability else AMApplicability()
     return html.Div(
         [
-            html.Div(_conditions_component(parametrization), className='col-4'),
+            html.Div(_conditions_component(am.id or '', parametrization, am_applicability), className='col-4'),
             html.Div(_am_summary_column(am, parametrization), className='col-8'),
         ],
         className='row',
@@ -156,7 +171,7 @@ def _callbacks(app: Dash, tab_id: str) -> None:
         prevent_initial_call=True,
     )
     def _toggle_buttons(_, class_names: List[str], condition_ids: List[Dict]):
-        triggered = _extract_trigger_key(dash.callback_context.triggered)
+        triggered = _extract_trigger_key(callback_context.triggered)
         keys = [cd['key'] for cd in condition_ids]
         new_class_names = [
             class_name.replace('alert-secondary', 'alert-primary')
@@ -174,7 +189,7 @@ def _callbacks(app: Dash, tab_id: str) -> None:
         prevent_initial_call=True,
     )
     def _toggle_badges(_, class_names: List[str], condition_ids: List[str]):
-        triggered = _extract_trigger_key(dash.callback_context.triggered)
+        triggered = _extract_trigger_key(callback_context.triggered)
         new_class_names = [
             class_name.replace('badge-secondary', 'badge-primary')
             if condition_id == triggered
@@ -184,4 +199,4 @@ def _callbacks(app: Dash, tab_id: str) -> None:
         return new_class_names
 
 
-TAB = ("Liste des paramètres", _layout, _callbacks)
+TAB = ('Paramétrage', _layout, _callbacks)

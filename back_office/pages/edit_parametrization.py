@@ -166,30 +166,22 @@ def _get_parametrization_summary(parametrization: Parametrization, am: Optional[
     )
 
 
-def _make_am_index_component(parametrization: Parametrization, am: Optional[ArreteMinisteriel]) -> Component:
+def _parametrization(parametrization: Parametrization, am: Optional[ArreteMinisteriel]) -> Component:
     return html.Div(_get_parametrization_summary(parametrization, am), style={'margin-bottom': '100px'})
 
 
-def _get_title_component(am_id: str, am_metadata: Optional[AMMetadata]) -> Component:
+def _title_component(am_id: str, am_metadata: Optional[AMMetadata]) -> Component:
     am_id = (am_metadata.nor or am_metadata.cid) if am_metadata else am_id
     cid = am_metadata.cid if am_metadata else am_id
-    am_backlink = html.Div(
-        dcc.Link(html.H2(f'Arrêté ministériel {am_id}'), href=f'/{Endpoint.AM}/{cid}'), className='col-6'
-    )
-    row = html.Div(html.Div(am_backlink, className='row'), className='container')
-    return html.Div(row, className='am_title')
-
-
-def _get_body_component(am: Optional[ArreteMinisteriel], parametrization: Parametrization) -> Component:
-    return _make_am_index_component(parametrization, am)
+    return html.H3(f'AM {cid}')
 
 
 def _page(am_id: str) -> Component:
     am_metadata = DATA_FETCHER.load_am_metadata(am_id)
     am = DATA_FETCHER.load_most_advanced_am(am_id)  # Fetch initial AM if no parametrization ever done.
     parametrization = DATA_FETCHER.load_or_init_parametrization(am_id)
-    body = html.Div(_get_body_component(am, parametrization), className='am_page_content')
-    return html.Div([_get_title_component(am_id, am_metadata), body, dcc.Store(data=am_id, id=_AM_ID)])
+    body = _parametrization(parametrization, am)
+    return html.Div([_title_component(am_id, am_metadata), body, dcc.Store(data=am_id, id=_AM_ID)])
 
 
 def _add_callbacks(app: Dash) -> None:

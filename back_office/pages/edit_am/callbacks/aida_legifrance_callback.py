@@ -38,7 +38,7 @@ def _parse(aida_id: str, am_id: str, from_legifrance: bool) -> List[Component]:
 
 def add_callbacks(app: dash.Dash) -> None:
     @app.callback(
-        Output(ids.TEXT_AREA_COMPONENT, 'value'),
+        Output(ids.HIDDEN_BUTTON, 'n_clicks'),
         Output(ids.AIDA_OUTPUT, 'children'),
         Output(ids.TEXT_AREA_COMPONENT, 'children'),
         Input(ids.FETCH_AIDA, 'n_clicks'),
@@ -46,16 +46,16 @@ def add_callbacks(app: dash.Dash) -> None:
         State(ids.AM_ID, 'data'),
         prevent_initial_call=True,
     )
-    def _edit_am(_, __, am_id: str) -> Tuple[str, Component, List[Component]]:
+    def _edit_am(_, __, am_id: str) -> Tuple[int, Component, List[Component]]:
         try:
             from_legifrance = ids.FETCH_LEGIFRANCE in dash.callback_context.triggered[0]['prop_id']
             metadata = DATA_FETCHER.load_am_metadata(am_id)
             if not metadata:
                 raise ValueError('AM Metadata not found.')
             success = success_component('Texte AIDA récupéré avec succès')
-            return '', success, _parse(metadata.aida_page, am_id, from_legifrance)
+            return 1, success, _parse(metadata.aida_page, am_id, from_legifrance)
         except _FrenchError as exc:
             error_message = str(exc)
         except Exception:  # pylint: disable=broad-except
             error_message = f'Erreur inattendue: \n{traceback.format_exc()}'
-        return '', error_component(error_message), cast(list, dash.no_update)
+        return 1, error_component(error_message), cast(list, dash.no_update)

@@ -79,10 +79,14 @@ def _aida_output() -> Component:
     return html.Div('', id=ids.AIDA_OUTPUT, className='aida-output')
 
 
+def _hidden_btn() -> Component:
+    return html.Button('', id=ids.HIDDEN_BUTTON, hidden=True)
+
+
 def _page_content(am_id: str, am: Optional[ArreteMinisteriel]) -> Component:
     am_id_store = dcc.Store(id=ids.AM_ID, data=am_id)
     component = _am_component(am)
-    return html.Div([component, _save(), _aida_output(), _save_output(), am_id_store])
+    return html.Div([component, _save(), _aida_output(), _save_output(), am_id_store, _hidden_btn()])
 
 
 def layout(am_id: str) -> Component:

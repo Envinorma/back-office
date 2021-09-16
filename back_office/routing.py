@@ -14,7 +14,7 @@ class Endpoint(Enum):
     LEGIFRANCE_COMPARE = 'compare'
     EDIT_PARAMETRIZATION = 'edit_parametrization'
     EDIT_AM = 'edit_am'
-    EDIT_AM_CONTENT = 'edit_am_content'  # TODO: potentially deprecate
+    EDIT_AM_CONTENT = 'edit_am_content'
     DELETE_AM = 'delete_am'
     CREATE_AM = 'create_am'
     LOGIN = 'login'

@@ -1,14 +1,12 @@
 from typing import List, Optional, Tuple
 
 from bs4 import BeautifulSoup
-from dash import Dash, Input, Output, callback, html
+from dash import ClientsideFunction, Dash, Input, Output, State, callback, html
 from dash.development.base_component import Component
 from envinorma.io.parse_html import extract_text_elements
 from envinorma.models.text_elements import Title
-from envinorma.structure import structured_text_to_text_elements
 
 from back_office.helpers.texts import get_truncated_str
-from back_office.utils import DATA_FETCHER
 
 from .. import ids
 from .save_callback import count_prefix_hashtags
@@ -51,19 +49,15 @@ def _parse_html_area_and_display_toc(html_str: str) -> Component:
     return _toc(titles)
 
 
-def _toc_from_am(am_id: str) -> Component:
-    am = DATA_FETCHER.load_most_advanced_am(am_id)
-    if not am:
-        return html.Div(am)
-    elements = structured_text_to_text_elements(am.to_text(), 0)
-    return _toc([element for element in elements if isinstance(element, Title)][1:])
-
-
 def add_callbacks(app: Dash) -> None:
-    @callback(
-        Output(ids.TOC_COMPONENT, 'children'), [Input(ids.TEXT_AREA_COMPONENT, 'value'), Input(ids.AM_ID, 'data')]
-    )
-    def _(text_area_content, am_id):
+    @callback(Output(ids.TOC_COMPONENT, 'children'), [Input(ids.TEXT_AREA_COMPONENT, 'value')])
+    def _(text_area_content):
         if text_area_content is not None:
             return _parse_html_area_and_display_toc(text_area_content)
-        return _toc_from_am(am_id)
+
+    app.clientside_callback(
+        ClientsideFunction(namespace='clientside', function_name='get_edited_content'),
+        Output(ids.TEXT_AREA_COMPONENT, 'value'),
+        [Input(ids.HIDDEN_BUTTON, 'n_clicks')],
+        [State(ids.TEXT_AREA_COMPONENT, 'id')],
+    )
