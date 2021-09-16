@@ -107,7 +107,10 @@ def _stringify_lost_topics(lost_topics: List[LostTopic]) -> str:
 def _lost_topics_message(lost_topics: List[LostTopic]) -> str:
     lost_topics_str = _stringify_lost_topics(lost_topics)
     if len(lost_topics) > 1:
-        return f'Les {len(lost_topics)} thèmes suivants n\'ont pas pu être réaffectés :\n{lost_topics_str}. Pensez à les vérifier.'
+        return (
+            f'Les {len(lost_topics)} thèmes suivants n\'ont pas pu être réaffectés :\n{lost_topics_str}. '
+            'Pensez à les vérifier.'
+        )
     return f'Le thème suivant n\'a pas pu être réaffecté :\n{lost_topics_str}. Pensez à le réaffecter si nécessaire.'
 
 

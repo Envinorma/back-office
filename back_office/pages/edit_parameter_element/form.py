@@ -5,15 +5,8 @@ from typing import List, Optional, Tuple, Type, cast
 import dash_bootstrap_components as dbc
 from dash import ALL, Dash, Input, Output, State, dcc, html
 from dash.development.base_component import Component
-from envinorma.models import Ints, StructuredText, dump_path
-from envinorma.parametrization import (
-    AlternativeSection,
-    AMWarning,
-    Condition,
-    ConditionSource,
-    InapplicableSection,
-    ParameterObject,
-)
+from envinorma.models import ArreteMinisteriel, StructuredText
+from envinorma.parametrization import AlternativeSection, AMWarning, Condition, InapplicableSection, ParameterObject
 from envinorma.parametrization.exceptions import ParametrizationError
 
 from back_office.helpers.texts import get_truncated_str
@@ -30,18 +23,20 @@ from .target_sections_form import add_callbacks as target_section_form_callbacks
 from .target_sections_form import target_section_form
 
 
-def _title(operation: AMOperation, is_edition: bool, rank: int) -> str:
+def _title(operation: AMOperation, is_edition: bool, destination_id: Optional[str]) -> str:
     if operation == AMOperation.ADD_CONDITION:
-        return f'Condition de non-application n°{rank}' if is_edition else 'Nouvelle condition de non-application'
+        return (
+            f'Condition de non-application #{destination_id}' if is_edition else 'Nouvelle condition de non-application'
+        )
     if operation == AMOperation.ADD_ALTERNATIVE_SECTION:
-        return f'Paragraphe alternatif n°{rank}' if is_edition else 'Nouveau paragraphe alternatif'
+        return f'Paragraphe alternatif #{destination_id}' if is_edition else 'Nouveau paragraphe alternatif'
     if operation == AMOperation.ADD_WARNING:
-        return f'Avertissement n°{rank}' if is_edition else 'Nouvel avertissement'
+        return f'Avertissement #{destination_id}' if is_edition else 'Nouvel avertissement'
     raise NotImplementedError(f'Unhandled operation {operation}')
 
 
-def _main_title(operation: AMOperation, is_edition: bool, rank: int) -> Component:
-    return html.H4(_title(operation, is_edition, rank))
+def _main_title(operation: AMOperation, is_edition: bool, destination_id: Optional[str]) -> Component:
+    return html.H4(_title(operation, is_edition, destination_id))
 
 
 def _go_back_button(am_id: str) -> Component:
@@ -66,25 +61,6 @@ def _buttons(am_id: str) -> Component:
     )
 
 
-def _extract_source(loaded_parameter: ParameterObject) -> ConditionSource:
-    if isinstance(loaded_parameter, AMWarning):
-        raise ValueError(
-            f'loaded_parameter should be of type ParameterObjectWithCondition, not {type(loaded_parameter)}'
-        )
-    return loaded_parameter.source
-
-
-def _get_source_form(
-    operation: AMOperation, options: DropdownOptions, loaded_parameter: Optional[ParameterObject]
-) -> Component:
-    if operation != AMOperation.ADD_WARNING and loaded_parameter:
-        default_value = dump_path(_extract_source(loaded_parameter).reference.section.path)
-    else:
-        default_value = ''
-    dropdown_source = dcc.Dropdown(value=default_value, options=options, id=ids.SOURCE, style={'font-size': '0.8em'})
-    return html.Div([html.H5('Source'), dropdown_source], hidden=operation == AMOperation.ADD_WARNING)
-
-
 def _get_delete_button(is_edition: bool) -> Component:
     return html.Button(
         'Supprimer',
@@ -106,10 +82,10 @@ def _get_target_section_block(
     operation: AMOperation,
     text_title_options: DropdownOptions,
     loaded_parameter: Optional[ParameterObject],
-    text: StructuredText,
+    am: ArreteMinisteriel,
     is_edition: bool,
 ) -> Component:
-    blocks = [target_section_form(operation, text_title_options, loaded_parameter, text, 0, is_edition)]
+    blocks = [target_section_form(operation, text_title_options, loaded_parameter, am, 0, is_edition)]
     return html.Div(
         [html.H5('Paragraphes visés'), html.Div(blocks, id=ids.TARGET_BLOCKS), _add_block_button(is_edition)]
     )
@@ -165,15 +141,14 @@ def _fields(
     text_title_options: DropdownOptions,
     operation: AMOperation,
     loaded_parameter: Optional[ParameterObject],
-    destination_rank: int,
-    text: StructuredText,
+    destination_id: Optional[str],
+    am: ArreteMinisteriel,
 ) -> Component:
-    is_edition = destination_rank != -1
+    is_edition = destination_id is not None
     fields = [
-        _main_title(operation, is_edition=is_edition, rank=destination_rank),
+        _main_title(operation, is_edition=is_edition, destination_id=destination_id),
         _get_delete_button(is_edition=is_edition),
-        _get_source_form(operation, text_title_options, loaded_parameter),
-        _get_target_section_block(operation, text_title_options, loaded_parameter, text, is_edition=is_edition),
+        _get_target_section_block(operation, text_title_options, loaded_parameter, am, is_edition=is_edition),
         _warning_content_form(operation, loaded_parameter),
         _condition_form(operation, loaded_parameter),
     ]
@@ -185,12 +160,12 @@ def _make_form(
     text_title_options: DropdownOptions,
     operation: AMOperation,
     loaded_parameter: Optional[ParameterObject],
-    destination_rank: int,
-    text: StructuredText,
+    destination_id: Optional[str],
+    am: ArreteMinisteriel,
 ) -> Component:
     return html.Div(
         [
-            _fields(text_title_options, operation, loaded_parameter, destination_rank, text),
+            _fields(text_title_options, operation, loaded_parameter, destination_id, am),
             html.Div(id='param-edition-upsert-output', className='mt-2'),
             html.Div(id='param-edition-delete-output'),
             dcc.Store(id=ids.DROPDOWN_OPTIONS, data=json.dumps(text_title_options)),
@@ -199,51 +174,32 @@ def _make_form(
     )
 
 
-def _extract_reference_and_values_titles(text: StructuredText, path: Ints, level: int = 0) -> List[Tuple[str, str]]:
-    return [(dump_path(path), get_truncated_str('#' * level + ' ' + text.title.text))] + [
-        elt
-        for rank, sec in enumerate(text.sections)
-        for elt in _extract_reference_and_values_titles(sec, path + (rank,), level + 1)
+def _extract_reference_and_values_titles(text: StructuredText, level: int) -> List[Tuple[str, str]]:
+    return [(text.id, get_truncated_str('#' * level + ' ' + text.title.text))] + [
+        elt for sec in text.sections for elt in _extract_reference_and_values_titles(sec, level + 1)
     ]
 
 
-def _extract_paragraph_reference_dropdown_values(text: StructuredText) -> DropdownOptions:
-    title_references_and_values = _extract_reference_and_values_titles(text, ())
+def _extract_paragraph_reference_dropdown_values(am: ArreteMinisteriel) -> DropdownOptions:
+    title_references_and_values = [elt for sec in am.sections for elt in _extract_reference_and_values_titles(sec, 1)]
     return [{'label': title, 'value': reference} for reference, title in title_references_and_values]
 
 
-def _get_instructions() -> Component:
-    return html.Div(
-        html.A(
-            'Guide de paramétrage',
-            href='https://www.notion.so/R-gles-de-param-trisation-47d8e5c4d3434d8691cbd9f59d556f0f',
-            target='_blank',
-        ),
-        className='alert alert-light',
-    )
-
-
-def form(
+def parameter_element_form(
     am_id: str,
-    text: StructuredText,
+    am: ArreteMinisteriel,
     operation: AMOperation,
     loaded_parameter: Optional[ParameterObject],
-    destination_rank: int,
+    destination_id: Optional[str],
 ) -> Component:
-    dropdown_values = _extract_paragraph_reference_dropdown_values(text)
-    return html.Div(
-        [
-            _get_instructions(),
-            _make_form(am_id, dropdown_values, operation, loaded_parameter, destination_rank, text),
-        ]
-    )
+    dropdown_values = _extract_paragraph_reference_dropdown_values(am)
+    return _make_form(am_id, dropdown_values, operation, loaded_parameter, destination_id, am)
 
 
 def _handle_submit(
     operation: AMOperation,
     am_id: str,
-    parameter_rank: int,
-    source_str: str,
+    parameter_id: Optional[str],
     target_section_form_values: TargetSectionFormValues,
     condition_form_values: ConditionFormValues,
     warning_content: str,
@@ -252,8 +208,7 @@ def _handle_submit(
         extract_and_upsert_new_parameter(
             operation,
             am_id,
-            parameter_rank,
-            source_str,
+            parameter_id,
             target_section_form_values,
             condition_form_values,
             warning_content,
@@ -286,12 +241,12 @@ def _deduce_parameter_object_type(operation: AMOperation) -> Type[ParameterObjec
     raise NotImplementedError()
 
 
-def _handle_delete(n_clicks: int, operation_str: str, am_id: str, parameter_rank: int) -> Component:
+def _handle_delete(n_clicks: int, operation_str: str, am_id: str, parameter_id: str) -> Component:
     if n_clicks == 0:
         return html.Div()
     try:
         operation = AMOperation(operation_str)
-        DATA_FETCHER.remove_parameter(am_id, _deduce_parameter_object_type(operation), parameter_rank)
+        DATA_FETCHER.remove_parameter(am_id, _deduce_parameter_object_type(operation), parameter_id)
     except Exception:  # pylint: disable=broad-except
         return dbc.Alert(f'Unexpected error:\n{traceback.format_exc()}', color='danger')
     return html.Div(
@@ -309,10 +264,9 @@ def add_callbacks(app: Dash):
     @app.callback(
         Output('param-edition-upsert-output', 'children'),
         Input('submit-val-param-edition', 'n_clicks'),
-        State(ids.AM_OPERATION, 'children'),
-        State(ids.AM_ID, 'children'),
-        State(ids.PARAMETER_RANK, 'children'),
-        State(ids.SOURCE, 'value'),
+        State(ids.AM_OPERATION, 'data'),
+        State(ids.AM_ID, 'data'),
+        State(ids.PARAMETER_ID, 'data'),
         State(ids.WARNING_CONTENT, 'value'),
         State(ids.new_text_title(cast(int, ALL)), 'value'),
         State(ids.new_text_content(cast(int, ALL)), 'value'),
@@ -328,8 +282,7 @@ def add_callbacks(app: Dash):
         _,
         operation_str,
         am_id,
-        parameter_rank,
-        source_str,
+        parameter_id,
         warning_content,
         new_texts_titles,
         new_texts_contents,
@@ -349,8 +302,7 @@ def add_callbacks(app: Dash):
         return _handle_submit(
             AMOperation(operation_str),
             am_id,
-            parameter_rank,
-            source_str,
+            parameter_id,
             target_section_form_values,
             condition_form_values,
             warning_content,
@@ -359,18 +311,18 @@ def add_callbacks(app: Dash):
     @app.callback(
         Output('param-edition-delete-output', 'children'),
         Input('param-edition-delete-button', 'n_clicks'),
-        State(ids.AM_OPERATION, 'children'),
-        State(ids.AM_ID, 'children'),
-        State(ids.PARAMETER_RANK, 'children'),
+        State(ids.AM_OPERATION, 'data'),
+        State(ids.AM_ID, 'data'),
+        State(ids.PARAMETER_ID, 'data'),
     )
-    def handle_delete(n_clicks, operation, am_id, parameter_rank):
-        return _handle_delete(n_clicks, operation, am_id, parameter_rank)
+    def handle_delete(n_clicks, operation, am_id, parameter_id):
+        return _handle_delete(n_clicks, operation, am_id, parameter_id)
 
     @app.callback(
         Output(ids.TARGET_BLOCKS, 'children'),
         Input(ids.ADD_TARGET_BLOCK, 'n_clicks'),
         State(ids.TARGET_BLOCKS, 'children'),
-        State(ids.AM_OPERATION, 'children'),
+        State(ids.AM_OPERATION, 'data'),
         State(ids.DROPDOWN_OPTIONS, 'data'),
         prevent_initial_call=True,
     )

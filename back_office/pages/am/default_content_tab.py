@@ -3,8 +3,8 @@ from typing import Optional
 import dash_bootstrap_components as dbc
 from dash import Dash, Input, Output, State, dcc, html
 from dash.development.base_component import Component
-from envinorma.models import AMMetadata
 from envinorma.enriching import add_metadata
+from envinorma.models import AMMetadata
 from envinorma.parametrization.apply_parameter_values import AMWithApplicability, build_am_with_applicability
 
 from back_office.components.parametric_am import parametric_am_callbacks, parametric_am_component
@@ -19,7 +19,7 @@ _AM_ID = f'{_PREFIX}-am-id'
 def _am_component(am: AMWithApplicability, am_metadata: AMMetadata) -> Component:
     if not am.arrete.legifrance_url:
         am.arrete = add_metadata(am.arrete, ensure_not_none(am_metadata))
-    return parametric_am_component(am, _PREFIX)
+    return parametric_am_component(am, _PREFIX, with_topics=False)
 
 
 def _am_component_with_toc(am: Optional[AMWithApplicability], am_metadata: AMMetadata) -> Component:

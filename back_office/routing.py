@@ -24,7 +24,7 @@ class Endpoint(Enum):
     REGULATION_ENGINE = 'regulation_engine'
     TOPIC_DETECTOR = 'topic_detector'
     ADD_WARNING = 'add_warning'
-    ADD_CONDITION = 'add_condition'
+    ADD_INAPPLICABILITY = 'add_inapplicability'
     ADD_ALTERNATIVE_SECTION = 'add_alternative_section'
 
     def __repr__(self):
@@ -50,9 +50,9 @@ _ENDPOINT_TO_ROUTES: Dict[Endpoint, List[str]] = {
     Endpoint.EDIT_AM_CONTENT: ['/{}/<am_id>', '/{}/<am_id>/<with_buttons>'],
     Endpoint.REGULATION_ENGINE: ['/{}'],
     Endpoint.TOPIC_DETECTOR: ['/{}'],
-    Endpoint.ADD_WARNING: ['/{}/<am_id>', '/{}/<am_id>/<rank>', '/{}/<am_id>/<rank>/copy'],
-    Endpoint.ADD_CONDITION: ['/{}/<am_id>', '/{}/<am_id>/<rank>', '/{}/<am_id>/<rank>/copy'],
-    Endpoint.ADD_ALTERNATIVE_SECTION: ['/{}/<am_id>', '/{}/<am_id>/<rank>', '/{}/<am_id>/<rank>/copy'],
+    Endpoint.ADD_WARNING: ['/{}/<am_id>', '/{}/<am_id>/<parameter_id>', '/{}/<am_id>/<parameter_id>/copy'],
+    Endpoint.ADD_INAPPLICABILITY: ['/{}/<am_id>', '/{}/<am_id>/<parameter_id>', '/{}/<am_id>/<parameter_id>/copy'],
+    Endpoint.ADD_ALTERNATIVE_SECTION: ['/{}/<am_id>', '/{}/<am_id>/<parameter_id>', '/{}/<am_id>/<parameter_id>/copy'],
 }
 
 ROUTER: MapAdapter = Map(

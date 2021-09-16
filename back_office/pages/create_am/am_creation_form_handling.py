@@ -14,7 +14,7 @@ from envinorma.models import (
     extract_date_of_signature,
 )
 
-from back_office.pages.parametrization_edition.form_handling import FormHandlingError
+from back_office.pages.edit_parameter_element.form_handling import FormHandlingError
 from back_office.routing import Endpoint
 from back_office.utils import DATA_FETCHER
 

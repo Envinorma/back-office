@@ -3,7 +3,7 @@ from enum import Enum
 
 import requests
 
-from back_office.config import SLACK_ENRICHMENT_NOTIFICATION_URL
+from back_office.config import ENVIRONMENT_TYPE, SLACK_ENRICHMENT_NOTIFICATION_URL, EnvironmentType
 
 
 class SlackChannel(Enum):
@@ -15,7 +15,9 @@ class SlackChannel(Enum):
         raise NotImplementedError(f'Missing slack channel url {self}.')
 
 
-def send_slack_notification(message: str, channel: SlackChannel) -> None:
+def send_slack_notification(message: str, channel: SlackChannel, prod_only: bool = True) -> None:
+    if ENVIRONMENT_TYPE != EnvironmentType.PROD and prod_only:
+        return
     url = channel.slack_url()
     answer = requests.post(url, json={'text': message})
     if not (200 <= answer.status_code < 300):

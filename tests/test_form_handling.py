@@ -4,14 +4,12 @@ from datetime import date
 from pathlib import Path
 
 import pytest
-from envinorma.models import ArreteMinisteriel, Regime, StructuredText, dump_path
+from envinorma.models import ArreteMinisteriel, Regime, StructuredText
 from envinorma.models.text_elements import estr
 from envinorma.parametrization import (
     AlternativeSection,
     AMWarning,
     AndCondition,
-    ConditionSource,
-    EntityReference,
     Equal,
     Greater,
     InapplicableSection,
@@ -19,31 +17,26 @@ from envinorma.parametrization import (
     OrCondition,
     ParameterEnum,
     Range,
-    SectionReference,
 )
 
-from back_office.pages.parametrization_edition import page_ids
-from back_office.pages.parametrization_edition.condition_form import _AND_ID, ConditionFormValues
-from back_office.pages.parametrization_edition.form_handling import (
+from back_office.pages.edit_parameter_element import page_ids
+from back_office.pages.edit_parameter_element.condition_form import _AND_ID, ConditionFormValues
+from back_office.pages.edit_parameter_element.form_handling import (
     FormHandlingError,
     _assert_strictly_below,
     _build_condition,
     _build_new_text,
     _build_parameter_value,
-    _build_section_reference,
-    _build_source,
-    _build_target_versions,
     _check_compatibility_and_build_range,
     _extract_new_parameter_objects,
     _extract_parameter_to_conditions,
-    _Modification,
     _NotSimplifiableError,
     _simplify_alineas,
     _simplify_condition,
     _simplify_mono_conditions,
     _try_building_range_condition,
 )
-from back_office.pages.parametrization_edition.target_sections_form import TargetSectionFormValues
+from back_office.pages.edit_parameter_element.target_sections_form import TargetSectionFormValues
 from back_office.utils import AMOperation, ensure_not_none
 
 
@@ -221,38 +214,11 @@ def _get_am() -> ArreteMinisteriel:
 
 def test_simplify_alineas():
     am = _get_am()
-    assert _simplify_alineas(am, SectionReference((0,)), None) is None
-    assert _simplify_alineas(am, SectionReference((0,)), [0, 1]) is None
-    assert _simplify_alineas(am, SectionReference((0,)), [0]) == [0]
-    assert _simplify_alineas(am, SectionReference((0, 0)), [0]) == [0]
-    assert _simplify_alineas(am, SectionReference((0, 0)), [0, 1]) is None
-
-
-def test_build_target_versions():
-    am = _get_am()
-    form_values = TargetSectionFormValues([], [], [], [])
-    assert _build_target_versions(am, form_values) == []
-
-    form_values = TargetSectionFormValues(['title'], ['content'], [dump_path((0, 0))], [])
-    text = StructuredText(estr('title'), [estr('content')], [], None)
-    modif = _Modification(SectionReference((0, 0)), None, text)
-    res = _build_target_versions(am, form_values)
-    previous_text: StructuredText = ensure_not_none(res[0].new_text)
-    new_text: StructuredText = ensure_not_none(modif.new_text)
-    new_text.id = previous_text.id
-    assert res == [modif]
-
-    form_values = TargetSectionFormValues([], [], [dump_path((0, 0))], [[0, 1]])
-    modif = _Modification(SectionReference((0, 0)), None, None)
-    assert _build_target_versions(am, form_values) == [modif]
-
-    form_values = TargetSectionFormValues([], [], [dump_path((0, 0))], [[0]])
-    modif = _Modification(SectionReference((0, 0)), [0], None)
-    assert _build_target_versions(am, form_values) == [modif]
-
-    form_values = TargetSectionFormValues([], [], [dump_path((0,))], [[0]])
-    modif = _Modification(SectionReference((0,)), [0], None)
-    assert _build_target_versions(am, form_values) == [modif]
+    assert _simplify_alineas(am.sections[0], None) is None
+    assert _simplify_alineas(am.sections[0], [0, 1]) is None
+    assert _simplify_alineas(am.sections[0], [0]) == [0]
+    assert _simplify_alineas(am.sections[0].sections[0], [0]) == [0]
+    assert _simplify_alineas(am.sections[0].sections[0], [0, 1]) is None
 
 
 def test_build_new_text():
@@ -289,18 +255,6 @@ def test_build_condition():
     assert _build_condition(form_values) == res
 
 
-def test_build_source():
-    with pytest.raises(FormHandlingError):
-        _build_source('')
-    assert _build_source('[1, 2]') == ConditionSource(EntityReference(SectionReference((1, 2)), None))
-
-
-def test_build_section_reference():
-    with pytest.raises(FormHandlingError):
-        _build_section_reference('')
-    assert _build_section_reference('[1, 2, 3]') == SectionReference((1, 2, 3))
-
-
 @pytest.fixture
 def data_dir() -> Path:
     return Path(__file__).parent / 'data'
@@ -314,19 +268,18 @@ def test_am(data_dir: Path) -> ArreteMinisteriel:
 
 def test_extract_new_parameter_objects_alternative_section(test_am: ArreteMinisteriel):
     operation = AMOperation.ADD_ALTERNATIVE_SECTION
-    source = '[5]'
-    target = TargetSectionFormValues(['1. Dispositions générales'], ['Lorem ipsum dolor sit amet'], ['[5, 0]'], [[]])
+    section_id = test_am.sections[5].sections[0].id
+    target = TargetSectionFormValues(['1. Dispositions générales'], ['Lorem ipsum dolor sit amet'], [section_id], [[]])
     condition = ConditionFormValues(['Date de mise en service'], ['<'], ['01/01/2020'], 'and')
     warning_content = ''
 
-    new_parameters = _extract_new_parameter_objects(operation, test_am, source, target, condition, warning_content)
+    new_parameters = _extract_new_parameter_objects(operation, test_am, target, condition, warning_content)
     assert len(new_parameters) == 1
     assert isinstance(new_parameters[0], AlternativeSection)
 
     new_parameters = _extract_new_parameter_objects(
         operation,
         test_am,
-        source,
         replace(target, new_texts_titles=['1. Dispositions générales', '2. second paragraph']),
         condition,
         warning_content,
@@ -337,33 +290,29 @@ def test_extract_new_parameter_objects_alternative_section(test_am: ArreteMinist
     new_targets = TargetSectionFormValues(
         ['1. Dispositions générales', '2. second paragraph'],
         ['Lorem ipsum dolor sit amet', 'Lorem ipsum dolor sit amet'],
-        ['[5, 0]', '[5, 1]'],
+        [test_am.sections[5].sections[0].id, test_am.sections[5].sections[1].id],
         [[], []],
     )
-    new_parameters = _extract_new_parameter_objects(operation, test_am, source, new_targets, condition, warning_content)
+    new_parameters = _extract_new_parameter_objects(operation, test_am, new_targets, condition, warning_content)
     assert len(new_parameters) == 2
     assert isinstance(new_parameters[0], AlternativeSection)
     assert isinstance(new_parameters[1], AlternativeSection)
 
-    with pytest.raises(FormHandlingError):
-        new_parameters = _extract_new_parameter_objects(operation, test_am, '', target, condition, warning_content)
-
 
 def test_extract_new_parameter_objects_condition(test_am: ArreteMinisteriel):
     operation = AMOperation.ADD_CONDITION
-    source = '[5]'
-    target = TargetSectionFormValues([], [], ['[5, 0]'], [[10]])
+    section_id = test_am.sections[5].sections[0].id
+    target = TargetSectionFormValues([], [], [section_id], [[10]])
     condition = ConditionFormValues(['Date de mise en service'], ['<'], ['01/01/2020'], 'and')
     warning_content = ''
 
-    new_parameters = _extract_new_parameter_objects(operation, test_am, source, target, condition, warning_content)
+    new_parameters = _extract_new_parameter_objects(operation, test_am, target, condition, warning_content)
     assert len(new_parameters) == 1
     assert isinstance(new_parameters[0], InapplicableSection)
 
     new_parameters = _extract_new_parameter_objects(
         operation,
         test_am,
-        source,
         replace(target, target_alineas=[[10], [11]]),
         condition,
         warning_content,
@@ -371,33 +320,29 @@ def test_extract_new_parameter_objects_condition(test_am: ArreteMinisteriel):
     assert len(new_parameters) == 1
     assert isinstance(new_parameters[0], InapplicableSection)
 
-    new_targets = TargetSectionFormValues([], [], ['[5]', '[5, 1]'], [[0, 2], [0]])
-    new_parameters = _extract_new_parameter_objects(operation, test_am, source, new_targets, condition, warning_content)
+    ids = [test_am.sections[5].id, test_am.sections[5].sections[1].id]
+    new_targets = TargetSectionFormValues([], [], ids, [[0, 2], [0]])
+    new_parameters = _extract_new_parameter_objects(operation, test_am, new_targets, condition, warning_content)
     assert len(new_parameters) == 2
     assert isinstance(new_parameters[0], InapplicableSection)
     assert isinstance(new_parameters[1], InapplicableSection)
-    assert new_parameters[0].targeted_entity.outer_alinea_indices == [0, 2]
-    assert new_parameters[1].targeted_entity.outer_alinea_indices is None
-
-    with pytest.raises(FormHandlingError):
-        new_parameters = _extract_new_parameter_objects(operation, test_am, '', target, condition, warning_content)
+    assert new_parameters[0].alineas == [0, 2]
+    assert new_parameters[1].alineas is None
 
 
 def test_extract_new_parameter_objects_warning(test_am: ArreteMinisteriel):
     operation = AMOperation.ADD_WARNING
-    source = ''
-    target = TargetSectionFormValues([], [], ['[5, 0]'], [])
+    target = TargetSectionFormValues([], [], [test_am.sections[5].sections[0].id], [])
     condition = ConditionFormValues([], [], [], 'and')
     warning_content = 'Content of warning.'
 
-    new_parameters = _extract_new_parameter_objects(operation, test_am, source, target, condition, warning_content)
+    new_parameters = _extract_new_parameter_objects(operation, test_am, target, condition, warning_content)
     assert len(new_parameters) == 1
     assert isinstance(new_parameters[0], AMWarning)
 
     new_parameters = _extract_new_parameter_objects(
         operation,
         test_am,
-        source,
         replace(target, target_alineas=[[10], [11]]),
         condition,
         warning_content,
@@ -405,11 +350,12 @@ def test_extract_new_parameter_objects_warning(test_am: ArreteMinisteriel):
     assert len(new_parameters) == 1
     assert isinstance(new_parameters[0], AMWarning)
 
-    new_targets = TargetSectionFormValues([], [], ['[5]', '[5, 1]'], [])
-    new_parameters = _extract_new_parameter_objects(operation, test_am, source, new_targets, condition, warning_content)
+    ids = [test_am.sections[5].id, test_am.sections[5].sections[1].id]
+    new_targets = TargetSectionFormValues([], [], ids, [])
+    new_parameters = _extract_new_parameter_objects(operation, test_am, new_targets, condition, warning_content)
     assert len(new_parameters) == 2
     assert isinstance(new_parameters[0], AMWarning)
     assert isinstance(new_parameters[1], AMWarning)
 
     with pytest.raises(FormHandlingError):
-        new_parameters = _extract_new_parameter_objects(operation, test_am, '', target, condition, 'too short')
+        new_parameters = _extract_new_parameter_objects(operation, test_am, target, condition, 'too short')

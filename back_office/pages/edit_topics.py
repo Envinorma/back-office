@@ -53,7 +53,7 @@ def _am_topics(am: ArreteMinisteriel) -> Component:
 
 
 def _link_to_am(am_id: str) -> Component:
-    return dcc.Link(html.Button("Consulter l'AM", className='btn btn-link'), href=f'/{Endpoint.AM}/{am_id}')
+    return dcc.Link(html.Button("Consulter l'AM", className='btn btn-link'), href=f'/{Endpoint.AM}/{am_id}/1')
 
 
 def _am_topics_with_loader(am: ArreteMinisteriel) -> Component:

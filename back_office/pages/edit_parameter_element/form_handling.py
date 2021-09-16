@@ -2,15 +2,13 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from typing import Any, Dict, FrozenSet, List, Optional, Type, Union
 
-from envinorma.models import ArreteMinisteriel, Regime, StructuredText, ensure_rubrique, load_path
+from envinorma.models import ArreteMinisteriel, Regime, StructuredText, ensure_rubrique
 from envinorma.models.text_elements import EnrichedString
 from envinorma.parametrization import (
     AlternativeSection,
     AMWarning,
     AndCondition,
     Condition,
-    ConditionSource,
-    EntityReference,
     Equal,
     Greater,
     InapplicableSection,
@@ -21,14 +19,12 @@ from envinorma.parametrization import (
     ParameterObject,
     ParameterType,
     Range,
-    SectionReference,
     ensure_mono_conditions,
 )
 
-from back_office.helpers.texts import safe_get_section
-from back_office.pages.parametrization_edition import page_ids
-from back_office.pages.parametrization_edition.condition_form import ConditionFormValues
-from back_office.pages.parametrization_edition.target_sections_form import TargetSectionFormValues
+from back_office.pages.edit_parameter_element import page_ids
+from back_office.pages.edit_parameter_element.condition_form import ConditionFormValues
+from back_office.pages.edit_parameter_element.target_sections_form import TargetSectionFormValues
 from back_office.utils import DATA_FETCHER, AMOperation, ensure_not_none
 
 
@@ -198,12 +194,6 @@ def _simplify_condition(condition: Condition) -> Condition:
     return condition
 
 
-def _build_source(source_str: str) -> ConditionSource:
-    if not source_str:
-        raise FormHandlingError('Le champ source doit être renseigné.')
-    return ConditionSource(EntityReference(SectionReference(load_path(source_str)), None))
-
-
 def _build_condition(condition_form_values: ConditionFormValues) -> Condition:
     condition_cls = _get_condition_cls(condition_form_values.merge)
     conditions_raw = list(
@@ -217,7 +207,7 @@ def _build_condition(condition_form_values: ConditionFormValues) -> Condition:
 
 @dataclass
 class _Modification:
-    target_section: SectionReference
+    section_id: str
     target_alineas: Optional[List[int]]
     new_text: Optional[StructuredText]
 
@@ -247,36 +237,25 @@ def _build_new_text(new_text_title: Optional[str], new_text_content: Optional[st
     return _check_and_build_new_text(new_text_title or '', new_text_content or '')
 
 
-def _simplify_alineas(
-    am: ArreteMinisteriel, section: SectionReference, target_alineas: Optional[List[int]]
-) -> Optional[List[int]]:
+def _simplify_alineas(section: StructuredText, target_alineas: Optional[List[int]]) -> Optional[List[int]]:
     if not target_alineas:
         return None
-    target_section = safe_get_section(section.path, am)
-    if target_section is None:
-        raise FormHandlingError('La section visée est introuvable dans l\'arrêté')
-    if len(set(target_alineas)) == len(target_section.outer_alineas):
+    if len(set(target_alineas)) == len(section.outer_alineas):
         return None
     return target_alineas
 
 
-def _build_section_reference(target_section: str) -> SectionReference:
-    if not target_section:
-        raise FormHandlingError('Le champ "Titre" des "Paragraphes visés" doit être renseigné.')
-    return SectionReference(load_path(target_section))
-
-
 def _build_target_version(
-    am: ArreteMinisteriel,
+    section_id_to_section: Dict[str, StructuredText],
     new_text_title: Optional[str],
     new_text_content: Optional[str],
-    target_section: str,
+    section_id: str,
     target_alineas: Optional[List[int]],
 ) -> _Modification:
-    section = _build_section_reference(target_section)
-    simplified_target_alineas = _simplify_alineas(am, section, target_alineas)
+    section = section_id_to_section[section_id]
+    simplified_target_alineas = _simplify_alineas(section, target_alineas)
     new_text = _build_new_text(new_text_title, new_text_content)
-    return _Modification(section, simplified_target_alineas, new_text)
+    return _Modification(section_id, simplified_target_alineas, new_text)
 
 
 def _build_target_versions(am: ArreteMinisteriel, form_values: TargetSectionFormValues) -> List[_Modification]:
@@ -284,62 +263,56 @@ def _build_target_versions(am: ArreteMinisteriel, form_values: TargetSectionForm
     new_texts_contents = form_values.new_texts_contents or len(form_values.target_sections) * [None]
     target_sections = form_values.target_sections
     target_alineas = form_values.target_alineas or len(form_values.target_sections) * [None]
+    section_id_to_section = {section.id: section for section in am.descendent_sections()}
     return [
-        _build_target_version(am, title, content, section, alineas)
+        _build_target_version(section_id_to_section, title, content, section, alineas)
         for title, content, section, alineas in zip(
             new_texts_titles, new_texts_contents, target_sections, target_alineas
         )
     ]
 
 
-def _build_inapplicable_section(
-    condition: Condition, source: ConditionSource, modification: _Modification
-) -> InapplicableSection:
-    targeted_entity = EntityReference(modification.target_section, outer_alinea_indices=modification.target_alineas)
-    return InapplicableSection(targeted_entity=targeted_entity, condition=condition, source=source)
+def _build_inapplicable_section(condition: Condition, modification: _Modification) -> InapplicableSection:
+    return InapplicableSection(modification.section_id, modification.target_alineas, condition=condition)
 
 
-def _build_am_warning(target_section: SectionReference, warning_content: str) -> AMWarning:
+def _build_am_warning(section_id: str, warning_content: str) -> AMWarning:
     min_len = 10
     if len(warning_content or '') <= min_len:
         raise FormHandlingError(f'Le champ "Contenu de l\'avertissement" doit contenir au moins {min_len} caractères.')
-    return AMWarning(target_section, warning_content)
+    return AMWarning(section_id, warning_content)
 
 
 def _build_parameter_object(
     operation: AMOperation,
     condition: Optional[Condition],
-    source: Optional[ConditionSource],
     modification: _Modification,
     warning_content: str,
 ) -> ParameterObject:
     if operation == AMOperation.ADD_ALTERNATIVE_SECTION:
         return AlternativeSection(
-            targeted_section=modification.target_section,
+            section_id=modification.section_id,
             new_text=ensure_not_none(modification.new_text),
             condition=ensure_not_none(condition),
-            source=ensure_not_none(source),
         )
     if operation == AMOperation.ADD_CONDITION:
-        return _build_inapplicable_section(ensure_not_none(condition), ensure_not_none(source), modification)
+        return _build_inapplicable_section(ensure_not_none(condition), modification)
     if operation == AMOperation.ADD_WARNING:
-        return _build_am_warning(modification.target_section, warning_content)
+        return _build_am_warning(modification.section_id, warning_content)
     raise NotImplementedError(f'Not implemented for operation {operation}')
 
 
 def _extract_new_parameter_objects(
     operation: AMOperation,
     am: ArreteMinisteriel,
-    source_str: str,
     target_section_form_values: TargetSectionFormValues,
     condition_form_values: ConditionFormValues,
     warning_content: str,
 ) -> List[ParameterObject]:
     condition = _build_condition(condition_form_values) if operation != AMOperation.ADD_WARNING else None
     target_versions = _build_target_versions(am, target_section_form_values)
-    source = _build_source(source_str) if operation != AMOperation.ADD_WARNING else None
     return [
-        _build_parameter_object(operation, condition, source, target_version, warning_content)
+        _build_parameter_object(operation, condition, target_version, warning_content)
         for target_version in target_versions
     ]
 
@@ -359,8 +332,7 @@ def _check_consistency(operation: AMOperation, parameters: List[ParameterObject]
 def extract_and_upsert_new_parameter(
     operation: AMOperation,
     am_id: str,
-    parameter_rank: int,
-    source_str: str,
+    parameter_id: Optional[str],
     target_section_form_values: TargetSectionFormValues,
     condition_form_values: ConditionFormValues,
     warning_content: str,
@@ -369,14 +341,17 @@ def extract_and_upsert_new_parameter(
     if not am:
         raise ValueError(f'AM with id {am_id} not found!')
     new_parameters = _extract_new_parameter_objects(
-        operation, am, source_str, target_section_form_values, condition_form_values, warning_content
+        operation, am, target_section_form_values, condition_form_values, warning_content
     )
     _check_consistency(operation, new_parameters)
-    _upsert_parameters(am_id, new_parameters, parameter_rank)
+    _upsert_parameters(am_id, new_parameters, parameter_id)
 
 
-def _upsert_parameters(am_id: str, new_parameters: List[ParameterObject], parameter_rank: int):
-    if parameter_rank != -1 and len(new_parameters) != 1:
-        raise ValueError('Must have only one parameter when updating a specific parameter..')
-    for parameter in new_parameters:
-        DATA_FETCHER.upsert_parameter(am_id, parameter, parameter_rank)
+def _upsert_parameters(am_id: str, new_parameters: List[ParameterObject], parameter_id: Optional[str]):
+    if parameter_id is not None:
+        if len(new_parameters) != 1:
+            raise ValueError('Must have only one parameter when updating a specific parameter..')
+        DATA_FETCHER.upsert_parameter(am_id, new_parameters[0], parameter_id)
+    else:
+        for parameter in new_parameters:
+            DATA_FETCHER.upsert_parameter(am_id, parameter, None)

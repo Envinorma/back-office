@@ -9,7 +9,7 @@ from dash.development.base_component import Component
 from envinorma.models import DELETE_REASON_MIN_NB_CHARS, AMMetadata, AMState
 
 from back_office.helpers.login import get_current_user
-from back_office.pages.parametrization_edition.form_handling import FormHandlingError
+from back_office.pages.edit_parameter_element.form_handling import FormHandlingError
 from back_office.routing import Endpoint, Page
 from back_office.utils import DATA_FETCHER, generate_id
 

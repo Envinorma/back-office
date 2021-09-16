@@ -23,9 +23,9 @@ from back_office.pages.index import PAGE as index_page
 from back_office.pages.legifrance_compare import PAGE as legifrance_compare_page
 from back_office.pages.login import PAGE as login_page
 from back_office.pages.logout import PAGE as logout_page
-from back_office.pages.parametrization_edition import PAGE_ALTERNATIVE_SECTION as alternative_section_page
-from back_office.pages.parametrization_edition import PAGE_CONDITION as condition_page
-from back_office.pages.parametrization_edition import PAGE_WARNING as warning_page
+from back_office.pages.edit_parameter_element import PAGE_ALTERNATIVE_SECTION as alternative_section_page
+from back_office.pages.edit_parameter_element import PAGE_CONDITION as condition_page
+from back_office.pages.edit_parameter_element import PAGE_WARNING as warning_page
 from back_office.pages.regulation_engine import PAGE as regulation_engine_page
 from back_office.pages.topic_detector import PAGE as topic_detector_page
 from back_office.pages.upload_ams import PAGE as upload_ams_page
@@ -49,7 +49,7 @@ _ENDPOINT_TO_PAGE: Dict[Endpoint, Page] = {
     Endpoint.TOPIC_DETECTOR: topic_detector_page,
     Endpoint.UPLOAD_AMS: upload_ams_page,
     Endpoint.ADD_ALTERNATIVE_SECTION: alternative_section_page,
-    Endpoint.ADD_CONDITION: condition_page,
+    Endpoint.ADD_INAPPLICABILITY: condition_page,
     Endpoint.ADD_WARNING: warning_page,
 }
 

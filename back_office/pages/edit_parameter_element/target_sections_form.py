@@ -5,28 +5,25 @@ import dash
 import dash_bootstrap_components as dbc
 from dash import MATCH, Input, Output, State, dcc, html
 from dash.development.base_component import Component
-from envinorma.models import Ints, StructuredText, dump_path, load_path
-from envinorma.parametrization import AlternativeSection, AMWarning, InapplicableSection, ParameterObject
+from envinorma.models import StructuredText
+from envinorma.models.arrete_ministeriel import ArreteMinisteriel
+from envinorma.parametrization import AlternativeSection, InapplicableSection, ParameterObject
 
-from back_office.helpers.texts import get_section, safe_get_section, safe_get_subsection
-from back_office.pages.parametrization_edition import page_ids
+from back_office.pages.edit_parameter_element import page_ids
 from back_office.utils import DATA_FETCHER, AMOperation
 
 DropdownOptions = List[Dict[str, Any]]
 
 
-def _get_target_entity(parameter: ParameterObject) -> Ints:
-    if isinstance(parameter, InapplicableSection):
-        return parameter.targeted_entity.section.path
-    if isinstance(parameter, AlternativeSection):
-        return parameter.targeted_section.path
-    if isinstance(parameter, AMWarning):
-        return parameter.targeted_section.path
-    raise NotImplementedError(f'{type(parameter)}')
+def _find_section_by_id(section_id: str, am: ArreteMinisteriel) -> StructuredText:
+    for section in am.descendent_sections():
+        if section.id == section_id:
+            return section
+    raise ValueError(f'Section {section_id} not found')
 
 
 def _target_section_form(options: DropdownOptions, loaded_parameter: Optional[ParameterObject], rank: int) -> Component:
-    default_value = dump_path(_get_target_entity(loaded_parameter)) if loaded_parameter else None
+    default_value = loaded_parameter.section_id if loaded_parameter else None
     dropdown_target = html.Div(
         [
             dcc.Dropdown(
@@ -46,7 +43,7 @@ def _ensure_optional_condition(parameter: Optional[ParameterObject]) -> Optional
 
 
 def _target_alineas_form(
-    operation: AMOperation, loaded_parameter: Optional[ParameterObject], text: Optional[StructuredText], rank: int
+    operation: AMOperation, loaded_parameter: Optional[ParameterObject], am: Optional[ArreteMinisteriel], rank: int
 ) -> Component:
     title = html.H6('Alineas visés')
     if not _is_condition(operation):
@@ -60,10 +57,14 @@ def _target_alineas_form(
         value = []
         options = []
     else:
-        assert text is not None
-        path = condition.targeted_entity.section.path
-        alineas = condition.targeted_entity.outer_alinea_indices
-        target_section_alineas = section.outer_alineas if (section := safe_get_subsection(path, text)) else []
+        if not am:
+            raise ValueError('am is required')
+        try:
+            section = _find_section_by_id(condition.section_id, am)
+        except ValueError:  # Section could not be found if am has changed
+            section = None
+        alineas = condition.alineas
+        target_section_alineas = section.outer_alineas if section else []
         if target_section_alineas:
             options = [{'label': al.text, 'value': i} for i, al in enumerate(target_section_alineas)]
             value = alineas if alineas else list(range(len(target_section_alineas)))
@@ -127,14 +128,13 @@ def _new_section_form_from_default(
     return _new_section_form(default_title, default_content, rank, operation)
 
 
-def _build_new_text_component(str_path: Optional[str], am_id: str, operation: AMOperation, rank: int) -> Component:
-    if operation != AMOperation.ADD_ALTERNATIVE_SECTION or not str_path:
+def _build_new_text_component(section_id: Optional[str], am_id: str, operation: AMOperation, rank: int) -> Component:
+    if operation != AMOperation.ADD_ALTERNATIVE_SECTION or not section_id:
         return _new_section_form('', '', rank, operation)
     am = DATA_FETCHER.load_most_advanced_am(am_id)
     if not am:
         return _new_section_form('', '', rank, operation)
-    path = load_path(str_path)
-    section = safe_get_section(path, am)
+    section = _find_section_by_id(section_id, am)
     if not section:
         return _new_section_form('', '', rank, operation)
     title, content = _extract_title_and_content(section)
@@ -149,14 +149,13 @@ def _build_targeted_alineas_options(section_dict: Dict[str, Any], operation: AMO
     return [{'label': al, 'value': i} for i, al in enumerate(alineas_str)]
 
 
-def _store_target_section(str_path: Optional[str], am_id: str) -> Dict[str, Any]:
-    if not str_path:
+def _store_target_section(section_id: Optional[str], am_id: str) -> Dict[str, Any]:
+    if not section_id:
         return {}
     am = DATA_FETCHER.load_most_advanced_am(am_id)
     if not am:
         return {}
-    path = load_path(str_path)
-    section = get_section(path, am)
+    section = _find_section_by_id(section_id, am)
     return section.to_dict()
 
 
@@ -180,7 +179,7 @@ def target_section_form(
     operation: AMOperation,
     text_title_options: DropdownOptions,
     loaded_parameter: Optional[ParameterObject],
-    text: Optional[StructuredText],
+    am: Optional[ArreteMinisteriel],
     rank: int,
     is_edition: bool,
 ) -> Component:
@@ -188,7 +187,7 @@ def target_section_form(
         [
             _delete_button(rank, is_edition),
             _target_section_form(text_title_options, loaded_parameter, rank),
-            _target_alineas_form(operation, loaded_parameter, text, rank),
+            _target_alineas_form(operation, loaded_parameter, am, rank),
             html.Div(_new_section_form_from_default(operation, loaded_parameter, rank), id=page_ids.new_text(rank)),
             dcc.Store(id=page_ids.target_section_store(rank)),
         ],
@@ -215,28 +214,28 @@ def add_callbacks(app: dash.Dash):
     @app.callback(
         Output(page_ids.new_text(cast(int, MATCH)), 'children'),
         Input(page_ids.target_section(cast(int, MATCH)), 'value'),
-        State(page_ids.AM_ID, 'children'),
-        State(page_ids.AM_OPERATION, 'children'),
+        State(page_ids.AM_ID, 'data'),
+        State(page_ids.AM_OPERATION, 'data'),
         State(page_ids.target_section(cast(int, MATCH)), 'id'),
         prevent_initial_call=True,
     )
-    def build_new_text(path, am_id, operation, trigger_id):
+    def build_new_text(section_id, am_id, operation, trigger_id):
         rank = trigger_id['rank']
-        return _build_new_text_component(path, am_id, AMOperation(operation), rank)
+        return _build_new_text_component(section_id, am_id, AMOperation(operation), rank)
 
     @app.callback(
         Output(page_ids.target_section_store(cast(int, MATCH)), 'data'),
         Input(page_ids.target_section(cast(int, MATCH)), 'value'),
-        State(page_ids.AM_ID, 'children'),
+        State(page_ids.AM_ID, 'data'),
         prevent_initial_call=True,
     )
-    def store_target_section(path, am_id):
-        return _store_target_section(path, am_id)
+    def store_target_section(section_id, am_id):
+        return _store_target_section(section_id, am_id)
 
     @app.callback(
         Output(page_ids.target_alineas(cast(int, MATCH)), 'options'),
         Input(page_ids.target_section_store(cast(int, MATCH)), 'data'),
-        State(page_ids.AM_OPERATION, 'children'),
+        State(page_ids.AM_OPERATION, 'data'),
         prevent_initial_call=True,
     )
     def build_targeted_alinea_options(target_section, operation):
@@ -245,7 +244,7 @@ def add_callbacks(app: dash.Dash):
     @app.callback(
         Output(page_ids.target_alineas(cast(int, MATCH)), 'value'),
         Input(page_ids.target_section_store(cast(int, MATCH)), 'data'),
-        State(page_ids.AM_OPERATION, 'children'),
+        State(page_ids.AM_OPERATION, 'data'),
         prevent_initial_call=True,
     )
     def build_targeted_alinea_value(target_section, operation):

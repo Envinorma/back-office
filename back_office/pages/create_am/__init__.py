@@ -239,7 +239,18 @@ def _warning(am_metadata: Optional[AMMetadata]) -> Component:
 
 
 def _submit_button() -> Component:
-    return html.Button('Valider', className='btn btn-primary mb-5', id=ids.SUBMIT_BUTTON)
+    return html.Button('Valider', className='btn btn-primary', id=ids.SUBMIT_BUTTON)
+
+
+def _cancel_button(am_id: str) -> Component:
+    hidden = not am_id
+    return dcc.Link(
+        html.Button('Annuler', className='btn btn-link ml-2', hidden=hidden), href=f'/{Endpoint.AM}/{am_id}'
+    )
+
+
+def _buttons(am_id: str) -> Component:
+    return html.Div([_submit_button(), _cancel_button(am_id)], className='mb-5')
 
 
 def _metadata_form(am_metadata: Optional[AMMetadata]) -> Component:
@@ -257,7 +268,7 @@ def _metadata_form(am_metadata: Optional[AMMetadata]) -> Component:
             _am_source(am_metadata),
             _reason_deleted(am_metadata),
             html.Div(id=ids.FORM_OUTPUT),
-            _submit_button(),
+            _buttons(am_metadata.cid if am_metadata else ''),
         ]
     )
 

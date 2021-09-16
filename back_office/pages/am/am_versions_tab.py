@@ -6,8 +6,8 @@ import dash_bootstrap_components as dbc
 from dash import ALL, Dash, Input, Output, State, dcc, html
 from dash.development.base_component import Component
 from dash.exceptions import PreventUpdate
-from envinorma.models import AMMetadata, ArreteMinisteriel, Regime
 from envinorma.enriching import add_metadata
+from envinorma.models import AMMetadata, ArreteMinisteriel, Regime
 from envinorma.parametrization import Parameter, ParameterEnum, ParameterType, Parametrization
 from envinorma.parametrization.apply_parameter_values import AMWithApplicability, build_am_with_applicability
 from envinorma.utils import random_id

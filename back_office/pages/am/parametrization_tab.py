@@ -7,7 +7,8 @@ from typing import Any, Dict, List, Tuple, Union
 import dash
 from dash import ALL, Dash, Input, Output, State, html
 from dash.development.base_component import Component
-from envinorma.models import AMMetadata, ArreteMinisteriel, Ints, StructuredText
+from envinorma.models import AMMetadata, ArreteMinisteriel, StructuredText
+from envinorma.models.am_applicability import AMApplicability
 from envinorma.parametrization.models import (
     AlternativeSection,
     AMWarning,
@@ -50,7 +51,7 @@ def _condition_component(condition_or_warning: _ConditionOrWarning) -> Component
 
 
 def _extract_conditions_with_occurrences(parametrization: Parametrization) -> List[Tuple[_ConditionOrWarning, int]]:
-    warnings = [warning.text for warnings_ in parametrization.path_to_warnings.values() for warning in warnings_]
+    warnings = [warning.text for warnings_ in parametrization.id_to_warnings.values() for warning in warnings_]
     condition_or_warnings = [*parametrization.extract_conditions(), *warnings]
     return Counter(condition_or_warnings).most_common()
 
@@ -81,47 +82,42 @@ def _condition_badges(
     return html.Span(badges_1 + badges_2 + badges_3)
 
 
-def _title(title: str, path: Ints, parametrization: Parametrization) -> Component:
-    badges = _condition_badges(
-        parametrization.path_to_conditions.get(path) or [],
-        parametrization.path_to_alternative_sections.get(path) or [],
-        parametrization.path_to_warnings.get(path) or [],
-    )
+def _title_with_badges(title: str, badges: Component) -> Component:
     return html.Span([f'{title} ', badges], style={'font-size': '0.8em'})
 
 
-def _section_summary(
-    section: StructuredText, id_to_path: Dict[str, Ints], parametrization: Parametrization
-) -> Component:
+def _title(title: str, section_id: str, parametrization: Parametrization) -> Component:
+    badges = _condition_badges(
+        parametrization.id_to_conditions.get(section_id) or [],
+        parametrization.id_to_alternative_sections.get(section_id) or [],
+        parametrization.id_to_warnings.get(section_id) or [],
+    )
+    return _title_with_badges(title, badges)
+
+
+def _title_whole_am(applicability: AMApplicability) -> Component:
+    badges = [_condition_badge(str(hash(applicability.condition_of_inapplicability)), 'inapplicable')] + [
+        _condition_badge(str(hash(warning)), 'warning') for warning in applicability.warnings
+    ]
+    return _title_with_badges('ARRÊTÉ', html.Span(badges))
+
+
+def _section_summary(section: StructuredText, parametrization: Parametrization) -> Component:
     common_style = {'border-left': '3px solid #007bff', 'padding-left': '25px'}
     return html.Div(
         [
-            _title(section.title.text, id_to_path[section.id], parametrization),
-            *[_section_summary(sub, id_to_path, parametrization) for sub in section.sections],
+            _title(section.title.text, section.id, parametrization),
+            *[_section_summary(sub, parametrization) for sub in section.sections],
         ],
         style=common_style,
     )
 
 
-_Section = Union[ArreteMinisteriel, StructuredText]
-
-
-def _id_to_path(section: _Section, prefix: Ints = ()) -> Dict[str, Ints]:
-    result = {
-        key: value
-        for i, child in enumerate(section.sections)
-        for key, value in _id_to_path(child, prefix + (i,)).items()
-    }
-    result[section.id or ''] = prefix
-    return result
-
-
 def _am_summary(am: ArreteMinisteriel, parametrization: Parametrization) -> Component:
-    id_to_path = _id_to_path(am)
     return html.Div(
         [
-            _title('ARRÊTÉ', (), parametrization),
-            *[_section_summary(section, id_to_path, parametrization) for section in am.sections],
+            _title_whole_am(am.applicability),
+            *[_section_summary(section, parametrization) for section in am.sections],
         ]
     )
 
