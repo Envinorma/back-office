@@ -46,10 +46,10 @@ def _diff(am_id: str, form_am_value: Optional[str]) -> Component:
 
 def add_callbacks(app: Dash) -> None:
     @app.callback(
-        Output(ids.MODAL, 'is_open'),
+        Output(ids.DIFF_MODAL, 'is_open'),
         Input(ids.DIFF_BUTTON, 'n_clicks'),
         Input(ids.SAVE_BUTTON, 'n_clicks'),
-        State(ids.MODAL, 'is_open'),
+        State(ids.DIFF_MODAL, 'is_open'),
         prevent_initial_call=True,
     )
     def _toggle_modal(n_clicks, n_clicks_submit, is_open):
@@ -58,7 +58,7 @@ def add_callbacks(app: Dash) -> None:
         return False
 
     @app.callback(
-        Output(ids.DIFF, 'children'),
+        Output(ids.DIFF_BODY, 'children'),
         Input(ids.DIFF_BUTTON, 'n_clicks'),
         State(ids.AM_ID, 'data'),
         State(ids.TEXT_AREA_COMPONENT, 'value'),

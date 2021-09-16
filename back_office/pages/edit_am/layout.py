@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Tuple
 
 import dash_bootstrap_components as dbc
 import dash_editable_div as ded
@@ -54,17 +54,23 @@ def _am_component(am: Optional[ArreteMinisteriel]) -> Component:
     return _get_main_row(am)
 
 
-def _diff_modal() -> Component:
+def _diff_modal() -> Tuple[Component, Component]:
+    text = 'Vérifier les différences'
+    modal_components = [dbc.ModalHeader(text), dbc.ModalBody(html.Div('', id=ids.DIFF_BODY))]
+    modal = dbc.Modal(modal_components, id=ids.DIFF_MODAL, size='xl')
+    trigger_button = html.Button(text, id=ids.DIFF_BUTTON, className='btn btn-light save-button mr-2')
+    return trigger_button, modal
+
+
+def _save_modal() -> Tuple[Component, Component]:
     modal_components = [
-        dbc.ModalHeader('Vérifier les différences et enregistrer'),
-        dbc.ModalBody(html.Div('', id=ids.DIFF)),
+        dbc.ModalHeader('Enregistrement'),
+        dbc.ModalBody(html.Div('', id=ids.SAVE_MODAL_BODY)),
         dbc.ModalFooter(html.Button('Valider', id=ids.SAVE_BUTTON, className='btn btn-primary')),
     ]
-    modal = dbc.Modal(modal_components, id=ids.MODAL, size='xl')
-    trigger_button = html.Button(
-        'Vérifier les différences et enregistrer', id=ids.DIFF_BUTTON, className='btn btn-primary save-button'
-    )
-    return html.Div([trigger_button, modal])
+    modal = dbc.Modal(modal_components, id=ids.SAVE_MODAL, size='xl')
+    trigger_button = html.Button('Enregistrer', id=ids.PRESAVE_BUTTON, className='btn btn-primary save-button')
+    return trigger_button, modal
 
 
 def _save_output() -> Component:
@@ -72,7 +78,9 @@ def _save_output() -> Component:
 
 
 def _save() -> Component:
-    return html.Div(_diff_modal(), className='save-zone')
+    diff_trigger_button, diff_modal = _diff_modal()
+    save_trigger_button, save_modal = _save_modal()
+    return html.Div([diff_trigger_button, diff_modal, save_trigger_button, save_modal], className='save-zone')
 
 
 def _aida_output() -> Component:
