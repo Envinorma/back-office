@@ -1,8 +1,9 @@
 import json
-from typing import Any, Dict, List, Optional, Tuple, cast
+from typing import Any, Dict, List, Optional, cast
 
 import dash_bootstrap_components as dbc
-from dash import ALL, Dash, Input, Output, State, dcc, html, no_update
+from dash import ALL, Dash, Input, Output, State, dcc, html
+from dash.dependencies import MATCH
 from dash.development.base_component import Component
 from envinorma.models import Condition
 from envinorma.models.am_applicability import AMApplicability
@@ -136,9 +137,7 @@ def _applicability(warnings: List[str], use_condition: bool, condition_str: Opti
     return AMApplicability(warnings, condition)
 
 
-def _handle_form(
-    warnings: List[str], use_condition: bool, condition: Optional[str], am_id: str
-) -> Tuple[Component, Component]:
+def _handle_form(warnings: List[str], use_condition: bool, condition: Optional[str], am_id: str) -> Component:
     try:
         new_applicability = _applicability(warnings, use_condition, condition)
         am = DATA_FETCHER.load_most_advanced_am(am_id)
@@ -147,9 +146,9 @@ def _handle_form(
         am.applicability = new_applicability
         DATA_FETCHER.upsert_structured_am(am_id, am)
     except _FormHandlingError as exc:
-        return error_component(f"Erreur dans le formulaire : {exc}"), no_update  # type: ignore
+        return error_component(f"Erreur dans le formulaire : {exc}")
     redirect = dcc.Location(id='am-applicability-redirect', href=f'/{Endpoint.EDIT_PARAMETRIZATION}/{am_id}')
-    return success_component('Enregistré avec succès.'), redirect
+    return html.Div([success_component('Enregistré avec succès.'), redirect])
 
 
 def _add_callbacks(app: Dash) -> None:
@@ -171,6 +170,14 @@ def _add_callbacks(app: Dash) -> None:
     )
     def toggle_condition(checkbox_value):
         return not checkbox_value
+
+    @app.callback(
+        Output(_Ids.warning(cast(int, MATCH)), 'children'),
+        Input(_Ids.delete_warning_button(cast(int, MATCH)), 'n_clicks'),
+        prevent_initial_call=True,
+    )
+    def delete_section(_):
+        return html.Div()
 
     @app.callback(
         Output(_Ids.WARNINGS, 'children'),

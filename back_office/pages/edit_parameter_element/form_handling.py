@@ -75,7 +75,7 @@ def _build_target_version(
     target_alineas: Optional[List[int]],
 ) -> _Modification:
     if not section_id:
-        raise FormHandlingError(f'La section visée doit être sélectionnée.')
+        raise FormHandlingError('La section visée doit être sélectionnée.')
     if section_id not in section_id_to_section:
         raise FormHandlingError(f'La section "{section_id}" n\'existe pas.')
     section = section_id_to_section[section_id]

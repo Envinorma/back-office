@@ -16,7 +16,7 @@ from back_office.routing import Endpoint
 
 
 def condition_str(condition: Condition) -> Component:
-    return html.P(f'Condition : {condition.to_str()}')
+    return html.Span(f'Si {condition.to_str()}')
 
 
 def _human_alinea_tuple(ints: Optional[List[int]]) -> str:

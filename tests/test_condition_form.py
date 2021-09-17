@@ -4,13 +4,12 @@ import pytest
 from envinorma.models import Regime
 from envinorma.parametrization import AndCondition, Equal, Greater, Littler, OrCondition, ParameterEnum, Range
 
-from back_office.components.condition_form import (
-    _AND_ID,
-    _CONDITION_VARIABLES,
+from back_office.components.condition_form import _AND_ID
+from back_office.components.condition_form.helpers import (
+    CONDITION_VARIABLES,
     ConditionFormValues,
     FormHandlingError,
     _assert_strictly_below,
-    _build_condition,
     _build_parameter_value,
     _check_compatibility_and_build_range,
     _extract_parameter_to_conditions,
@@ -18,6 +17,7 @@ from back_office.components.condition_form import (
     _simplify_condition,
     _simplify_mono_conditions,
     _try_building_range_condition,
+    build_condition,
 )
 
 
@@ -161,7 +161,7 @@ def test_assert_strictly_below():
 
 
 def test_build_parameter_value():
-    for param in _CONDITION_VARIABLES.values():
+    for param in CONDITION_VARIABLES.values():
         try:
             _build_parameter_value(param.value.type, '')
         except Exception as exc:
@@ -189,17 +189,17 @@ def test_extract_parameter_to_conditions():
 
 def test_build_condition():
     with pytest.raises(FormHandlingError):
-        assert _build_condition(ConditionFormValues([], [], [], _AND_ID))
+        assert build_condition(ConditionFormValues([], [], [], _AND_ID))
 
     res = Equal(ParameterEnum.DATE_DECLARATION.value, date(2020, 1, 1))
-    assert _build_condition(ConditionFormValues(['Date de déclaration'], ['='], ['01/01/2020'], _AND_ID)) == res
+    assert build_condition(ConditionFormValues(['Date de déclaration'], ['='], ['01/01/2020'], _AND_ID)) == res
 
     res = Range(ParameterEnum.DATE_DECLARATION.value, date(2020, 1, 1), date(2020, 1, 31))
     form_values = ConditionFormValues(['Date de déclaration'] * 2, ['>=', '<'], ['01/01/2020', '31/01/2020'], _AND_ID)
-    assert _build_condition(form_values) == res
+    assert build_condition(form_values) == res
 
     cd_1 = Equal(ParameterEnum.DATE_DECLARATION.value, date(2020, 1, 1))
     cd_2 = Equal(ParameterEnum.REGIME.value, Regime.A)
     res = AndCondition(frozenset([cd_1, cd_2]))
     form_values = ConditionFormValues(['Date de déclaration', 'Régime'], ['=', '='], ['01/01/2020', 'A'], _AND_ID)
-    assert _build_condition(form_values) == res
+    assert build_condition(form_values) == res

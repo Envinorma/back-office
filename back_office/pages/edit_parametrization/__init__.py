@@ -1,5 +1,6 @@
 from typing import Dict, List, Optional, Tuple
 
+import dash_bootstrap_components as dbc
 from dash import Dash, dcc, html
 from dash.development.base_component import Component
 from envinorma.models import AMApplicability, AMMetadata, ArreteMinisteriel, StructuredText
@@ -55,17 +56,19 @@ def _lost_parameters(parametrization: Parametrization, am: ArreteMinisteriel) ->
 def _am_applicability(am_id: str, am_applicability: AMApplicability) -> Component:
     warnings = [html.P(warning) for warning in am_applicability.warnings or ['Aucun avertissement']]
     condition_ = am_applicability.condition_of_inapplicability
-    condition = condition_str(condition_) if condition_ else html.P('Aucune condition d\'inapplicabilité.')
+    condition = html.P(
+        [html.Strong('Cas d\'inapplicabilité : '), condition_str(condition_)]
+        if condition_
+        else 'Aucune condition d\'inapplicabilité.'
+    )
     edit = html.Button('Éditer', className='btn btn-primary ml-2')
     return html.Div(
         [
-            html.H5('Avertissements'),
+            html.H6('Avertissements'),
             *warnings,
-            html.H5('Condition d\'inapplicabilité', className='mt-4'),
             condition,
             dcc.Link(edit, href=f'/{Endpoint.AM_APPLICABILITY}/{am_id}'),
-        ],
-        className='mt-4',
+        ]
     )
 
 
@@ -88,14 +91,22 @@ def _section_parameters_summary(am_id: str, section: StructuredText, param: Para
     )
 
 
+def _am_applicability_row(am: ArreteMinisteriel) -> Component:
+    return dbc.Card(
+        [
+            dbc.CardHeader('Paramètres concernants l\'arrêté en entier'),
+            dbc.CardBody(_am_applicability(am.id or '', am.applicability or AMApplicability())),
+        ]
+    )
+
+
 def _parametrization(parametrization: Parametrization, am: ArreteMinisteriel) -> Component:
     return html.Div(
         [
             _new_parameter_element_buttons(am.id or ''),
             _lost_parameters(parametrization, am),
-            html.H4('Paramètres de l\'arrêté'),
-            _am_applicability(am.id or '', am.applicability or AMApplicability()),
-            html.H4('Paramètres des sections'),
+            _am_applicability_row(am),
+            html.H4('Paramètres', className='mt-5'),
             *[_section_parameters_summary(am.id or '', section, parametrization) for section in am.sections],
         ]
     )

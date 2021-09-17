@@ -5,8 +5,8 @@ from envinorma.parametrization import AndCondition, Equal, Greater, Littler, OrC
 
 from back_office.components.condition_form import (
     _AND_ID,
-    _CONDITION_VARIABLES,
     _OR_ID,
+    CONDITION_VARIABLES,
     _change_to_mono_conditions,
     _get_str_target,
     _make_mono_conditions,
@@ -46,7 +46,7 @@ def test_change_to_mono_conditions():
 
 
 def test_get_str_target():
-    for param in _CONDITION_VARIABLES.values():
+    for param in CONDITION_VARIABLES.values():
         try:
             _get_str_target('test', param.value.type)
         except Exception as exc:
