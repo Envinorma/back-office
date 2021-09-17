@@ -26,7 +26,7 @@ def _new_parameter_element_buttons(am_id: str) -> Component:
             dcc.Link(html.Button(button_text, className='btn btn-primary ml-2'), href=href)
             for button_text, href in hrefs
         ],
-        className='mb-3',
+        className='mb-3 mt-3',
     )
 
 
@@ -101,13 +101,15 @@ def _am_applicability_row(am: ArreteMinisteriel) -> Component:
 
 
 def _parametrization(parametrization: Parametrization, am: ArreteMinisteriel) -> Component:
+    am_id = am.id or ''
     return html.Div(
         [
-            _new_parameter_element_buttons(am.id or ''),
+            dcc.Link("< Retour à l'arrêté", href=f'/{Endpoint.AM}/{am_id}'),
+            _new_parameter_element_buttons(am_id),
             _lost_parameters(parametrization, am),
             _am_applicability_row(am),
             html.H4('Paramètres', className='mt-5'),
-            *[_section_parameters_summary(am.id or '', section, parametrization) for section in am.sections],
+            *[_section_parameters_summary(am_id, section, parametrization) for section in am.sections],
         ]
     )
 

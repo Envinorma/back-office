@@ -43,7 +43,7 @@ def _get_row(rank: int, am: AMMetadata, occurrences: int) -> Component:
         _normal_td(am.source.value),
         _normal_td(occurrences),
     ]
-    style = {'text-decoration': 'line-through'} if am.state != AMState.VIGUEUR else {}
+    style = {'text-decoration': 'line-through'} if am.state not in (AMState.VIGUEUR, AMState.EN_CREATION) else {}
     return html.Tr(rows, style=style)
 
 
@@ -92,12 +92,12 @@ def _build_recap(state_counter: Dict[AMState, int]) -> Component:
         )
         for txt in txts
     ]
-    return html.Div(cols, className='row', style={'margin-top': '20px', 'margin-bottom': '40px'})
+    return html.Div(cols, className='row', style={'margin-top': '20px'})
 
 
 def _add_am_button() -> Component:
     return html.Div(
-        dcc.Link(html.Button('+ Ajouter un arrêté', className='btn btn-link'), href=f'/{Endpoint.CREATE_AM}'),
+        dcc.Link(html.Button('+ Créer un arrêté', className='btn btn-link'), href=f'/{Endpoint.CREATE_AM}'),
         style={'text-align': 'right'},
     )
 
@@ -109,11 +109,22 @@ def _inforced_am_row(id_to_am_metadata: Dict[str, AMMetadata], id_to_occurrences
     return html.Div(_build_am_table(id_to_am_metadata, id_to_occurrences))
 
 
+def _in_creation_am_row(id_to_am_metadata: Dict[str, AMMetadata], id_to_occurrences: Dict[str, int]) -> Component:
+    id_to_am_metadata = {id_: md for id_, md in id_to_am_metadata.items() if md.state == AMState.EN_CREATION}
+    displayed_ids = set(list(id_to_am_metadata))
+    id_to_occurrences = {id_: occ for id_, occ in id_to_occurrences.items() if id_ in displayed_ids}
+    return html.Div(_build_am_table(id_to_am_metadata, id_to_occurrences))
+
+
 def _deleted_am_row(id_to_am_metadata: Dict[str, AMMetadata]) -> Component:
-    deleted_am = {id_: metadata for id_, metadata in id_to_am_metadata.items() if metadata.state != AMState.VIGUEUR}
+    deleted_am = {
+        id_: metadata
+        for id_, metadata in id_to_am_metadata.items()
+        if metadata.state not in (AMState.VIGUEUR, AMState.EN_CREATION)
+    }
     return html.Div(
         [
-            html.H2('Arrêtés supprimés ou abrogés.', className='mt-5'),
+            html.H3('Arrêtés supprimés ou abrogés.', className='mt-5'),
             html.P('Ces arrêtés ne sont pas exploités dans l\'application envinorma.'),
             _build_am_table(deleted_am, {}),
         ],
@@ -122,11 +133,16 @@ def _deleted_am_row(id_to_am_metadata: Dict[str, AMMetadata]) -> Component:
 
 def _index_component(id_to_am_metadata: Dict[str, AMMetadata], id_to_occurrences: Dict[str, int]) -> Component:
     states = Counter([md.state for md in id_to_am_metadata.values()])
+    sentence = 'Ces arrêtés doivent être déclarés en vigueur une fois les thèmes et le paramétrage définis.'
     return html.Div(
         [
             html.H2('Arrêtés ministériels.'),
             _build_recap(states),
             _add_am_button(),
+            html.H3('Arrêtés ministériels en cours de création.', className='mt-2'),
+            html.P(sentence),
+            _in_creation_am_row(id_to_am_metadata, id_to_occurrences),
+            html.H3('Arrêtés ministériels en vigueur.', className='mt-5'),
             _inforced_am_row(id_to_am_metadata, id_to_occurrences),
             _deleted_am_row(id_to_am_metadata),
         ]

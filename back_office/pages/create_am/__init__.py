@@ -70,7 +70,7 @@ def _nor_exists(am_metadata: Optional[AMMetadata]) -> Component:
             dbc.Checkbox(label='Existence du numéro NOR ?', value=default_value, id=ids.NOR_EXISTS),
             dbc.FormText('Il existe le plus souvent, mais peut ne pas exister pour les vieux arrêtés.'),
         ],
-        className='mb-3',
+        className='mb-3 mt-3',
     )
 
 

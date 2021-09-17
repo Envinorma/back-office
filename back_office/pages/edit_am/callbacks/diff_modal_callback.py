@@ -48,12 +48,11 @@ def add_callbacks(app: Dash) -> None:
     @app.callback(
         Output(ids.DIFF_MODAL, 'is_open'),
         Input(ids.DIFF_BUTTON, 'n_clicks'),
-        Input(ids.SAVE_BUTTON, 'n_clicks'),
         State(ids.DIFF_MODAL, 'is_open'),
         prevent_initial_call=True,
     )
-    def _toggle_modal(n_clicks, n_clicks_submit, is_open):
-        if n_clicks or n_clicks_submit:
+    def _toggle_modal(n_clicks, is_open):
+        if n_clicks:
             return not is_open
         return False
 

@@ -1,6 +1,6 @@
 import traceback
 from datetime import date
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import dash_bootstrap_components as dbc
 from dash import ALL, Dash, Input, Output, State, dcc, html
@@ -95,8 +95,14 @@ def _build_parameter_input(parameter: Parameter) -> Component:
     )
 
 
-def _parametrization_form(parametrization: Parametrization) -> Component:
-    parameters = parametrization.extract_parameters()
+def _am_parameters(am: ArreteMinisteriel) -> Set[Parameter]:
+    if not am.applicability.condition_of_inapplicability:
+        return set()
+    return set(am.applicability.condition_of_inapplicability.parameters())
+
+
+def _parametrization_form(am: ArreteMinisteriel, parametrization: Parametrization) -> Component:
+    parameters = parametrization.extract_parameters().union(_am_parameters(am))
     output = html.Div(
         id=_FORM_OUTPUT,
         style={'margin-top': '10px', 'margin-bottom': '10px'},
@@ -119,10 +125,13 @@ def _parametrization_form(parametrization: Parametrization) -> Component:
 
 def _parametrization_component(am_id: str) -> Component:
     parametrization = DATA_FETCHER.load_parametrization(am_id)
-    if not parametrization:
+    am = DATA_FETCHER.load_most_advanced_am(am_id)
+    if not am:
+        content = html.Div('Arrêté ministériel inexistent.')
+    elif not parametrization:
         content = html.Div('Paramétrage non défini pour cet arrêté.')
     else:
-        content = _parametrization_form(parametrization)
+        content = _parametrization_form(am, parametrization)
     return html.Div([html.H2('Paramétrage'), content])
 
 
@@ -131,11 +140,10 @@ def _form_header(am_id: str) -> Component:
 
 
 def _layout(am_metadata: AMMetadata) -> Component:
-    style = {'height': '80vh', 'overflow-y': 'auto'}
     return html.Div(
         [
             _form_header(am_metadata.cid),
-            html.Div(_am_component_with_toc(None), style=style),
+            html.Div(_am_component_with_toc(None)),
             dcc.Store(data=am_metadata.cid, id=_AM_ID),
         ]
     )

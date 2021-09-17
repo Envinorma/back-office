@@ -63,7 +63,9 @@ def _extract_conditions_with_occurrences(
 
 def _edit_parameters_button(am_id: str) -> Component:
     button_wording = 'Éditer le paramétrage'
-    return dcc.Link(dbc.Button(button_wording, color='primary'), href=f'/{Endpoint.EDIT_PARAMETRIZATION}/{am_id}')
+    return dcc.Link(
+        dbc.Button(button_wording, color='primary', className='m-2'), href=f'/{Endpoint.EDIT_PARAMETRIZATION}/{am_id}'
+    )
 
 
 def _conditions_component(am_id: str, parametrization: Parametrization, am_applicability: AMApplicability) -> Component:

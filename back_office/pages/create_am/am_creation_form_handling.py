@@ -13,6 +13,8 @@ from envinorma.models import (
     Regime,
     extract_date_of_signature,
 )
+from envinorma.models.arrete_ministeriel import ArreteMinisteriel
+from envinorma.models.text_elements import EnrichedString
 
 from back_office.pages.edit_parameter_element.form_handling import FormHandlingError
 from back_office.routing import Endpoint
@@ -203,6 +205,8 @@ def handle_form(
             regimes,
             alineas,
         )
+        am = ArreteMinisteriel(EnrichedString(title or ''), [], [], new_am_metadata.date_of_signature, id=am_id)
+        DATA_FETCHER.upsert_structured_am(am_id or '', am)
         DATA_FETCHER.upsert_am(new_am_metadata)
     except FormHandlingError as exc:
         return dbc.Alert(f'Erreur dans le formulaire :\n{exc}', color='danger')
