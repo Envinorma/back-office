@@ -220,4 +220,6 @@ def parametric_am_component(
     am: AMWithApplicability, page_id: str, topics_to_keep: Optional[Set[TopicName]] = None, with_topics: bool = True
 ) -> Component:
     data = _build_component_data(am.arrete, topics_to_keep)
-    return _component(AMWithApplicability(data.am, am.applicable, am.warnings), data.text, data.warnings, page_id, with_topics)
+    return _component(
+        AMWithApplicability(data.am, am.applicable, am.warnings), data.text, data.warnings, page_id, with_topics
+    )

@@ -3,11 +3,11 @@ from typing import Dict, List, Optional, Tuple
 from dash import Dash, dcc, html
 from dash.development.base_component import Component
 from envinorma.models import AMApplicability, AMMetadata, ArreteMinisteriel, StructuredText
-from envinorma.parametrization import Parametrization
-from envinorma.parametrization import ParameterElement
+from envinorma.parametrization import ParameterElement, Parametrization
 
 from back_office.routing import Endpoint, Page
 from back_office.utils import DATA_FETCHER, generate_id
+
 from .components import condition_str, parameter_component
 
 _PREFIX = 'edit-parametrization'

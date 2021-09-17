@@ -1,13 +1,11 @@
-from dash import dcc
-from back_office.routing import Endpoint
 import json
 import random
 import string
 from collections import Counter
 from typing import Any, Dict, List, Tuple, Union
-import dash_bootstrap_components as dbc
 
-from dash import ALL, Dash, Input, Output, State, html, callback_context
+import dash_bootstrap_components as dbc
+from dash import ALL, Dash, Input, Output, State, callback_context, dcc, html
 from dash.development.base_component import Component
 from envinorma.models import AMMetadata, ArreteMinisteriel, StructuredText
 from envinorma.models.am_applicability import AMApplicability
@@ -19,6 +17,7 @@ from envinorma.parametrization.models import (
     Parametrization,
 )
 
+from back_office.routing import Endpoint
 from back_office.utils import DATA_FETCHER, generate_id
 
 

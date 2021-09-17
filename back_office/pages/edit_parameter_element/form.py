@@ -9,14 +9,13 @@ from envinorma.models import ArreteMinisteriel, StructuredText
 from envinorma.parametrization import AlternativeSection, AMWarning, Condition, InapplicableSection, ParameterElement
 from envinorma.parametrization.exceptions import ParametrizationError
 
+from back_office.components.condition_form import callbacks as condition_form_callbacks
+from back_office.components.condition_form import condition_form
 from back_office.helpers.texts import get_truncated_str
 from back_office.routing import Endpoint
 from back_office.utils import DATA_FETCHER, AMOperation
 
 from . import page_ids as ids
-from .condition_form import ConditionFormValues
-from .condition_form import add_callbacks as condition_form_callbacks
-from .condition_form import condition_form
 from .form_handling import FormHandlingError, extract_and_upsert_new_parameter
 from .target_sections_form import DropdownOptions, TargetSectionFormValues
 from .target_sections_form import add_callbacks as target_section_form_callbacks
@@ -104,7 +103,7 @@ def _condition_form(operation: AMOperation, loaded_parameter: Optional[Parameter
         _extract_condition(loaded_parameter) if loaded_parameter and operation != AMOperation.ADD_WARNING else None
     )
     return html.Div(
-        [condition_form(condition)],
+        [condition_form(condition, ids.CONDITION)],
         hidden=operation == AMOperation.ADD_WARNING,
     )
 
@@ -201,7 +200,7 @@ def _handle_submit(
     am_id: str,
     parameter_id: Optional[str],
     target_section_form_values: TargetSectionFormValues,
-    condition_form_values: ConditionFormValues,
+    condition: Optional[str],
     warning_content: str,
 ) -> Component:
     try:
@@ -210,7 +209,7 @@ def _handle_submit(
             am_id,
             parameter_id,
             target_section_form_values,
-            condition_form_values,
+            condition,
             warning_content,
         )
     except FormHandlingError as exc:
@@ -258,7 +257,7 @@ def _handle_delete(n_clicks: int, operation_str: str, am_id: str, parameter_id: 
 
 
 def add_callbacks(app: Dash):
-    condition_form_callbacks(app)
+    condition_form_callbacks(ids.CONDITION)(app)
     target_section_form_callbacks(app)
 
     @app.callback(
@@ -272,10 +271,7 @@ def add_callbacks(app: Dash):
         State(ids.new_text_content(cast(int, ALL)), 'value'),
         State(ids.target_section(cast(int, ALL)), 'value'),
         State(ids.target_alineas(cast(int, ALL)), 'value'),
-        State(ids.condition_parameter(cast(int, ALL)), 'value'),
-        State(ids.condition_operation(cast(int, ALL)), 'value'),
-        State(ids.condition_value(cast(int, ALL)), 'value'),
-        State(ids.CONDITION_MERGE, 'value'),
+        State(ids.CONDITION, 'data'),
         prevent_initial_call=True,
     )
     def handle_submit(
@@ -288,24 +284,13 @@ def add_callbacks(app: Dash):
         new_texts_contents,
         target_sections,
         target_alineas,
-        condition_parameters,
-        condition_operations,
-        condition_values,
-        condition_merge,
+        condition,
     ):
-        condition_form_values = ConditionFormValues(
-            condition_parameters, condition_operations, condition_values, condition_merge
-        )
         target_section_form_values = TargetSectionFormValues(
             new_texts_titles, new_texts_contents, target_sections, target_alineas
         )
         return _handle_submit(
-            AMOperation(operation_str),
-            am_id,
-            parameter_id,
-            target_section_form_values,
-            condition_form_values,
-            warning_content,
+            AMOperation(operation_str), am_id, parameter_id, target_section_form_values, condition, warning_content
         )
 
     @app.callback(
