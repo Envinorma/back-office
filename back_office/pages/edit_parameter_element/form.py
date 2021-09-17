@@ -6,7 +6,7 @@ import dash_bootstrap_components as dbc
 from dash import ALL, Dash, Input, Output, State, dcc, html
 from dash.development.base_component import Component
 from envinorma.models import ArreteMinisteriel, StructuredText
-from envinorma.parametrization import AlternativeSection, AMWarning, Condition, InapplicableSection, ParameterObject
+from envinorma.parametrization import AlternativeSection, AMWarning, Condition, InapplicableSection, ParameterElement
 from envinorma.parametrization.exceptions import ParametrizationError
 
 from back_office.helpers.texts import get_truncated_str
@@ -81,7 +81,7 @@ def _add_block_button(is_edition: bool) -> Component:
 def _get_target_section_block(
     operation: AMOperation,
     text_title_options: DropdownOptions,
-    loaded_parameter: Optional[ParameterObject],
+    loaded_parameter: Optional[ParameterElement],
     am: ArreteMinisteriel,
     is_edition: bool,
 ) -> Component:
@@ -91,15 +91,15 @@ def _get_target_section_block(
     )
 
 
-def _extract_condition(loaded_parameter: ParameterObject) -> Condition:
+def _extract_condition(loaded_parameter: ParameterElement) -> Condition:
     if isinstance(loaded_parameter, AMWarning):
         raise ValueError(
-            f'loaded_parameter should be of type ParameterObjectWithCondition, not {type(loaded_parameter)}'
+            f'loaded_parameter should be of type ParameterElementWithCondition, not {type(loaded_parameter)}'
         )
     return loaded_parameter.condition
 
 
-def _condition_form(operation: AMOperation, loaded_parameter: Optional[ParameterObject]) -> Component:
+def _condition_form(operation: AMOperation, loaded_parameter: Optional[ParameterElement]) -> Component:
     condition = (
         _extract_condition(loaded_parameter) if loaded_parameter and operation != AMOperation.ADD_WARNING else None
     )
@@ -109,7 +109,7 @@ def _condition_form(operation: AMOperation, loaded_parameter: Optional[Parameter
     )
 
 
-def _extract_warning_default_value(loaded_parameter: Optional[ParameterObject]) -> str:
+def _extract_warning_default_value(loaded_parameter: Optional[ParameterElement]) -> str:
     if not loaded_parameter:
         return ''
     if isinstance(loaded_parameter, AMWarning):
@@ -117,7 +117,7 @@ def _extract_warning_default_value(loaded_parameter: Optional[ParameterObject]) 
     return ''
 
 
-def _warning_content_text_area(loaded_parameter: Optional[ParameterObject]) -> Component:
+def _warning_content_text_area(loaded_parameter: Optional[ParameterElement]) -> Component:
     default_value = _extract_warning_default_value(loaded_parameter)
     return dcc.Textarea(
         id=ids.WARNING_CONTENT,
@@ -127,7 +127,7 @@ def _warning_content_text_area(loaded_parameter: Optional[ParameterObject]) -> C
     )
 
 
-def _warning_content_form(operation: AMOperation, loaded_parameter: Optional[ParameterObject]) -> Component:
+def _warning_content_form(operation: AMOperation, loaded_parameter: Optional[ParameterElement]) -> Component:
     return html.Div(
         [
             html.Label('Contenu de l\'avertissement', className='form-label'),
@@ -140,7 +140,7 @@ def _warning_content_form(operation: AMOperation, loaded_parameter: Optional[Par
 def _fields(
     text_title_options: DropdownOptions,
     operation: AMOperation,
-    loaded_parameter: Optional[ParameterObject],
+    loaded_parameter: Optional[ParameterElement],
     destination_id: Optional[str],
     am: ArreteMinisteriel,
 ) -> Component:
@@ -159,7 +159,7 @@ def _make_form(
     am_id: str,
     text_title_options: DropdownOptions,
     operation: AMOperation,
-    loaded_parameter: Optional[ParameterObject],
+    loaded_parameter: Optional[ParameterElement],
     destination_id: Optional[str],
     am: ArreteMinisteriel,
 ) -> Component:
@@ -189,7 +189,7 @@ def parameter_element_form(
     am_id: str,
     am: ArreteMinisteriel,
     operation: AMOperation,
-    loaded_parameter: Optional[ParameterObject],
+    loaded_parameter: Optional[ParameterElement],
     destination_id: Optional[str],
 ) -> Component:
     dropdown_values = _extract_paragraph_reference_dropdown_values(am)
@@ -231,7 +231,7 @@ def _handle_submit(
     )
 
 
-def _deduce_parameter_object_type(operation: AMOperation) -> Type[ParameterObject]:
+def _deduce_parameter_object_type(operation: AMOperation) -> Type[ParameterElement]:
     if operation == AMOperation.ADD_ALTERNATIVE_SECTION:
         return AlternativeSection
     if operation == AMOperation.ADD_CONDITION:

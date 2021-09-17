@@ -26,6 +26,7 @@ class Endpoint(Enum):
     ADD_WARNING = 'add_warning'
     ADD_INAPPLICABILITY = 'add_inapplicability'
     ADD_ALTERNATIVE_SECTION = 'add_alternative_section'
+    AM_APPLICABILITY = 'am_applicability'
 
     def __repr__(self):
         return self.value
@@ -53,6 +54,7 @@ _ENDPOINT_TO_ROUTES: Dict[Endpoint, List[str]] = {
     Endpoint.ADD_WARNING: ['/{}/<am_id>', '/{}/<am_id>/<parameter_id>', '/{}/<am_id>/<parameter_id>/copy'],
     Endpoint.ADD_INAPPLICABILITY: ['/{}/<am_id>', '/{}/<am_id>/<parameter_id>', '/{}/<am_id>/<parameter_id>/copy'],
     Endpoint.ADD_ALTERNATIVE_SECTION: ['/{}/<am_id>', '/{}/<am_id>/<parameter_id>', '/{}/<am_id>/<parameter_id>/copy'],
+    Endpoint.AM_APPLICABILITY: ['/{}/<am_id>'],
 }
 
 ROUTER: MapAdapter = Map(

@@ -16,7 +16,7 @@ from envinorma.parametrization import (
     MonoCondition,
     OrCondition,
     Parameter,
-    ParameterObject,
+    ParameterElement,
     ParameterType,
     Range,
     ensure_mono_conditions,
@@ -288,7 +288,7 @@ def _build_parameter_object(
     condition: Optional[Condition],
     modification: _Modification,
     warning_content: str,
-) -> ParameterObject:
+) -> ParameterElement:
     if operation == AMOperation.ADD_ALTERNATIVE_SECTION:
         return AlternativeSection(
             section_id=modification.section_id,
@@ -308,7 +308,7 @@ def _extract_new_parameter_objects(
     target_section_form_values: TargetSectionFormValues,
     condition_form_values: ConditionFormValues,
     warning_content: str,
-) -> List[ParameterObject]:
+) -> List[ParameterElement]:
     condition = _build_condition(condition_form_values) if operation != AMOperation.ADD_WARNING else None
     target_versions = _build_target_versions(am, target_section_form_values)
     return [
@@ -317,7 +317,7 @@ def _extract_new_parameter_objects(
     ]
 
 
-def _check_consistency(operation: AMOperation, parameters: List[ParameterObject]) -> None:
+def _check_consistency(operation: AMOperation, parameters: List[ParameterElement]) -> None:
     for parameter in parameters:
         if operation == AMOperation.ADD_CONDITION:
             assert isinstance(parameter, InapplicableSection), f'Expect InapplicableSection, got {type(parameter)}'
@@ -347,7 +347,7 @@ def extract_and_upsert_new_parameter(
     _upsert_parameters(am_id, new_parameters, parameter_id)
 
 
-def _upsert_parameters(am_id: str, new_parameters: List[ParameterObject], parameter_id: Optional[str]):
+def _upsert_parameters(am_id: str, new_parameters: List[ParameterElement], parameter_id: Optional[str]):
     if parameter_id is not None:
         if len(new_parameters) != 1:
             raise ValueError('Must have only one parameter when updating a specific parameter..')

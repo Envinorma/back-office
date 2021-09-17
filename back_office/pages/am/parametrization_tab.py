@@ -102,7 +102,7 @@ def _title_with_badges(title: str, badges: Component) -> Component:
 
 def _title(title: str, section_id: str, parametrization: Parametrization) -> Component:
     badges = _condition_badges(
-        parametrization.id_to_conditions.get(section_id) or [],
+        parametrization.id_to_inapplicabilities.get(section_id) or [],
         parametrization.id_to_alternative_sections.get(section_id) or [],
         parametrization.id_to_warnings.get(section_id) or [],
     )

@@ -7,7 +7,7 @@ from envinorma.parametrization import (
     AlternativeSection,
     AMWarning,
     InapplicableSection,
-    ParameterObject,
+    ParameterElement,
     Parametrization,
 )
 
@@ -22,7 +22,7 @@ def _get_main_component(
     am: ArreteMinisteriel,
     operation: AMOperation,
     destination_id: Optional[str],
-    loaded_parameter: Optional[ParameterObject],
+    loaded_parameter: Optional[ParameterElement],
 ) -> Component:
     return parameter_element_form(am.id or '', am, operation, loaded_parameter, destination_id)
 
@@ -32,7 +32,7 @@ def _build_page(
     operation: AMOperation,
     am_id: str,
     destination_id: Optional[str],
-    loaded_parameter: Optional[ParameterObject],
+    loaded_parameter: Optional[ParameterElement],
 ) -> Component:
     hidden_components = [
         dcc.Store(data=am_id, id=page_ids.AM_ID),
@@ -48,7 +48,7 @@ def _load_am(am_id: str) -> Optional[ArreteMinisteriel]:
     return DATA_FETCHER.load_most_advanced_am(am_id)
 
 
-def _get_parameter(parametrization: Parametrization, operation_id: AMOperation, parameter_id: str) -> ParameterObject:
+def _get_parameter(parametrization: Parametrization, operation_id: AMOperation, parameter_id: str) -> ParameterElement:
     parameters: Union[List[AlternativeSection], List[InapplicableSection], List[AMWarning]]
     if operation_id == operation_id.ADD_ALTERNATIVE_SECTION:
         parameters = parametrization.alternative_sections

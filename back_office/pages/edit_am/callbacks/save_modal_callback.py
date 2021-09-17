@@ -4,27 +4,20 @@ from typing import Dict, List, Optional
 from dash import Dash, Input, Output, State, html
 from dash.development.base_component import Component
 from envinorma.models.lost_topic import LostTopic
-from flask.scaffold import F
 
 from back_office.components import error_component, success_component, warning_component
 from back_office.utils import DATA_FETCHER
 
 from .. import ids
 from .save_callback import TextAreaHandlingError, extract_text_from_html
-from envinorma.parametrization.models import ParameterObject
 
 
 def _list_lost_parameters_titles(orphan_titles: Dict[str, List[str]], am_id: str) -> List[List[str]]:
     parametrization = DATA_FETCHER.load_or_init_parametrization(am_id)
     lost_parameters: List[List[str]] = []
-    tuples = [
-        *parametrization.id_to_alternative_sections.items(),
-        *parametrization.id_to_conditions.items(),
-        *parametrization.id_to_warnings.items(),
-    ]
-    for id_, parameters in parametrization.id_to_alternative_sections.items():
-        if id_ in orphan_titles:
-            lost_parameters.extend([orphan_titles[id_] for _ in parameters])
+    for element in parametrization.elements():
+        if element.section_id in orphan_titles:
+            lost_parameters.append(orphan_titles[element.section_id])
     return lost_parameters
 
 

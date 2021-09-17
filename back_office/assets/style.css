@@ -154,3 +154,13 @@ html {
   right: 30px;
   z-index: 3;
 }
+
+.parameter-element {
+  border: 1px solid #cccccc;
+  border-radius: 3px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+.section-title {
+  font-weight: 500;
+}

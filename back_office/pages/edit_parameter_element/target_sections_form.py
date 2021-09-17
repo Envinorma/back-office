@@ -7,7 +7,7 @@ from dash import MATCH, Input, Output, State, dcc, html
 from dash.development.base_component import Component
 from envinorma.models import StructuredText
 from envinorma.models.arrete_ministeriel import ArreteMinisteriel
-from envinorma.parametrization import AlternativeSection, InapplicableSection, ParameterObject
+from envinorma.parametrization import AlternativeSection, InapplicableSection, ParameterElement
 
 from back_office.pages.edit_parameter_element import page_ids
 from back_office.utils import DATA_FETCHER, AMOperation
@@ -22,7 +22,9 @@ def _find_section_by_id(section_id: str, am: ArreteMinisteriel) -> StructuredTex
     raise ValueError(f'Section {section_id} not found')
 
 
-def _target_section_form(options: DropdownOptions, loaded_parameter: Optional[ParameterObject], rank: int) -> Component:
+def _target_section_form(
+    options: DropdownOptions, loaded_parameter: Optional[ParameterElement], rank: int
+) -> Component:
     default_value = loaded_parameter.section_id if loaded_parameter else None
     dropdown_target = html.Div(
         [
@@ -34,7 +36,7 @@ def _target_section_form(options: DropdownOptions, loaded_parameter: Optional[Pa
     return html.Div([html.H6('Titre'), dropdown_target])
 
 
-def _ensure_optional_condition(parameter: Optional[ParameterObject]) -> Optional[InapplicableSection]:
+def _ensure_optional_condition(parameter: Optional[ParameterElement]) -> Optional[InapplicableSection]:
     if not parameter:
         return None
     if not isinstance(parameter, InapplicableSection):
@@ -43,7 +45,7 @@ def _ensure_optional_condition(parameter: Optional[ParameterObject]) -> Optional
 
 
 def _target_alineas_form(
-    operation: AMOperation, loaded_parameter: Optional[ParameterObject], am: Optional[ArreteMinisteriel], rank: int
+    operation: AMOperation, loaded_parameter: Optional[ParameterElement], am: Optional[ArreteMinisteriel], rank: int
 ) -> Component:
     title = html.H6('Alineas visés')
     if not _is_condition(operation):
@@ -83,7 +85,7 @@ def _is_condition(operation: AMOperation) -> bool:
     return operation == operation.ADD_CONDITION
 
 
-def _ensure_alternative_section(parameter: ParameterObject) -> AlternativeSection:
+def _ensure_alternative_section(parameter: ParameterElement) -> AlternativeSection:
     if not isinstance(parameter, AlternativeSection):
         raise ValueError(f'Expecting AlternativeSection, not {type(parameter)}')
     return parameter
@@ -118,7 +120,7 @@ def _new_section_form(default_title: str, default_content: str, rank: int, opera
 
 
 def _new_section_form_from_default(
-    operation: AMOperation, loaded_parameter: Optional[ParameterObject], rank: int
+    operation: AMOperation, loaded_parameter: Optional[ParameterElement], rank: int
 ) -> Component:
     if not loaded_parameter or operation != AMOperation.ADD_ALTERNATIVE_SECTION:
         default_title, default_content = '', ''
@@ -178,7 +180,7 @@ def _delete_button(rank: int, is_edition: bool) -> Component:
 def target_section_form(
     operation: AMOperation,
     text_title_options: DropdownOptions,
-    loaded_parameter: Optional[ParameterObject],
+    loaded_parameter: Optional[ParameterElement],
     am: Optional[ArreteMinisteriel],
     rank: int,
     is_edition: bool,

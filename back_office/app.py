@@ -3,6 +3,7 @@ from urllib.parse import quote_plus
 
 from dash import Input, Output, dcc, html
 from dash.development.base_component import Component
+
 from flask.app import Flask
 from flask_login import LoginManager
 from werkzeug.exceptions import NotFound
@@ -29,6 +30,7 @@ from back_office.pages.edit_parameter_element import PAGE_WARNING as warning_pag
 from back_office.pages.regulation_engine import PAGE as regulation_engine_page
 from back_office.pages.topic_detector import PAGE as topic_detector_page
 from back_office.pages.upload_ams import PAGE as upload_ams_page
+from back_office.pages.am_applicability import PAGE as am_applicability_page
 from back_office.routing import ROUTER, Endpoint, Page
 from back_office.utils import ensure_not_none
 
@@ -51,6 +53,7 @@ _ENDPOINT_TO_PAGE: Dict[Endpoint, Page] = {
     Endpoint.ADD_ALTERNATIVE_SECTION: alternative_section_page,
     Endpoint.ADD_INAPPLICABILITY: condition_page,
     Endpoint.ADD_WARNING: warning_page,
+    Endpoint.AM_APPLICABILITY: am_applicability_page,
 }
 
 
