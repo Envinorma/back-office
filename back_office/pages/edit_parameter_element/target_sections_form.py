@@ -47,7 +47,7 @@ def _ensure_optional_condition(parameter: Optional[ParameterElement]) -> Optiona
 def _target_alineas_form(
     operation: AMOperation, loaded_parameter: Optional[ParameterElement], am: Optional[ArreteMinisteriel], rank: int
 ) -> Component:
-    title = html.H6('Alineas visés')
+    title = html.H6('Alineas inapplicables', className='mt-3')
     if not _is_condition(operation):
         return html.Div(
             [title, dbc.Checklist(options=[], id=page_ids.target_alineas(rank))],
@@ -76,7 +76,12 @@ def _target_alineas_form(
     return html.Div(
         [
             title,
-            dbc.Checklist(options=options, value=value, id=page_ids.target_alineas(rank)),
+            dbc.Checklist(
+                options=options,
+                value=value,
+                id=page_ids.target_alineas(rank),
+                label_checked_style={'text-decoration': 'line-through'},
+            ),
         ]
     )
 

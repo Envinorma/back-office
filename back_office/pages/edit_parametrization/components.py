@@ -43,7 +43,9 @@ def _alineas_to_component(targeted_alineas: Optional[List[int]], alineas: List[E
     )
 
 
-def _inapplicability(am_id: str, inapplicability: InapplicableSection, text: Optional[StructuredText]) -> Component:
+def _inapplicability(
+    am_id: str, inapplicability: InapplicableSection, text: Optional[StructuredText], color: str
+) -> Component:
     alineas = html.Div(
         [
             f'Alineas visés : {_human_alinea_tuple(inapplicability.alineas)}',
@@ -57,14 +59,14 @@ def _inapplicability(am_id: str, inapplicability: InapplicableSection, text: Opt
     buttons = html.Div([edit, copy])
     return dbc.Card(
         [dbc.CardHeader('Section potentiellement inapplicable'), dbc.CardBody([condition, alineas, buttons])],
-        color='dark',
+        color=color,
         outline=True,
         className='mb-2',
     )
 
 
 def _alternative_section(
-    am_id: str, alternative_section: AlternativeSection, text: Optional[StructuredText]
+    am_id: str, alternative_section: AlternativeSection, text: Optional[StructuredText], color: str
 ) -> Component:
     condition = condition_str(alternative_section.condition)
     if text:
@@ -80,30 +82,32 @@ def _alternative_section(
     buttons = html.Div([edit, copy])
     return dbc.Card(
         [dbc.CardHeader('Section alternative'), dbc.CardBody([condition, new_version, buttons])],
-        color='dark',
+        color=color,
         outline=True,
         className='mb-2',
     )
 
 
-def _warning(am_id: str, warning: AMWarning) -> Component:
+def _warning(am_id: str, warning: AMWarning, color: str) -> Component:
     href = f'/{Endpoint.ADD_WARNING}/{am_id}/{warning.id}'
     edit = link_button('Éditer ou supprimer', href=href, state=ButtonState.NORMAL_LINK)
     copy = link_button('Copier', href=f'{href}/copy', state=ButtonState.NORMAL_LINK)
     buttons = html.Div([edit, copy])
     return dbc.Card(
         [dbc.CardHeader('Avertissement'), dbc.CardBody([warning.text, buttons])],
-        color='dark',
+        color=color,
         outline=True,
         className='mb-2',
     )
 
 
-def parameter_component(am_id: str, element: ParameterElement, text: Optional[StructuredText]) -> Component:
+def parameter_component(
+    am_id: str, element: ParameterElement, text: Optional[StructuredText], color: str = 'dark'
+) -> Component:
     if isinstance(element, InapplicableSection):
-        return _inapplicability(am_id, element, text)
+        return _inapplicability(am_id, element, text, color)
     if isinstance(element, AlternativeSection):
-        return _alternative_section(am_id, element, text)
+        return _alternative_section(am_id, element, text, color)
     if isinstance(element, AMWarning):
-        return _warning(am_id, element)
+        return _warning(am_id, element, color)
     raise ValueError(f'Unknown parameter type {type(element)}')

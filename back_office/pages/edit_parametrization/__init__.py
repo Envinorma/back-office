@@ -6,6 +6,7 @@ from dash.development.base_component import Component
 from envinorma.models import AMApplicability, AMMetadata, ArreteMinisteriel, StructuredText
 from envinorma.parametrization import ParameterElement, Parametrization
 
+from back_office.components import error_component
 from back_office.routing import Endpoint, Page
 from back_office.utils import DATA_FETCHER, generate_id
 
@@ -41,7 +42,10 @@ def _lost_parameter_component(am_id: str, lost_parameter: Tuple[Optional[List[st
     titles, parameter = lost_parameter
     title_str = 'inconnus' if not titles else ' > '.join(titles)
     return html.Div(
-        [html.P(f'Titres de la section précédemment visée : {title_str}'), parameter_component(am_id, parameter, None)]
+        [
+            html.P(f'Titres de la section précédemment visée : {title_str}'),
+            parameter_component(am_id, parameter, None, 'danger'),
+        ]
     )
 
 
@@ -50,7 +54,11 @@ def _lost_parameters(parametrization: Parametrization, am: ArreteMinisteriel) ->
     if not _lost_parameters:
         return html.Div()
     parameters = [_lost_parameter_component(am.id or '', p) for p in _lost_parameters]
-    return html.Div([html.H5('Paramètres perdus'), *parameters])
+    explaination = error_component(
+        'Les paramètres suivants ont été dissociés lors de la dernière édition du contenu de l\'arrêté. '
+        'Veuillez les supprimer ou les réaffecter.'
+    )
+    return html.Div([html.H5('Paramètres perdus'), explaination, *parameters], className='mt-3')
 
 
 def _am_applicability(am_id: str, am_applicability: AMApplicability) -> Component:
@@ -106,8 +114,8 @@ def _parametrization(parametrization: Parametrization, am: ArreteMinisteriel) ->
         [
             dcc.Link("< Retour à l'arrêté", href=f'/{Endpoint.AM}/{am_id}'),
             _new_parameter_element_buttons(am_id),
-            _lost_parameters(parametrization, am),
             _am_applicability_row(am),
+            _lost_parameters(parametrization, am),
             html.H4('Paramètres', className='mt-5'),
             *[_section_parameters_summary(am_id, section, parametrization) for section in am.sections],
         ]
