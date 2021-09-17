@@ -18,9 +18,11 @@ AM_STATE = generate_id(__file__, 'am-state')
 AM_SOURCE = generate_id(__file__, 'am-source')
 NOR_EXISTS = generate_id(__file__, 'nor-exists')
 NOR_ID = generate_id(__file__, 'nor-id')
+NOR_DIV = generate_id(__file__, 'nor-div')
 REASON_DELETED = generate_id(__file__, 'reason-deleted')
 SUBMIT_BUTTON = generate_id(__file__, 'submit-button')
 SUCCESS_REDIRECT = generate_id(__file__, 'success-redirect')
+REASON_DELETED_DIV = generate_id(__file__, 'reason-deleted-div')
 
 
 def delete_classement_button_id(rank: int) -> Dict[str, Any]:

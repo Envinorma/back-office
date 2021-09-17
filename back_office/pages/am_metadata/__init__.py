@@ -1,7 +1,7 @@
 from typing import List, Optional, cast
 
 import dash_bootstrap_components as dbc
-from dash import ALL, MATCH, Dash, Input, Output, State, dcc, html
+from dash import ALL, MATCH, Dash, Input, Output, State, dcc, html, no_update
 from dash.development.base_component import Component
 from envinorma.models import AMMetadata, AMSource, AMState, Classement, Regime
 from envinorma.utils import AIDA_URL
@@ -60,6 +60,7 @@ def _nor_form(am_metadata: Optional[AMMetadata]) -> Component:
             dcc.Input(value=default_value, placeholder='ex: DEVP0123456A', id=ids.NOR_ID, className='form-control'),
         ],
         className='mb-3',
+        id=ids.NOR_DIV,
     )
 
 
@@ -183,7 +184,7 @@ def _classements_form(am_metadata: Optional[AMMetadata]) -> Component:
 
 
 def _am_state(am_metadata: Optional[AMMetadata]) -> Component:
-    default_value = am_metadata.state.value if am_metadata else None
+    default_value = am_metadata.state.value if am_metadata else AMState.EN_CREATION.value
     return html.Div(
         [
             html.Label('Statut', className='form-label'),
@@ -209,7 +210,8 @@ def _am_source(am_metadata: Optional[AMMetadata]) -> Component:
             dcc.Dropdown(value=default_value, options=_AM_SOURCE_OPTIONS, id=ids.AM_SOURCE, placeholder='Source'),
             dbc.FormText(
                 'La source qui sera utilisée pour initialiser l\'arrêté. Choisir Légifrance '
-                'par défaut, sauf si il manque les annexes ou une autre partie du texte sur Légifrance.'
+                'par défaut, sauf si il manque les annexes ou une autre partie du texte sur Légifrance, ou si la '
+                'version consolidée n\'existe pas.'
             ),
         ],
         className='mb-3',
@@ -225,6 +227,8 @@ def _reason_deleted(am_metadata: Optional[AMMetadata]) -> Component:
             dbc.FormText('À ne renseigner que si le statut choisi est DELETED.'),
         ],
         className='mb-3',
+        hidden=False,
+        id=ids.REASON_DELETED_DIV,
     )
 
 
@@ -265,8 +269,8 @@ def _metadata_form(am_metadata: Optional[AMMetadata]) -> Component:
             _aida_page_form(am_metadata),
             _classements_form(am_metadata),
             _am_state(am_metadata),
-            _am_source(am_metadata),
             _reason_deleted(am_metadata),
+            _am_source(am_metadata),
             html.Div(id=ids.FORM_OUTPUT),
             _buttons(am_metadata.cid if am_metadata else ''),
         ]
@@ -283,17 +287,27 @@ def _form(am_id: Optional[str], metadata: Optional[AMMetadata]) -> Component:
     return html.Div([_legifrance_id_form(am_id), _metadata_row(am_id, metadata), dcc.Store(data=am_id, id=ids.AM_ID)])
 
 
-def _page_if_logged(am_id: Optional[str]) -> Component:
+def _page(am_id: Optional[str]) -> Component:
     metadata = DATA_FETCHER.load_am_metadata(am_id) if am_id else None
     title = 'Nouvel arrêté ministériel.' if not metadata else f"Modification de l'arrêté ministériel {am_id}."
     return html.Div([html.H2(title), _form(am_id, metadata)])
 
 
-def _page(am_id: Optional[str] = None) -> Component:
-    return _page_if_logged(am_id)
-
-
 def _add_callbacks(app: Dash) -> None:
+    @app.callback(Output(ids.REASON_DELETED_DIV, 'hidden'), Input(ids.AM_STATE, 'value'))
+    def set_reason_deleted_visibility(am_state: Optional[str]) -> bool:
+        return am_state != AMState.DELETED.value
+
+    @app.callback(Output(ids.NOR_DIV, 'hidden'), Input(ids.NOR_EXISTS, 'value'))
+    def set_nor_visibility(checked) -> bool:
+        return not checked
+
+    @app.callback(Output(ids.REASON_DELETED, 'value'), Input(ids.AM_STATE, 'value'))
+    def clear_reason_deleted(am_state: Optional[str]):
+        if am_state != AMState.DELETED.value:
+            return ''
+        return no_update
+
     @app.callback(
         Output(ids.SUBMIT_LEGIFRANCE_OUTPUT, 'children'),
         Input(ids.SUBMIT_LEGIFRANCE_ID, 'n_clicks'),

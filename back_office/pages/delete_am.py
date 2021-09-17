@@ -29,7 +29,7 @@ def _delete_form(am_id: str) -> Component:
             dcc.Input(value='', id=_DELETE_REASON, className='form-control'),
             dcc.Store(data=am_id, id=_AM_ID),
             html.Div(id=_FORM_OUTPUT),
-            html.Button('Supprimer l\'AM', className='btn btn-primary mt-2 mb-2', id=_SUBMIT_DELETION),
+            html.Button('Supprimer', className='btn btn-primary mt-2 mb-2', id=_SUBMIT_DELETION),
         ]
     )
 
@@ -52,7 +52,7 @@ def _get_and_check_am(am_id: str) -> AMMetadata:
     res = DATA_FETCHER.load_am_metadata(am_id)
     if not res:
         raise FormHandlingError(f'L\'arrêté {am_id} n\'existe pas.')
-    if res.state != AMState.VIGUEUR:
+    if res.state not in (AMState.VIGUEUR, AMState.EN_CREATION):
         raise FormHandlingError(f'L\'arrêté {am_id} est déjà supprimé')
     return res
 
