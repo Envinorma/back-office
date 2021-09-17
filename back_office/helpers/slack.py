@@ -15,7 +15,9 @@ class SlackChannel(Enum):
         raise NotImplementedError(f'Missing slack channel url {self}.')
 
 
-def send_slack_notification(message: str, channel: SlackChannel, prod_only: bool = True) -> None:
+def send_slack_notification(
+    message: str, channel: SlackChannel = SlackChannel.ENRICHMENT_NOTIFICATIONS, prod_only: bool = True
+) -> None:
     if ENVIRONMENT_TYPE != EnvironmentType.PROD and prod_only:
         return
     url = channel.slack_url()

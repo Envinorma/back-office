@@ -59,7 +59,7 @@ def _alert() -> Component:
 
 
 def _edit_metadata_button(am_id: str) -> Component:
-    return dcc.Link(dbc.Button('Modifier les metadonnées', color='primary'), href=f'/{Endpoint.CREATE_AM}/{am_id}')
+    return dcc.Link(dbc.Button('Modifier les metadonnées', color='primary'), href=f'/{Endpoint.AM_METADATA}/{am_id}')
 
 
 def _edit_content_button(am_id: str) -> Component:

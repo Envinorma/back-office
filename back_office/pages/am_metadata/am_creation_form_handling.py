@@ -16,11 +16,20 @@ from envinorma.models import (
 from envinorma.models.arrete_ministeriel import ArreteMinisteriel
 from envinorma.models.text_elements import EnrichedString
 
+from back_office.helpers.login import get_current_user
+from back_office.helpers.slack import send_slack_notification
 from back_office.pages.edit_parameter_element.form_handling import FormHandlingError
 from back_office.routing import Endpoint
 from back_office.utils import DATA_FETCHER
 
-from . import create_am_ids as page_ids
+from . import ids
+
+
+def _slack(am_metadata: AMMetadata) -> None:
+    send_slack_notification(
+        f'User `{get_current_user().username}` succesfully edited AM `{am_metadata.cid}` with '
+        f'status `{am_metadata.state.value}`.'
+    )
 
 
 def is_legifrance_id_valid(legifrance_id: str) -> bool:
@@ -208,6 +217,7 @@ def handle_form(
         am = ArreteMinisteriel(EnrichedString(title or ''), [], [], new_am_metadata.date_of_signature, id=am_id)
         DATA_FETCHER.upsert_structured_am(am_id or '', am)
         DATA_FETCHER.upsert_am(new_am_metadata)
+        _slack(new_am_metadata)
     except FormHandlingError as exc:
         return dbc.Alert(f'Erreur dans le formulaire :\n{exc}', color='danger')
     except Exception as exc:
@@ -216,6 +226,6 @@ def handle_form(
     return html.Div(
         [
             dbc.Alert('Enregistrement réussi.', color='success'),
-            dcc.Location(href=redirect_target, id=page_ids.SUCCESS_REDIRECT),
+            dcc.Location(href=redirect_target, id=ids.SUCCESS_REDIRECT),
         ]
     )

@@ -9,7 +9,7 @@ from envinorma.utils import AIDA_URL
 from back_office.routing import Endpoint, Page
 from back_office.utils import DATA_FETCHER
 
-from . import create_am_ids as ids
+from . import ids
 from .am_creation_form_handling import handle_form, is_legifrance_id_valid
 
 _REGIME_OPTIONS = [{'label': regime.value, 'value': regime.value} for regime in Regime]
@@ -38,7 +38,7 @@ def _legifrance_id_form(am_id: Optional[str]) -> Component:
                 html.Button(
                     'Éditer l\'identifiant Légifrance', className='btn btn-outline-primary', hidden=am_id is None
                 ),
-                href=f'/{Endpoint.CREATE_AM}',
+                href=f'/{Endpoint.AM_METADATA}',
             ),
         ],
         className='input-group',
@@ -309,7 +309,7 @@ def _add_callbacks(app: Dash) -> None:
                 className='mt-2 mb-3',
                 dismissable=True,
             )
-        return dcc.Location(pathname=f'/{Endpoint.CREATE_AM}/{legifrance_id}', id=ids.REFRESH_REDIRECT)
+        return dcc.Location(pathname=f'/{Endpoint.AM_METADATA}/{legifrance_id}', id=ids.REFRESH_REDIRECT)
 
     @app.callback(
         Output(ids.classement_row_id(cast(int, MATCH)), 'children'),

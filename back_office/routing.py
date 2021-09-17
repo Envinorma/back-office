@@ -16,7 +16,7 @@ class Endpoint(Enum):
     EDIT_AM = 'edit_am'
     EDIT_AM_CONTENT = 'edit_am_content'
     DELETE_AM = 'delete_am'
-    CREATE_AM = 'create_am'
+    AM_METADATA = 'am_metadata'
     LOGIN = 'login'
     LOGOUT = 'logout'
     EDIT_TOPICS = 'edit_topics'
@@ -43,7 +43,7 @@ _ENDPOINT_TO_ROUTES: Dict[Endpoint, List[str]] = {
     Endpoint.LOGIN: ['/{}', '/{}/<origin>'],
     Endpoint.LOGOUT: ['/{}'],
     Endpoint.DELETE_AM: ['/{}/<am_id>'],
-    Endpoint.CREATE_AM: ['/{}', '/{}/<am_id>'],
+    Endpoint.AM_METADATA: ['/{}', '/{}/<am_id>'],
     Endpoint.UPLOAD_AMS: ['/{}'],
     Endpoint.EDIT_TOPICS: ['/{}/<am_id>'],
     Endpoint.EDIT_PARAMETRIZATION: ['/{}/<am_id>'],

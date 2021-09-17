@@ -97,7 +97,7 @@ def _build_recap(state_counter: Dict[AMState, int]) -> Component:
 
 def _add_am_button() -> Component:
     return html.Div(
-        dcc.Link(html.Button('+ Créer un arrêté', className='btn btn-link'), href=f'/{Endpoint.CREATE_AM}'),
+        dcc.Link(html.Button('+ Créer un arrêté', className='btn btn-link'), href=f'/{Endpoint.AM_METADATA}'),
         style={'text-align': 'right'},
     )
 

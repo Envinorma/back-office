@@ -13,7 +13,7 @@ from back_office.config import LOGIN_SECRET_KEY
 from back_office.helpers.login import UNIQUE_USER, get_current_user
 from back_office.pages.am import PAGE as am_page
 from back_office.pages.am_applicability import PAGE as am_applicability_page
-from back_office.pages.create_am import PAGE as create_am_page
+from back_office.pages.am_metadata import PAGE as am_metadata_page
 from back_office.pages.delete_am import PAGE as delete_am_page
 from back_office.pages.edit_am import PAGE as edit_am_page
 from back_office.pages.edit_am_content import PAGE as edit_am_content_page
@@ -45,7 +45,7 @@ _ENDPOINT_TO_PAGE: Dict[Endpoint, Page] = {
     Endpoint.LOGOUT: logout_page,
     Endpoint.INDEX: index_page,
     Endpoint.DELETE_AM: delete_am_page,
-    Endpoint.CREATE_AM: create_am_page,
+    Endpoint.AM_METADATA: am_metadata_page,
     Endpoint.REGULATION_ENGINE: regulation_engine_page,
     Endpoint.TOPIC_DETECTOR: topic_detector_page,
     Endpoint.UPLOAD_AMS: upload_ams_page,

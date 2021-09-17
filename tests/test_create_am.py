@@ -3,7 +3,7 @@ from datetime import date
 import pytest
 from envinorma.models import AMMetadata, AMSource, AMState, Classement, Regime
 
-from back_office.pages.create_am.am_creation_form_handling import FormHandlingError, _extract_am_metadata
+from back_office.pages.am_metadata.am_creation_form_handling import FormHandlingError, _extract_am_metadata
 
 
 def test_extract_am_metadata():
