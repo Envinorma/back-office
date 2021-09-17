@@ -1,10 +1,7 @@
 from typing import Callable, List, Optional, Tuple
 
 import dash_bootstrap_components as dbc
-import dash_core_components as dcc
-import dash_html_components as html
-from dash import Dash
-from dash.dependencies import Input, Output, State
+from dash import Dash, Input, Output, State, dcc, html
 from dash.development.base_component import Component
 from envinorma.models.am_metadata import AMMetadata, AMState
 
@@ -33,8 +30,14 @@ def _warning(am_metadata: AMMetadata) -> Component:
         )
     if am_metadata.state == AMState.DELETED:
         return dbc.Alert(
-            f'Cet arrêté a été supprimé et ne sera pas exploité dans l\'application envinorma. '
+            'Cet arrêté a été supprimé et ne sera pas exploité dans l\'application envinorma. '
             f'Raison de la suppression :\n{am_metadata.reason_deleted}',
+            color='warning',
+        )
+    if am_metadata.state == AMState.EN_CREATION:
+        return dbc.Alert(
+            'Cet arrêté est en cours de création et ne sera pas exploité dans l\'application envinorma '
+            'tant qu\'il ne sera pas déclaré comme en vigueur.',
             color='warning',
         )
     raise NotImplementedError(f'Unhandled state {am_metadata.state}')
@@ -73,4 +76,4 @@ def _callbacks(app: Dash) -> None:
         return f'/{Endpoint.AM}/{am_id}/{active_tab}'
 
 
-PAGE = Page(_layout, _callbacks)
+PAGE = Page(_layout, _callbacks, False)

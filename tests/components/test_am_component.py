@@ -1,6 +1,6 @@
 from typing import Union
 
-import dash_html_components as html
+from dash import html
 from dash.development.base_component import Component
 from envinorma.io.parse_html import extract_table
 from envinorma.models import Table

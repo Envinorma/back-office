@@ -1,4 +1,4 @@
-import dash_core_components as dcc
+from dash import dcc
 from dash.development.base_component import Component
 from flask_login import logout_user
 
@@ -12,4 +12,4 @@ def _layout() -> Component:
     return dcc.Location(pathname='/', id='back_home')
 
 
-PAGE = Page(_layout, None)
+PAGE = Page(_layout, None, False)

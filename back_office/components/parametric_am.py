@@ -3,8 +3,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 import dash
 import dash_bootstrap_components as dbc
-import dash_html_components as html
-from dash.dependencies import MATCH, Input, Output, State
+from dash import MATCH, Input, Output, State, html
 from dash.development.base_component import Component
 from envinorma.models import Applicability, ArreteMinisteriel, EnrichedString, StructuredText
 from envinorma.parametrization.apply_parameter_values import AMWithApplicability
@@ -136,8 +135,10 @@ def _main_component(am: AMWithApplicability, text: StructuredText, warnings: Lis
     )
 
 
-def _component(am: AMWithApplicability, text: StructuredText, warnings: List[_Warning], page_id: str) -> Component:
-    summary = summary_component(text, True)
+def _component(
+    am: AMWithApplicability, text: StructuredText, warnings: List[_Warning], page_id: str, with_topics: bool
+) -> Component:
+    summary = summary_component(text, True, with_topics)
     return html.Div(
         [
             html.Div(summary, className='col-3'),
@@ -216,7 +217,9 @@ def parametric_am_callbacks(app: dash.Dash, page_id: str) -> None:
 
 
 def parametric_am_component(
-    am: AMWithApplicability, page_id: str, topics_to_keep: Optional[Set[TopicName]] = None
+    am: AMWithApplicability, page_id: str, topics_to_keep: Optional[Set[TopicName]] = None, with_topics: bool = True
 ) -> Component:
     data = _build_component_data(am.arrete, topics_to_keep)
-    return _component(AMWithApplicability(data.am, am.applicable, am.warnings), data.text, data.warnings, page_id)
+    return _component(
+        AMWithApplicability(data.am, am.applicable, am.warnings), data.text, data.warnings, page_id, with_topics
+    )

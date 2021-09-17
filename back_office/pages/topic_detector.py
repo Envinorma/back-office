@@ -5,10 +5,7 @@ from typing import Any, Dict, List, Optional
 
 import dash
 import dash_bootstrap_components as dbc
-import dash_core_components as dcc
-import dash_html_components as html
-from dash import Dash
-from dash.dependencies import ALL, Input, Output
+from dash import ALL, Dash, Input, Output, dcc, html
 from dash.development.base_component import Component
 from envinorma.models.arrete_ministeriel import ArreteMinisteriel
 from envinorma.models.structured_text import StructuredText
@@ -97,7 +94,7 @@ def _intro() -> Component:
     return html.Div('Thèmes associés par le détecteur de thèmes à chaque AM de la base.', className='mb-3')
 
 
-def layout() -> Component:
+def _layout() -> Component:
     return html.Div([html.H3('Détecteur de thèmes.'), _intro(), _topics()])
 
 
@@ -108,4 +105,4 @@ def _callbacks(app: Dash) -> None:
         return _topics_tabs(batch_index)
 
 
-PAGE = Page(layout, _callbacks)
+PAGE = Page(_layout, _callbacks, True)

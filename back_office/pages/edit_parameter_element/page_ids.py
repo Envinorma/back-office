@@ -1,7 +1,5 @@
 from typing import Any, Dict
 
-from envinorma.parametrization import ParameterEnum
-
 
 def new_text(rank: int) -> Dict[str, Any]:
     return {'id': 'param-edition-new-text', 'rank': rank}
@@ -58,25 +56,8 @@ def condition_block(rank: int) -> Dict[str, Any]:
 DROPDOWN_OPTIONS = 'param-edition-dropdown-options'
 TARGET_BLOCKS = 'param-edition-target-blocks'
 ADD_TARGET_BLOCK = 'param-edition-add-target-block'
-SOURCE = 'param-edition-source'
 WARNING_CONTENT = 'param-edition-warning-content'
-CONDITION_MERGE = 'param-edition-condition-merge'
-ADD_CONDITION_BLOCK = 'param-edition-add-condition-block'
-CONDITION_BLOCKS = 'param-edition-condition-blocks'
+CONDITION = 'param-edition-condition'
 AM_ID = 'param-edition-am-id'
-PARAMETER_RANK = 'param-edition-param-rank'
+PARAMETER_ID = 'param-edition-param-id'
 AM_OPERATION = 'param-edition-am-operation'
-_AUTORISATION_DATE_FR = 'Date d\'autorisation'
-_DECLARATION_DATE_FR = 'Date de déclaration'
-_ENREGISTREMENT_DATE_FR = 'Date d\'enregistrement'
-INSTALLATION_DATE_FR = 'Date de mise en service'
-CONDITION_VARIABLES = {
-    'Régime': ParameterEnum.REGIME,
-    _AUTORISATION_DATE_FR: ParameterEnum.DATE_AUTORISATION,
-    _DECLARATION_DATE_FR: ParameterEnum.DATE_DECLARATION,
-    _ENREGISTREMENT_DATE_FR: ParameterEnum.DATE_ENREGISTREMENT,
-    INSTALLATION_DATE_FR: ParameterEnum.DATE_INSTALLATION,
-    'Alinéa': ParameterEnum.ALINEA,
-    'Rubrique': ParameterEnum.RUBRIQUE,
-    'Quantité associée à la rubrique': ParameterEnum.RUBRIQUE_QUANTITY,
-}

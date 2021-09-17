@@ -1,19 +1,13 @@
 import json
 from typing import Any, Dict, List, Optional, Union
-from urllib.parse import quote_plus
 
-import dash
 import dash_bootstrap_components as dbc
-import dash_core_components as dcc
-import dash_html_components as html
-from dash import Dash
-from dash.dependencies import ALL, Input, Output, State
+from dash import ALL, Dash, Input, Output, State, callback_context, dcc, html
 from dash.development.base_component import Component
 from envinorma.models import Annotations, ArreteMinisteriel, StructuredText
 from envinorma.topics.patterns import TopicName
 from envinorma.topics.simple_topics import SIMPLE_ONTOLOGY
 
-from back_office.helpers.login import get_current_user
 from back_office.routing import Endpoint, Page
 from back_office.utils import DATA_FETCHER, ensure_not_none, generate_id
 
@@ -59,7 +53,7 @@ def _am_topics(am: ArreteMinisteriel) -> Component:
 
 
 def _link_to_am(am_id: str) -> Component:
-    return dcc.Link(html.Button("Consulter l'AM", className='btn btn-link'), href=f'/{Endpoint.AM}/{am_id}')
+    return dcc.Link(html.Button("Consulter l'AM", className='btn btn-link'), href=f'/{Endpoint.AM}/{am_id}/1')
 
 
 def _am_topics_with_loader(am: ArreteMinisteriel) -> Component:
@@ -118,9 +112,6 @@ def _layout_if_logged(am_id: str) -> Component:
 
 
 def _layout(am_id: str) -> Component:
-    if not get_current_user().is_authenticated:
-        origin = quote_plus(f'/{Endpoint.EDIT_TOPICS}/{am_id}')
-        return dcc.Location(pathname=f'/{Endpoint.LOGIN}/{origin}', id='login-redirect')
     return _layout_if_logged(am_id)
 
 
@@ -192,7 +183,7 @@ def _callbacks(app: Dash) -> None:
         prevent_initial_call=True,
     )
     def _edit_topic(_, dropdown_value, am_structure, am_id):
-        section_ids = _extract_trigger_keys(dash.callback_context.triggered)
+        section_ids = _extract_trigger_keys(callback_context.triggered)
         target_section = _keep_deepest_id(section_ids, am_structure)
         try:
             am = _edit_am_topic(am_id, target_section, dropdown_value)
@@ -202,4 +193,4 @@ def _callbacks(app: Dash) -> None:
         return dbc.Alert(f'Section {target_section} affectée au thème {dropdown_value}.'), _am_topics(am)
 
 
-PAGE = Page(_layout, _callbacks)
+PAGE = Page(_layout, _callbacks, True)

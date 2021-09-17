@@ -13,7 +13,7 @@ def _clean_line(line: str) -> str:
     return ''.join(c for c in res if c in _SIMPLE_CHARS)
 
 
-def _extract_lines(am: ArreteMinisteriel, normalize_text: bool) -> List[str]:
+def extract_am_lines(am: ArreteMinisteriel, normalize_text: bool) -> List[str]:
     lines = [line for section in am.sections for line in section.text_lines(1)]
     if normalize_text:
         return [_clean_line(line) for line in lines]
@@ -21,8 +21,8 @@ def _extract_lines(am: ArreteMinisteriel, normalize_text: bool) -> List[str]:
 
 
 def compute_am_diff(am_before: ArreteMinisteriel, am_after: ArreteMinisteriel, normalize_text: bool) -> TextDifferences:
-    lines_before = _extract_lines(am_before, normalize_text)
-    lines_after = _extract_lines(am_after, normalize_text)
+    lines_before = extract_am_lines(am_before, normalize_text)
+    lines_after = extract_am_lines(am_after, normalize_text)
     return text_differences(lines_before, lines_after)
 
 

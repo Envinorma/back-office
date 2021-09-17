@@ -2,10 +2,7 @@ from typing import Optional
 from urllib.parse import unquote
 
 import dash_bootstrap_components as dbc
-import dash_core_components as dcc
-import dash_html_components as html
-from dash import Dash, no_update
-from dash.dependencies import Input, Output, State
+from dash import Dash, Input, Output, State, dcc, html, no_update
 from dash.development.base_component import Component
 from flask_login import login_user
 
@@ -22,7 +19,7 @@ _LOGIN_BUTTON = generate_id(__file__, 'login-button')
 
 
 def _form() -> Component:
-    return dbc.FormGroup(
+    return html.Div(
         [
             dbc.Input(id=_LOGIN_USERNAME, autoFocus=True),
             dbc.FormText('Nom d\'utilisateur'),
@@ -88,4 +85,4 @@ def _callbacks(app: Dash):
         return no_update, ''
 
 
-PAGE = Page(_layout, _callbacks)
+PAGE = Page(_layout, _callbacks, False)

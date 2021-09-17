@@ -3,10 +3,7 @@ from typing import Any, Dict
 
 import dash
 import dash_bootstrap_components as dbc
-import dash_core_components as dcc
-import dash_html_components as html
-from dash import Dash
-from dash.dependencies import MATCH, Input, Output, State
+from dash import MATCH, Dash, Input, Output, State, dcc, html
 from dash.development.base_component import Component
 
 from back_office.utils import generate_id

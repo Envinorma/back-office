@@ -2,10 +2,7 @@ from enum import Enum
 from typing import Callable, Optional
 
 import dash_bootstrap_components as dbc
-import dash_core_components as dcc
-import dash_html_components as html
-from dash.dash import Dash
-from dash.dependencies import Input, Output
+from dash import Dash, Input, Output, dcc, html
 from dash.development.base_component import Component
 from envinorma.models import AMMetadata, ArreteMinisteriel
 from leginorma import LegifranceRequestError
@@ -104,4 +101,4 @@ def _callbacks(app_: Dash) -> None:
         return _build_component(*args)
 
 
-PAGE = Page(_layout, _callbacks)
+PAGE = Page(_layout, _callbacks, False)

@@ -51,10 +51,6 @@ h2 {
   color: #212529;
 }
 
-.am_page_content {
-  margin-top: 60px;
-}
-
 .parametrization_content {
   margin-top: 80px;
 }
@@ -137,4 +133,34 @@ html {
 
 .main-header .nav-link:hover {
   color: white;
+}
+
+.save-zone {
+  position: fixed;
+  bottom: 5px;
+  left: 0px;
+  transform: translate(calc(50vw - 50%));
+  z-index: 3;
+  opacity: 0.5;
+  text-align: center;
+}
+.save-zone:hover {
+  opacity: 1;
+}
+
+.aida-output {
+  position: fixed;
+  top: 50px;
+  right: 30px;
+  z-index: 3;
+}
+
+.parameter-element {
+  border: 1px solid #cccccc;
+  border-radius: 3px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+.section-title {
+  font-weight: 500;
 }

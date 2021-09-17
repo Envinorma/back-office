@@ -4,14 +4,12 @@ from urllib.parse import quote_plus
 
 import dash
 import dash_bootstrap_components as dbc
-import dash_core_components as dcc
-import dash_html_components as html
-from dash.dependencies import Input, Output, State
+from dash import Input, Output, State, dcc, html
 from dash.development.base_component import Component
 from envinorma.models import DELETE_REASON_MIN_NB_CHARS, AMMetadata, AMState
 
 from back_office.helpers.login import get_current_user
-from back_office.pages.parametrization_edition.form_handling import FormHandlingError
+from back_office.pages.edit_parameter_element.form_handling import FormHandlingError
 from back_office.routing import Endpoint, Page
 from back_office.utils import DATA_FETCHER, generate_id
 
@@ -104,4 +102,4 @@ def _add_callbacks(app: dash.Dash) -> None:
         return _handle_submit_deletion(am_id, delete_reason or '')
 
 
-PAGE = Page(_page, _add_callbacks)
+PAGE = Page(_page, _add_callbacks, True)

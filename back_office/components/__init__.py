@@ -1,29 +1,32 @@
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set, Union
 
-import dash_core_components as dcc
-import dash_html_components as html
+import dash_bootstrap_components as dbc
+from dash import dcc, html
 from dash.development.base_component import Component
+from typing_extensions import Literal
+
+from .table import ExtendedComponent  # noqa: F401
 
 
 def replace_line_breaks(message: str) -> List[Union[str, Component]]:
     return [el for piece in message.split('\n') for el in [piece, html.Br()]]
 
 
+def alert(message: str, color: Literal['success', 'danger', 'warning']) -> Component:
+    return dbc.Alert(replace_line_breaks(message), color=color, className='mt-3 mb-3', dismissable=True)
+
+
 def error_component(message: str) -> Component:
-    return html.Div(
-        replace_line_breaks(message),
-        className='alert alert-danger',
-        style={'margin-top': '5px', 'margin-bottom': '5px'},
-    )
+    return alert(message, 'danger')
 
 
 def success_component(message: str) -> Component:
-    return html.Div(
-        replace_line_breaks(message),
-        className='alert alert-success',
-        style={'margin-top': '5px', 'margin-bottom': '5px'},
-    )
+    return alert(message, 'success')
+
+
+def warning_component(message: str) -> Component:
+    return alert(message, 'warning')
 
 
 class ButtonState(Enum):

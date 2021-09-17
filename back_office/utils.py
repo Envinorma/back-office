@@ -3,7 +3,7 @@ import os
 import traceback
 from enum import Enum
 from functools import lru_cache
-from typing import Any, Dict, List, Optional, Tuple, TypeVar, Union
+from typing import Any, Dict, List, Optional, TypeVar, Union
 
 from envinorma.data_fetcher import DataFetcher
 
@@ -51,12 +51,6 @@ def ensure_not_none(option: Optional[T]) -> T:
     return option
 
 
-def split_route(route: str) -> Tuple[str, str]:
-    assert route.startswith('/')
-    pieces = route[1:].split('/')
-    return '/' + pieces[0], ('/' + '/'.join(pieces[1:])) if pieces[1:] else ''
-
-
 class RouteParsingError(Exception):
     pass
 
@@ -79,8 +73,6 @@ def write_json(obj: Union[Dict, List], filename: str, safe: bool = False, pretty
 
 
 class AMOperation(Enum):
-    INIT = 'init'
-    EDIT_STRUCTURE = 'edit_structure'
     ADD_CONDITION = 'add_condition'
     ADD_ALTERNATIVE_SECTION = 'add_alternative_section'
     ADD_WARNING = 'ADD_WARNING'

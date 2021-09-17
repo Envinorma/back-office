@@ -1,20 +1,15 @@
 from typing import List, Optional, cast
-from urllib.parse import quote_plus
 
-import dash
 import dash_bootstrap_components as dbc
-import dash_core_components as dcc
-import dash_html_components as html
-from dash.dependencies import ALL, MATCH, Input, Output, State
+from dash import ALL, MATCH, Dash, Input, Output, State, dcc, html
 from dash.development.base_component import Component
 from envinorma.models import AMMetadata, AMSource, AMState, Classement, Regime
 from envinorma.utils import AIDA_URL
 
-from back_office.helpers.login import get_current_user
 from back_office.routing import Endpoint, Page
 from back_office.utils import DATA_FETCHER
 
-from . import create_am_ids as page_ids
+from . import ids
 from .am_creation_form_handling import handle_form, is_legifrance_id_valid
 
 _REGIME_OPTIONS = [{'label': regime.value, 'value': regime.value} for regime in Regime]
@@ -28,7 +23,7 @@ def _legifrance_id_form(am_id: Optional[str]) -> Component:
             dcc.Input(
                 value=am_id or '',
                 placeholder='ex: JORFTEXT000012345678',
-                id=page_ids.LEGIFRANCE_ID,
+                id=ids.LEGIFRANCE_ID,
                 className='form-control',
                 disabled=am_id is not None,
                 style={'display': 'flex'},
@@ -36,104 +31,103 @@ def _legifrance_id_form(am_id: Optional[str]) -> Component:
             html.Button(
                 'Créer un nouvel AM',
                 className='btn btn-primary',
-                id=page_ids.SUBMIT_LEGIFRANCE_ID,
+                id=ids.SUBMIT_LEGIFRANCE_ID,
                 hidden=am_id is not None,
             ),
             dcc.Link(
                 html.Button(
                     'Éditer l\'identifiant Légifrance', className='btn btn-outline-primary', hidden=am_id is None
                 ),
-                href=f'/{Endpoint.CREATE_AM}',
+                href=f'/{Endpoint.AM_METADATA}',
             ),
         ],
         className='input-group',
     )
-    return dbc.FormGroup(
+    return html.Div(
         [
             html.Label('Identifiant Légifrance', className='form-label'),
             input_,
-            html.Div(id=page_ids.SUBMIT_LEGIFRANCE_OUTPUT),
+            html.Div(id=ids.SUBMIT_LEGIFRANCE_OUTPUT),
         ]
     )
 
 
 def _nor_form(am_metadata: Optional[AMMetadata]) -> Component:
     default_value = am_metadata.nor if am_metadata else ''
-    return dbc.FormGroup(
+    return html.Div(
         [
             html.Label('Numéro NOR', className='form-label'),
-            dcc.Input(
-                value=default_value, placeholder='ex: DEVP0123456A', id=page_ids.NOR_ID, className='form-control'
-            ),
-        ]
+            dcc.Input(value=default_value, placeholder='ex: DEVP0123456A', id=ids.NOR_ID, className='form-control'),
+        ],
+        className='mb-3',
     )
 
 
 def _nor_exists(am_metadata: Optional[AMMetadata]) -> Component:
     default_value = bool(am_metadata.nor) if am_metadata else True
-    return dbc.FormGroup(
+    return html.Div(
         [
-            dbc.Checkbox(checked=default_value, id=page_ids.NOR_EXISTS, className='mr-2'),
-            html.Label('Existence du numéro NOR ?', className='form-label'),
+            dbc.Checkbox(label='Existence du numéro NOR ?', value=default_value, id=ids.NOR_EXISTS),
             dbc.FormText('Il existe le plus souvent, mais peut ne pas exister pour les vieux arrêtés.'),
-        ]
+        ],
+        className='mb-3 mt-3',
     )
 
 
 def _title(am_metadata: Optional[AMMetadata]) -> Component:
-    return dbc.FormGroup(
+    return html.Div(
         [
             html.Label('Titre', className='form-label'),
             dcc.Textarea(
                 value=am_metadata.title if am_metadata else '',
                 placeholder='ex: Arrêté du 03/08/18 relatif aux prescriptions générales applicables aux...',
-                id=page_ids.TITLE,
+                id=ids.TITLE,
                 className='form-control',
             ),
             dbc.FormText('Format attendu : "Arrêté du jj/mm/yy relatif..." ou "Arrêté du jj/mm/yy fixant..."'),
-        ]
+        ],
+        className='mb-3',
     )
 
 
 def _nickname(am_metadata: Optional[AMMetadata]) -> Component:
     default_value = am_metadata.nickname if am_metadata else ''
-    return dbc.FormGroup(
+    return html.Div(
         [
             html.Label('Surnom', className='form-label'),
-            dcc.Input(value=default_value, placeholder='Ex: GEREP', id=page_ids.NICKNAME, className='form-control'),
+            dcc.Input(value=default_value, placeholder='Ex: GEREP', id=ids.NICKNAME, className='form-control'),
             dbc.FormText('Peut être laissé vide, est utilisé principalement pour les AM transverses.'),
-        ]
+        ],
+        className='mb-3',
     )
 
 
 def _is_transverse_checkbox(am_metadata: Optional[AMMetadata]) -> Component:
     default_value = am_metadata.is_transverse if am_metadata else False
-    return dbc.FormGroup(
-        [
-            dbc.Checkbox(checked=default_value, id=page_ids.IS_TRANSVERSE_CHECKBOX, className='mr-2'),
-            html.Label('AM transverse', className='form-label'),
-        ]
+    return html.Div(
+        dbc.Checkbox(value=default_value, id=ids.IS_TRANSVERSE_CHECKBOX, label='AM transverse'), className='mb-3'
     )
 
 
 def _aida_page_form(am_metadata: Optional[AMMetadata]) -> Component:
     default_value = am_metadata.aida_page if am_metadata else ''
-    return dbc.FormGroup(
+    return html.Div(
         [
             html.Label('Page AIDA', className='form-label'),
-            dcc.Input(value=default_value, placeholder='ex: 1234', id=page_ids.AIDA_PAGE, className='form-control'),
+            dcc.Input(value=default_value, placeholder='ex: 1234', id=ids.AIDA_PAGE, className='form-control'),
             dbc.FormText(f'Il s\'agit des derniers chiffres de l\'url, par exemple, 1234 pour {AIDA_URL}1234'),
-        ]
+        ],
+        className='mb-3',
     )
 
 
 def _delete_classement_button(rank: int) -> Component:
-    return dbc.Button('X', color='light', id=page_ids.delete_classement_button_id(rank), size='sm', className='ml-1')
+    return dbc.Button('X', color='light', id=ids.delete_classement_button_id(rank), size='sm', className='ml-1')
 
 
 def _rubrique_input(rank: int, rubrique: str) -> Component:
     return dcc.Input(
-        id=page_ids.rubrique_input_id(rank),
+        id=ids.rubrique_input_id(rank),
         value=rubrique or '',
         type='text',
         placeholder='Rubrique (ex: 1234)',
@@ -144,7 +138,7 @@ def _rubrique_input(rank: int, rubrique: str) -> Component:
 def _regime_dropdown(rank: int, regime: Optional[Regime]) -> Component:
     default = regime.value if regime else None
     return dcc.Dropdown(
-        id=page_ids.regime_id(rank),
+        id=ids.regime_id(rank),
         options=_REGIME_OPTIONS,
         clearable=False,
         value=default,
@@ -155,7 +149,7 @@ def _regime_dropdown(rank: int, regime: Optional[Regime]) -> Component:
 
 def _alinea_input(rank: int, alinea: Optional[str]) -> Component:
     return dcc.Input(
-        id=page_ids.alinea_input_id(rank),
+        id=ids.alinea_input_id(rank),
         value=alinea or '',
         type='text',
         placeholder='Alinéa (ex: A.3)',
@@ -170,75 +164,93 @@ def _classement_row(classement: Optional[Classement], rank: int) -> Component:
         _alinea_input(rank, classement.alinea if classement else None),
         _delete_classement_button(rank),
     ]
-    return dbc.FormGroup(classement_elements, style={'display': 'flex'}, id=page_ids.classement_row_id(rank))
+    return html.Div(classement_elements, style={'display': 'flex'}, id=ids.classement_row_id(rank), className='mb-3')
 
 
 def _classements_form(am_metadata: Optional[AMMetadata]) -> Component:
     classements = am_metadata.classements if am_metadata else [None]
-    return dbc.FormGroup(
+    return html.Div(
         [
             html.Label('Classements', className='form-label'),
             html.Div(
                 [_classement_row(classement, rank) for rank, classement in enumerate(classements)],
-                id=page_ids.CLASSEMENTS,
+                id=ids.CLASSEMENTS,
             ),
-            html.Button(
-                '+ nouveau classement', id=page_ids.ADD_CLASSEMENT_FORM, className='btn btn-secondary btn-sm mt-1'
-            ),
-        ]
+            html.Button('+ nouveau classement', id=ids.ADD_CLASSEMENT_FORM, className='btn btn-secondary btn-sm mt-1'),
+        ],
+        className='mb-3',
     )
 
 
 def _am_state(am_metadata: Optional[AMMetadata]) -> Component:
     default_value = am_metadata.state.value if am_metadata else None
-    return dbc.FormGroup(
+    return html.Div(
         [
             html.Label('Statut', className='form-label'),
-            dcc.Dropdown(value=default_value, options=_AM_STATE_OPTIONS, id=page_ids.AM_STATE, placeholder='Statut'),
+            dcc.Dropdown(value=default_value, options=_AM_STATE_OPTIONS, id=ids.AM_STATE, placeholder='Statut'),
             dbc.FormText(
+                'Choisir EN_CREATION tant que l\'AM n\'est pas prêt à être exploité. '
                 'Choisir VIGUEUR pour que l\'AM soit exploité dans Envinorma. '
                 'Il est possible de créer un arrêté abrogé ou supprimé principalement à des fins de test. '
                 'Une fois créé, un AM n\'est jamais supprimé pour permettre une restauration éventuelle. '
                 'La suppression est indiquée par le statut DELETED. '
                 'Le statut ABROGE est réservé pour un AM qui a été en vigueur dans le passé.'
             ),
-        ]
+        ],
+        className='mb-3',
     )
 
 
 def _am_source(am_metadata: Optional[AMMetadata]) -> Component:
     default_value = am_metadata.source.value if am_metadata else None
-    return dbc.FormGroup(
+    return html.Div(
         [
             html.Label('Source', className='form-label'),
-            dcc.Dropdown(value=default_value, options=_AM_SOURCE_OPTIONS, id=page_ids.AM_SOURCE, placeholder='Source'),
+            dcc.Dropdown(value=default_value, options=_AM_SOURCE_OPTIONS, id=ids.AM_SOURCE, placeholder='Source'),
             dbc.FormText(
                 'La source qui sera utilisée pour initialiser l\'arrêté. Choisir Légifrance '
                 'par défaut, sauf si il manque les annexes ou une autre partie du texte sur Légifrance.'
             ),
-        ]
+        ],
+        className='mb-3',
     )
 
 
 def _reason_deleted(am_metadata: Optional[AMMetadata]) -> Component:
     default_value = am_metadata.reason_deleted if am_metadata else None
-    return dbc.FormGroup(
+    return html.Div(
         [
             html.Label('Raison de suppression ', className='form-label'),
-            dbc.Input(value=default_value, type='text', id=page_ids.REASON_DELETED),
+            dbc.Input(value=default_value, type='text', id=ids.REASON_DELETED),
             dbc.FormText('À ne renseigner que si le statut choisi est DELETED.'),
-        ]
+        ],
+        className='mb-3',
     )
 
 
 def _warning(am_metadata: Optional[AMMetadata]) -> Component:
     if not am_metadata:
         return html.Div()
-    return dbc.Alert('Cet arrêté existe déjà. L\'opération engendrera une modification de celui-ci.', color='warning')
+    return dbc.Alert(
+        'Cet arrêté existe déjà. L\'opération engendrera une modification de celui-ci.',
+        color='warning',
+        className='mt-2',
+    )
 
 
 def _submit_button() -> Component:
-    return html.Button('Valider', className='btn btn-primary mb-5', id=page_ids.SUBMIT_BUTTON)
+    return html.Button('Valider', className='btn btn-primary', id=ids.SUBMIT_BUTTON)
+
+
+def _cancel_button(am_id: str) -> Component:
+    hidden = not am_id
+    return dcc.Link(
+        html.Button('Annuler', className='btn btn-link ml-2', hidden=hidden), href=f'/{Endpoint.AM}/{am_id}'
+    )
+
+
+def _buttons(am_id: str) -> Component:
+    return html.Div([_submit_button(), _cancel_button(am_id)], className='mb-5')
 
 
 def _metadata_form(am_metadata: Optional[AMMetadata]) -> Component:
@@ -255,8 +267,8 @@ def _metadata_form(am_metadata: Optional[AMMetadata]) -> Component:
             _am_state(am_metadata),
             _am_source(am_metadata),
             _reason_deleted(am_metadata),
-            html.Div(id=page_ids.FORM_OUTPUT),
-            _submit_button(),
+            html.Div(id=ids.FORM_OUTPUT),
+            _buttons(am_metadata.cid if am_metadata else ''),
         ]
     )
 
@@ -268,9 +280,7 @@ def _metadata_row(am_id: Optional[str], metadata: Optional[AMMetadata]) -> Compo
 
 
 def _form(am_id: Optional[str], metadata: Optional[AMMetadata]) -> Component:
-    return html.Div(
-        [_legifrance_id_form(am_id), _metadata_row(am_id, metadata), dcc.Store(data=am_id, id=page_ids.AM_ID)]
-    )
+    return html.Div([_legifrance_id_form(am_id), _metadata_row(am_id, metadata), dcc.Store(data=am_id, id=ids.AM_ID)])
 
 
 def _page_if_logged(am_id: Optional[str]) -> Component:
@@ -280,17 +290,14 @@ def _page_if_logged(am_id: Optional[str]) -> Component:
 
 
 def _page(am_id: Optional[str] = None) -> Component:
-    if not get_current_user().is_authenticated:
-        origin = quote_plus(f'/{Endpoint.CREATE_AM}/{am_id}' if am_id else f'/{Endpoint.CREATE_AM}')
-        return dcc.Location(pathname=f'/{Endpoint.LOGIN}/{origin}', id='login-redirect')
     return _page_if_logged(am_id)
 
 
-def _add_callbacks(app: dash.Dash) -> None:
+def _add_callbacks(app: Dash) -> None:
     @app.callback(
-        Output(page_ids.SUBMIT_LEGIFRANCE_OUTPUT, 'children'),
-        Input(page_ids.SUBMIT_LEGIFRANCE_ID, 'n_clicks'),
-        State(page_ids.LEGIFRANCE_ID, 'value'),
+        Output(ids.SUBMIT_LEGIFRANCE_OUTPUT, 'children'),
+        Input(ids.SUBMIT_LEGIFRANCE_ID, 'n_clicks'),
+        State(ids.LEGIFRANCE_ID, 'value'),
         prevent_initial_call=True,
     )
     def refresh_page(_, legifrance_id: Optional[str]) -> Component:
@@ -299,24 +306,24 @@ def _add_callbacks(app: dash.Dash) -> None:
             return dbc.Alert(
                 'L\'identifiant Legifrance est invalide : il doit contenir 20 caractères.',
                 color='danger',
-                className='mt-2 mb-2',
+                className='mt-2 mb-3',
                 dismissable=True,
             )
-        return dcc.Location(pathname=f'/{Endpoint.CREATE_AM}/{legifrance_id}', id=page_ids.REFRESH_REDIRECT)
+        return dcc.Location(pathname=f'/{Endpoint.AM_METADATA}/{legifrance_id}', id=ids.REFRESH_REDIRECT)
 
     @app.callback(
-        Output(page_ids.classement_row_id(cast(int, MATCH)), 'children'),
-        Input(page_ids.delete_classement_button_id(cast(int, MATCH)), 'n_clicks'),
+        Output(ids.classement_row_id(cast(int, MATCH)), 'children'),
+        Input(ids.delete_classement_button_id(cast(int, MATCH)), 'n_clicks'),
         prevent_initial_call=True,
     )
     def delete_section(_):
         return html.Div()
 
     @app.callback(
-        Output(page_ids.CLASSEMENTS, 'children'),
-        Input(page_ids.ADD_CLASSEMENT_FORM, 'n_clicks'),
-        State(page_ids.CLASSEMENTS, 'children'),
-        State(page_ids.classement_row_id(cast(int, ALL)), 'id'),
+        Output(ids.CLASSEMENTS, 'children'),
+        Input(ids.ADD_CLASSEMENT_FORM, 'n_clicks'),
+        State(ids.CLASSEMENTS, 'children'),
+        State(ids.classement_row_id(cast(int, ALL)), 'id'),
         prevent_initial_call=True,
     )
     def add_block(_, children, ids):
@@ -325,21 +332,21 @@ def _add_callbacks(app: dash.Dash) -> None:
         return children + [new_block]
 
     @app.callback(
-        Output(page_ids.FORM_OUTPUT, 'children'),
-        Input(page_ids.SUBMIT_BUTTON, 'n_clicks'),
-        State(page_ids.AM_ID, 'data'),
-        State(page_ids.TITLE, 'value'),
-        State(page_ids.NICKNAME, 'value'),
-        State(page_ids.IS_TRANSVERSE_CHECKBOX, 'checked'),
-        State(page_ids.AIDA_PAGE, 'value'),
-        State(page_ids.AM_STATE, 'value'),
-        State(page_ids.AM_SOURCE, 'value'),
-        State(page_ids.NOR_EXISTS, 'checked'),
-        State(page_ids.NOR_ID, 'value'),
-        State(page_ids.REASON_DELETED, 'value'),
-        State(page_ids.rubrique_input_id(cast(int, ALL)), 'value'),
-        State(page_ids.regime_id(cast(int, ALL)), 'value'),
-        State(page_ids.alinea_input_id(cast(int, ALL)), 'value'),
+        Output(ids.FORM_OUTPUT, 'children'),
+        Input(ids.SUBMIT_BUTTON, 'n_clicks'),
+        State(ids.AM_ID, 'data'),
+        State(ids.TITLE, 'value'),
+        State(ids.NICKNAME, 'value'),
+        State(ids.IS_TRANSVERSE_CHECKBOX, 'value'),
+        State(ids.AIDA_PAGE, 'value'),
+        State(ids.AM_STATE, 'value'),
+        State(ids.AM_SOURCE, 'value'),
+        State(ids.NOR_EXISTS, 'value'),
+        State(ids.NOR_ID, 'value'),
+        State(ids.REASON_DELETED, 'value'),
+        State(ids.rubrique_input_id(cast(int, ALL)), 'value'),
+        State(ids.regime_id(cast(int, ALL)), 'value'),
+        State(ids.alinea_input_id(cast(int, ALL)), 'value'),
         prevent_initial_call=True,
     )
     def _handle_form(
@@ -376,4 +383,4 @@ def _add_callbacks(app: dash.Dash) -> None:
         )
 
 
-PAGE = Page(_page, _add_callbacks)
+PAGE = Page(_page, _add_callbacks, True)

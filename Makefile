@@ -1,8 +1,11 @@
+test:
+	venv/bin/pytest --mypy-ignore-missing-imports
+
 test-and-lint:
 	venv/bin/isort . --profile black -l 120
 	venv/bin/black . --check -S -l 120
 	venv/bin/flake8 --count --verbose --show-source --statistics
-	venv/bin/pytest --mypy-ignore-missing-imports
+	make test
 
 start:
 	python3 back_office/app.py

@@ -4,8 +4,7 @@ import random
 from typing import Any, Dict, List, Tuple
 
 import dash_bootstrap_components as dbc
-import dash_html_components as html
-from dash import Dash
+from dash import Dash, html
 from dash.development.base_component import Component
 from envinorma.models import ArreteMinisteriel, DetailedClassement, Parameter, ParameterEnum, Regime
 from envinorma.parametrization.apply_parameter_values import AMWithApplicability, build_am_with_applicability
@@ -169,7 +168,7 @@ def _arrete_li(rank: int, arrete: AMWithApplicability, classements: List[Detaile
     to_append = html.Span(' - '.join(classement_hints), style={'color': 'grey'})
     return html.Li(
         [
-            dbc.Checkbox(checked=arrete.applicable),
+            dbc.Checkbox(value=arrete.applicable),
             html.Span(' '),
             arrete.arrete.short_title + ' - ',
             to_append,
@@ -217,7 +216,7 @@ def _arretes_component(arretes: List[Tuple[AMWithApplicability, List[DetailedCla
     return html.Div([ams, _ap()], className='row')
 
 
-def layout() -> Component:
+def _layout() -> Component:
     all_classements = _classements()
     classements = random.sample(all_classements, k=15)
     arretes = _compute_arrete_list(classements)
@@ -230,4 +229,4 @@ def _callbacks(app: Dash) -> None:
     ...
 
 
-PAGE = Page(layout, _callbacks)
+PAGE = Page(_layout, _callbacks, False)
