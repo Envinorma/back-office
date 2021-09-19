@@ -32,6 +32,7 @@ class _Modification:
     section_id: str
     target_alineas: Optional[List[int]]
     new_text: Optional[StructuredText]
+    propagate_in_subsection: Optional[bool]
 
 
 def _extract_alineas(text: str) -> List[EnrichedString]:
@@ -73,6 +74,7 @@ def _build_target_version(
     new_text_content: Optional[str],
     section_id: str,
     target_alineas: Optional[List[int]],
+    propagate_in_subsection: Optional[bool],
 ) -> _Modification:
     if not section_id:
         raise FormHandlingError('La section visée doit être sélectionnée.')
@@ -81,7 +83,7 @@ def _build_target_version(
     section = section_id_to_section[section_id]
     simplified_target_alineas = _simplify_alineas(section, target_alineas)
     new_text = _build_new_text(new_text_title, new_text_content)
-    return _Modification(section_id, simplified_target_alineas, new_text)
+    return _Modification(section_id, simplified_target_alineas, new_text, propagate_in_subsection)
 
 
 def _build_target_versions(am: ArreteMinisteriel, form_values: TargetSectionFormValues) -> List[_Modification]:
@@ -89,17 +91,25 @@ def _build_target_versions(am: ArreteMinisteriel, form_values: TargetSectionForm
     new_texts_contents = form_values.new_texts_contents or len(form_values.target_sections) * [None]
     target_sections = form_values.target_sections
     target_alineas = form_values.target_alineas or len(form_values.target_sections) * [None]
+    propagate_in_subsection = form_values.propagate_in_subsection or len(form_values.target_sections) * [None]
     section_id_to_section = {section.id: section for section in am.descendent_sections()}
     return [
-        _build_target_version(section_id_to_section, title, content, section, alineas)
-        for title, content, section, alineas in zip(
-            new_texts_titles, new_texts_contents, target_sections, target_alineas
+        _build_target_version(section_id_to_section, title, content, section, alineas, propagate_in_subsection)
+        for title, content, section, alineas, propagate_in_subsection in zip(
+            new_texts_titles, new_texts_contents, target_sections, target_alineas, propagate_in_subsection
         )
     ]
 
 
 def _build_inapplicable_section(condition: Condition, modification: _Modification) -> InapplicableSection:
-    return InapplicableSection(modification.section_id, modification.target_alineas, condition=condition)
+    return InapplicableSection(
+        modification.section_id,
+        modification.target_alineas,
+        condition=condition,
+        subsections_are_inapplicable=modification.propagate_in_subsection
+        if modification.propagate_in_subsection is not None
+        else True,
+    )
 
 
 def _build_am_warning(section_id: str, warning_content: str) -> AMWarning:

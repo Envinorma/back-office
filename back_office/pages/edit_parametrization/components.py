@@ -53,12 +53,18 @@ def _inapplicability(
         ]
     )
     condition = condition_str(inapplicability.condition)
+    propagate = html.P(
+        'Sous-sections également inapplicables : ' + ('Oui' if inapplicability.subsections_are_inapplicable else 'Non')
+    )
     href = f'/{Endpoint.ADD_INAPPLICABILITY}/{am_id}/{inapplicability.id}'
     edit = link_button('Éditer ou supprimer', href=href, state=ButtonState.NORMAL_LINK)
     copy = link_button('Copier', href=f'{href}/copy', state=ButtonState.NORMAL_LINK)
     buttons = html.Div([edit, copy])
     return dbc.Card(
-        [dbc.CardHeader('Section potentiellement inapplicable'), dbc.CardBody([condition, alineas, buttons])],
+        [
+            dbc.CardHeader('Section potentiellement inapplicable'),
+            dbc.CardBody([condition, propagate, alineas, buttons]),
+        ],
         color=color,
         outline=True,
         className='mb-2',

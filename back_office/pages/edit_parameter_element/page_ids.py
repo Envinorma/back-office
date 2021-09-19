@@ -25,6 +25,10 @@ def target_alineas(rank: int) -> Dict[str, Any]:
     return {'id': 'param-edition-target-alineas', 'rank': rank}
 
 
+def propagate_in_subsection(rank: int) -> Dict[str, Any]:
+    return {'id': 'param-edition-propagate-subsection', 'rank': rank}
+
+
 def delete_block_button(rank: int) -> Dict[str, Any]:
     return {'id': 'param-edition-delete-block-button', 'rank': rank}
 
