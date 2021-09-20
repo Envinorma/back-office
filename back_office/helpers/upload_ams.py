@@ -50,6 +50,7 @@ def _zip_and_upload(folder: str) -> str:
     with tempfile.NamedTemporaryFile('w', prefix='am-repo') as file_:
         shutil.make_archive(file_.name, 'zip', folder)
         _upload_to_ovh(f'{file_.name}.zip', filename)
+        _upload_to_ovh(f'{file_.name}.zip', 'ams/latest.zip')
     return filename
 
 
