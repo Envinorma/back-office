@@ -63,7 +63,7 @@ def _fetch_am_id_batch(batch_index: int, batch_size: int) -> List[str]:
 
 def _load_and_enrich_ams(batch_index: int, batch_size: int) -> List[ArreteMinisteriel]:
     am_ids = _fetch_am_id_batch(batch_index, batch_size)
-    return [ensure_not_none(DATA_FETCHER.load_most_advanced_am(am_id)) for am_id in am_ids]
+    return [ensure_not_none(DATA_FETCHER.load_am(am_id)) for am_id in am_ids]
 
 
 def _page_button(index: int, active_index: int) -> Component:

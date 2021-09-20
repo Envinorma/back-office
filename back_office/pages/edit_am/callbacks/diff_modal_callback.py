@@ -17,7 +17,7 @@ from .save_callback import TextAreaHandlingError, extract_text_from_html
 
 
 def _previous_lines(am_id: str) -> List[str]:
-    previous_am = DATA_FETCHER.load_most_advanced_am(am_id)
+    previous_am = DATA_FETCHER.load_am(am_id)
     if not previous_am:
         return []
     return extract_am_lines(previous_am, False)

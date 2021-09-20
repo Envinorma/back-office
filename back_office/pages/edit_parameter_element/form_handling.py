@@ -173,7 +173,7 @@ def extract_and_upsert_new_parameter(
     condition: Optional[str],
     warning_content: str,
 ) -> None:
-    am = DATA_FETCHER.load_most_advanced_am(am_id)
+    am = DATA_FETCHER.load_am(am_id)
     if not am:
         raise ValueError(f'AM with id {am_id} not found!')
     new_parameters = _extract_new_parameter_objects(

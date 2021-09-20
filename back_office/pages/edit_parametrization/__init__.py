@@ -130,7 +130,7 @@ def _title_component(am_id: str, am_metadata: Optional[AMMetadata]) -> Component
 
 def _page(am_id: str) -> Component:
     am_metadata = DATA_FETCHER.load_am_metadata(am_id)
-    am = DATA_FETCHER.load_most_advanced_am(am_id)  # Fetch initial AM if no parametrization ever done.
+    am = DATA_FETCHER.load_am(am_id)
     if not am:
         return html.H3('AM non initialisé.')
     parametrization = DATA_FETCHER.load_or_init_parametrization(am_id)

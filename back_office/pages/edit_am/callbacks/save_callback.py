@@ -96,11 +96,11 @@ def extract_text_from_html(new_am: str) -> List[StructuredText]:
 
 
 def _parse_and_save_text(am_id: str, new_am_text: str) -> List[LostTopic]:
-    am = DATA_FETCHER.load_most_advanced_am(am_id)
+    am = DATA_FETCHER.load_am(am_id)
     if not am:
         raise TextAreaHandlingError(f'L\'arrete ministériel {am_id} n\'existe pas.')
     new_am, lost_topics = am.create_copy_with_new_content(extract_text_from_html(new_am_text))
-    DATA_FETCHER.upsert_structured_am(am_id, new_am)
+    DATA_FETCHER.upsert_am(am_id, new_am)
     return lost_topics
 
 

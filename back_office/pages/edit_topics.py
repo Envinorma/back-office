@@ -99,7 +99,7 @@ def _id_store(am: ArreteMinisteriel) -> Component:
 
 
 def _layout_if_logged(am_id: str) -> Component:
-    am = DATA_FETCHER.load_structured_am(am_id)
+    am = DATA_FETCHER.load_am(am_id)
     if not am:
         return html.Div('404')
     return html.Div(
@@ -163,12 +163,12 @@ def _edit_section_topic(
 
 
 def _edit_am_topic(am_id: str, target_section: str, topic_name: str) -> ArreteMinisteriel:
-    am = DATA_FETCHER.load_structured_am(am_id)
+    am = DATA_FETCHER.load_am(am_id)
     if not am:
         raise ValueError('Expecting AM.')
     topic = TopicName(topic_name) if topic_name != _NO_TOPIC else None
     am.sections = [_edit_section_topic(section, target_section, topic) for section in am.sections]
-    DATA_FETCHER.upsert_structured_am(am_id, am)
+    DATA_FETCHER.upsert_am(am_id, am)
     return am
 
 
@@ -188,7 +188,7 @@ def _callbacks(app: Dash) -> None:
         try:
             am = _edit_am_topic(am_id, target_section, dropdown_value)
         except _EditionError as exc:
-            am = ensure_not_none(DATA_FETCHER.load_structured_am(am_id))
+            am = ensure_not_none(DATA_FETCHER.load_am(am_id))
             return dbc.Alert(str(exc), color='danger'), _am_topics(am)
         return dbc.Alert(f'Section {target_section} affectée au thème {dropdown_value}.'), _am_topics(am)
 

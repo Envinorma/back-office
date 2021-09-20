@@ -82,7 +82,7 @@ def _buttons_hidden(buttons_hidden: bool) -> Component:
 
 
 def _layout_if_logged(am_id: str, buttons_hidden: bool = True) -> Component:
-    am = DATA_FETCHER.load_most_advanced_am(am_id)
+    am = DATA_FETCHER.load_am(am_id)
     if not am:
         return html.Div('AM introuvable.')
 

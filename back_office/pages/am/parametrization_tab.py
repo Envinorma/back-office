@@ -145,7 +145,7 @@ def _am_summary_column(am: ArreteMinisteriel, parametrization: Parametrization) 
 
 
 def _layout(am_metadata: AMMetadata) -> Component:
-    am = DATA_FETCHER.load_most_advanced_am(am_metadata.cid)
+    am = DATA_FETCHER.load_am(am_metadata.cid)
     if not am:
         return html.Div('AM non initialisé.')
     parametrization = DATA_FETCHER.load_or_init_parametrization(am_metadata.cid)

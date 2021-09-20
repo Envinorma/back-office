@@ -71,7 +71,7 @@ def _build_component(am_id: str, compare_with_str: str, normalize_str: str = '')
         compare_with = CompareWith(compare_with_str)
     except ValueError:
         return error_component(f'Unhandled comparision with {compare_with_str}')
-    am = DATA_FETCHER.load_most_advanced_am(am_id)
+    am = DATA_FETCHER.load_am(am_id)
     if not am:
         return error_component(f'AM with id {am_id} not found')
     try:
