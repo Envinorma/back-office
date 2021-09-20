@@ -75,9 +75,9 @@ def _conditions_component(am_id: str, parametrization: Parametrization, am_appli
     ]
     return html.Div(
         [
+            html.H3('Paramétrage'),
             _edit_parameters_button(am_id),
-            html.H3('Conditions et warnings'),
-            html.Div(condition_items if condition_items else 'Pas de conditions.'),
+            html.Div(condition_items if condition_items else 'Pas de paramètres.'),
         ],
         style={'height': '75vh', 'overflow-y': 'auto'},
     )
