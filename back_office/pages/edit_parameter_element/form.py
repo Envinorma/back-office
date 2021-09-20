@@ -271,6 +271,7 @@ def add_callbacks(app: Dash):
         State(ids.new_text_content(cast(int, ALL)), 'value'),
         State(ids.target_section(cast(int, ALL)), 'value'),
         State(ids.target_alineas(cast(int, ALL)), 'value'),
+        State(ids.propagate_in_subsection(cast(int, ALL)), 'value'),
         State(ids.CONDITION, 'data'),
         prevent_initial_call=True,
     )
@@ -284,10 +285,11 @@ def add_callbacks(app: Dash):
         new_texts_contents,
         target_sections,
         target_alineas,
+        propagate_in_subsection,
         condition,
     ):
         target_section_form_values = TargetSectionFormValues(
-            new_texts_titles, new_texts_contents, target_sections, target_alineas
+            new_texts_titles, new_texts_contents, target_sections, target_alineas, propagate_in_subsection
         )
         return _handle_submit(
             AMOperation(operation_str), am_id, parameter_id, target_section_form_values, condition, warning_content

@@ -83,7 +83,9 @@ def test_am(data_dir: Path) -> ArreteMinisteriel:
 def test_extract_new_parameter_objects_alternative_section(test_am: ArreteMinisteriel):
     operation = AMOperation.ADD_ALTERNATIVE_SECTION
     section_id = test_am.sections[5].sections[0].id
-    target = TargetSectionFormValues(['1. Dispositions générales'], ['Lorem ipsum dolor sit amet'], [section_id], [[]])
+    target = TargetSectionFormValues(
+        ['1. Dispositions générales'], ['Lorem ipsum dolor sit amet'], [section_id], [[]], [True]
+    )
     condition = _littler_condition()
     warning_content = ''
 
@@ -106,6 +108,7 @@ def test_extract_new_parameter_objects_alternative_section(test_am: ArreteMinist
         ['Lorem ipsum dolor sit amet', 'Lorem ipsum dolor sit amet'],
         [test_am.sections[5].sections[0].id, test_am.sections[5].sections[1].id],
         [[], []],
+        [True, True],
     )
     new_parameters = _extract_new_parameter_objects(operation, test_am, new_targets, condition, warning_content)
     assert len(new_parameters) == 2
@@ -116,7 +119,7 @@ def test_extract_new_parameter_objects_alternative_section(test_am: ArreteMinist
 def test_extract_new_parameter_objects_condition(test_am: ArreteMinisteriel):
     operation = AMOperation.ADD_CONDITION
     section_id = test_am.sections[5].sections[0].id
-    target = TargetSectionFormValues([], [], [section_id], [[10]])
+    target = TargetSectionFormValues([], [], [section_id], [[10]], [True])
     condition = _littler_condition()
     warning_content = ''
 
@@ -135,18 +138,20 @@ def test_extract_new_parameter_objects_condition(test_am: ArreteMinisteriel):
     assert isinstance(new_parameters[0], InapplicableSection)
 
     ids = [test_am.sections[5].id, test_am.sections[5].sections[1].id]
-    new_targets = TargetSectionFormValues([], [], ids, [[0, 2], [0]])
+    new_targets = TargetSectionFormValues([], [], ids, [[0, 2], [0]], [True, False])
     new_parameters = _extract_new_parameter_objects(operation, test_am, new_targets, condition, warning_content)
     assert len(new_parameters) == 2
     assert isinstance(new_parameters[0], InapplicableSection)
     assert isinstance(new_parameters[1], InapplicableSection)
     assert new_parameters[0].alineas == [0, 2]
     assert new_parameters[1].alineas is None
+    assert new_parameters[0].subsections_are_inapplicable
+    assert not new_parameters[1].subsections_are_inapplicable
 
 
 def test_extract_new_parameter_objects_warning(test_am: ArreteMinisteriel):
     operation = AMOperation.ADD_WARNING
-    target = TargetSectionFormValues([], [], [test_am.sections[5].sections[0].id], [])
+    target = TargetSectionFormValues([], [], [test_am.sections[5].sections[0].id], [], [True])
     warning_content = 'Content of warning.'
 
     new_parameters = _extract_new_parameter_objects(operation, test_am, target, '', warning_content)
@@ -164,7 +169,7 @@ def test_extract_new_parameter_objects_warning(test_am: ArreteMinisteriel):
     assert isinstance(new_parameters[0], AMWarning)
 
     ids = [test_am.sections[5].id, test_am.sections[5].sections[1].id]
-    new_targets = TargetSectionFormValues([], [], ids, [])
+    new_targets = TargetSectionFormValues([], [], ids, [], [])
     new_parameters = _extract_new_parameter_objects(operation, test_am, new_targets, '', warning_content)
     assert len(new_parameters) == 2
     assert isinstance(new_parameters[0], AMWarning)

@@ -44,6 +44,20 @@ def _ensure_optional_condition(parameter: Optional[ParameterElement]) -> Optiona
     return parameter
 
 
+def _propagate_in_subsections_checkbox(
+    operation: AMOperation, loaded_parameter: Optional[ParameterElement], rank: int
+) -> Component:
+    checked = (
+        loaded_parameter.subsections_are_inapplicable
+        if loaded_parameter and isinstance(loaded_parameter, InapplicableSection)
+        else True
+    )
+    checkbox = dbc.Checkbox(
+        value=checked, id=page_ids.propagate_in_subsection(rank), label='Rendre inapplicable les sous-sections ?'
+    )
+    return html.Div(checkbox, className='mb-3', hidden=not _is_condition(operation))
+
+
 def _target_alineas_form(
     operation: AMOperation, loaded_parameter: Optional[ParameterElement], am: Optional[ArreteMinisteriel], rank: int
 ) -> Component:
@@ -194,6 +208,7 @@ def target_section_form(
         [
             _delete_button(rank, is_edition),
             _target_section_form(text_title_options, loaded_parameter, rank),
+            _propagate_in_subsections_checkbox(operation, loaded_parameter, rank),
             _target_alineas_form(operation, loaded_parameter, am, rank),
             html.Div(_new_section_form_from_default(operation, loaded_parameter, rank), id=page_ids.new_text(rank)),
             dcc.Store(id=page_ids.target_section_store(rank)),
@@ -215,6 +230,7 @@ class TargetSectionFormValues:
     new_texts_contents: List[str]
     target_sections: List[str]
     target_alineas: List[List[int]]
+    propagate_in_subsection: List[bool]
 
 
 def add_callbacks(app: dash.Dash):
