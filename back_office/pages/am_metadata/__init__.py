@@ -287,7 +287,7 @@ def _form(am_id: Optional[str], metadata: Optional[AMMetadata]) -> Component:
     return html.Div([_legifrance_id_form(am_id), _metadata_row(am_id, metadata), dcc.Store(data=am_id, id=ids.AM_ID)])
 
 
-def _page(am_id: Optional[str]) -> Component:
+def _page(am_id: Optional[str] = None) -> Component:
     metadata = DATA_FETCHER.load_am_metadata(am_id) if am_id else None
     title = 'Nouvel arrêté ministériel.' if not metadata else f"Modification de l'arrêté ministériel {am_id}."
     return html.Div([html.H2(title), _form(am_id, metadata)])
