@@ -68,7 +68,7 @@ def _upsert_am(am_metadata: AMMetadata, delete_reason: str) -> None:
     am_metadata = replace(am_metadata)
     am_metadata.state = AMState.DELETED
     am_metadata.reason_deleted = delete_reason
-    DATA_FETCHER.upsert_am(am_metadata)
+    DATA_FETCHER.upsert_am_metadata(am_metadata)
 
 
 def _handle_form(am_id: str, delete_reason: str) -> None:

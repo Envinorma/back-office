@@ -101,5 +101,5 @@ def layout(am_id: str) -> Component:
     am_metadata = DATA_FETCHER.load_am_metadata(am_id)
     if not am_metadata:
         return html.P(f'404 - Arrêté {am_id} inconnu')
-    am = DATA_FETCHER.load_most_advanced_am(am_id)
+    am = DATA_FETCHER.load_am(am_id)
     return html.Div([_title_component(am_id, am_metadata), _buttons(), _page_content(am_id, am)])

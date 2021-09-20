@@ -215,8 +215,8 @@ def handle_form(
             alineas,
         )
         am = ArreteMinisteriel(EnrichedString(title or ''), [], [], new_am_metadata.date_of_signature, id=am_id)
-        DATA_FETCHER.upsert_structured_am(am_id or '', am)
-        DATA_FETCHER.upsert_am(new_am_metadata)
+        DATA_FETCHER.upsert_am(am_id or '', am)
+        DATA_FETCHER.upsert_am_metadata(new_am_metadata)
         _slack(new_am_metadata)
     except FormHandlingError as exc:
         return dbc.Alert(f'Erreur dans le formulaire :\n{exc}', color='danger')

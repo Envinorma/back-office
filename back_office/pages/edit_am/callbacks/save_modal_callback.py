@@ -75,7 +75,7 @@ def _parameter_component(lost_parameter_titles: List[List[str]]) -> Component:
 def _lost_topics_and_parameters(am_id: str, form_am_value: Optional[str]) -> Component:
     if not form_am_value:
         raise TextAreaHandlingError('Le formulaire est vide.')
-    am = DATA_FETCHER.load_most_advanced_am(am_id)
+    am = DATA_FETCHER.load_am(am_id)
     if not am:
         return success_component("Extraction de l'arrêté ministériel réussie. Confirmer l'enregistrement ?")
     new_am, lost_topics = am.create_copy_with_new_content(extract_text_from_html(form_am_value))

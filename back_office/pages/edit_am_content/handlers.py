@@ -11,7 +11,7 @@ class SaveError(Exception):
 
 
 def _load_am(am_id: str) -> ArreteMinisteriel:
-    am = DATA_FETCHER.load_most_advanced_am(am_id)
+    am = DATA_FETCHER.load_am(am_id)
     if not am:
         raise SaveError('AM introuvable, modifications non effectuées.')
     return am
@@ -36,7 +36,7 @@ def _update_alineas(am: ArreteMinisteriel, section_id: str, alineas: List[Enrich
 
 def edit_am_alineas(am_id: str, section_id: str, new_alineas: List[EnrichedString]) -> None:
     new_am = _update_alineas(_load_am(am_id), section_id, new_alineas)
-    DATA_FETCHER.upsert_structured_am(am_id, new_am)
+    DATA_FETCHER.upsert_am(am_id, new_am)
 
 
 def _update_title_in_section(section: StructuredText, section_id: str, new_title: str) -> StructuredText:
@@ -56,7 +56,7 @@ def _update_title(am: ArreteMinisteriel, section_id: str, new_title: str) -> Arr
 
 def edit_am_title(am_id: str, section_id: str, new_title: str) -> None:
     new_am = _update_title(_load_am(am_id), section_id, new_title)
-    DATA_FETCHER.upsert_structured_am(am_id, new_am)
+    DATA_FETCHER.upsert_am(am_id, new_am)
 
 
 def _delete_section_recurse(section: StructuredText, section_id: str) -> StructuredText:
@@ -77,7 +77,7 @@ def _delete_section(am: ArreteMinisteriel, section_id: str) -> ArreteMinisteriel
 
 def delete_am_section(am_id: str, section_id: str) -> None:
     new_am = _delete_section(_load_am(am_id), section_id)
-    DATA_FETCHER.upsert_structured_am(am_id, new_am)
+    DATA_FETCHER.upsert_am(am_id, new_am)
 
 
 def _insert_empty_section_recurse(section: StructuredText, section_id: str) -> StructuredText:
@@ -96,4 +96,4 @@ def _insert_empty_section(am: ArreteMinisteriel, section_id: str) -> ArreteMinis
 
 def insert_empty_section(am_id: str, section_id: str) -> None:
     new_am = _insert_empty_section(_load_am(am_id), section_id)
-    DATA_FETCHER.upsert_structured_am(am_id, new_am)
+    DATA_FETCHER.upsert_am(am_id, new_am)

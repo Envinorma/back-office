@@ -45,7 +45,7 @@ def _build_page(
 
 
 def _load_am(am_id: str) -> Optional[ArreteMinisteriel]:
-    return DATA_FETCHER.load_most_advanced_am(am_id)
+    return DATA_FETCHER.load_am(am_id)
 
 
 def _get_parameter(parametrization: Parametrization, operation_id: AMOperation, parameter_id: str) -> ParameterElement:

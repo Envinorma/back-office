@@ -29,7 +29,7 @@ def _am_component_with_toc(am: Optional[AMWithApplicability], am_metadata: AMMet
 
 
 def _load_default_am(am_id) -> Optional[AMWithApplicability]:
-    am = DATA_FETCHER.load_most_advanced_am(am_id)
+    am = DATA_FETCHER.load_am(am_id)
     if not am:
         return None
     parametrization = DATA_FETCHER.load_or_init_parametrization(am_id)

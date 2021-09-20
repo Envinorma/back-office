@@ -125,7 +125,7 @@ def _parametrization_form(am: ArreteMinisteriel, parametrization: Parametrizatio
 
 def _parametrization_component(am_id: str) -> Component:
     parametrization = DATA_FETCHER.load_parametrization(am_id)
-    am = DATA_FETCHER.load_most_advanced_am(am_id)
+    am = DATA_FETCHER.load_am(am_id)
     if not am:
         content = html.Div('Arrêté ministériel inexistent.')
     elif not parametrization:
@@ -150,7 +150,7 @@ def _layout(am_metadata: AMMetadata) -> Component:
 
 
 def _load_am(am_id: str) -> Optional[ArreteMinisteriel]:
-    return DATA_FETCHER.load_most_advanced_am(am_id)
+    return DATA_FETCHER.load_am(am_id)
 
 
 class _FormError(Exception):

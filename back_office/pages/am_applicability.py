@@ -123,7 +123,7 @@ def _form(am_id: str, applicability: AMApplicability) -> Component:
 
 
 def _page(am_id: str) -> Component:
-    am = DATA_FETCHER.load_most_advanced_am(am_id)
+    am = DATA_FETCHER.load_am(am_id)
     if not am:
         return html.Div('AM introuvable')
     title = f'Editer les paramètres d\'application de l\'arrêté ministériel {am_id}.'
@@ -140,11 +140,11 @@ def _applicability(warnings: List[str], use_condition: bool, condition_str: Opti
 def _handle_form(warnings: List[str], use_condition: bool, condition: Optional[str], am_id: str) -> Component:
     try:
         new_applicability = _applicability(warnings, use_condition, condition)
-        am = DATA_FETCHER.load_most_advanced_am(am_id)
+        am = DATA_FETCHER.load_am(am_id)
         if not am:
             raise _FormHandlingError('AM introuvable. Impossible d\'enregistrer le formulaire.')
         am.applicability = new_applicability
-        DATA_FETCHER.upsert_structured_am(am_id, am)
+        DATA_FETCHER.upsert_am(am_id, am)
     except _FormHandlingError as exc:
         return error_component(f"Erreur dans le formulaire : {exc}")
     redirect = dcc.Location(id='am-applicability-redirect', href=f'/{Endpoint.EDIT_PARAMETRIZATION}/{am_id}')

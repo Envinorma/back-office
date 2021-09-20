@@ -152,7 +152,7 @@ def _new_section_form_from_default(
 def _build_new_text_component(section_id: Optional[str], am_id: str, operation: AMOperation, rank: int) -> Component:
     if operation != AMOperation.ADD_ALTERNATIVE_SECTION or not section_id:
         return _new_section_form('', '', rank, operation)
-    am = DATA_FETCHER.load_most_advanced_am(am_id)
+    am = DATA_FETCHER.load_am(am_id)
     if not am:
         return _new_section_form('', '', rank, operation)
     section = _find_section_by_id(section_id, am)
@@ -173,7 +173,7 @@ def _build_targeted_alineas_options(section_dict: Dict[str, Any], operation: AMO
 def _store_target_section(section_id: Optional[str], am_id: str) -> Dict[str, Any]:
     if not section_id:
         return {}
-    am = DATA_FETCHER.load_most_advanced_am(am_id)
+    am = DATA_FETCHER.load_am(am_id)
     if not am:
         return {}
     section = _find_section_by_id(section_id, am)

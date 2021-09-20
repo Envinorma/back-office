@@ -61,7 +61,7 @@ def _layout(am: AMMetadata) -> Component:
     return html.Div(
         [
             html.Div(_edition(am.cid), className='col-3'),
-            html.Div(className='col-9', children=_am_topics(DATA_FETCHER.load_most_advanced_am(am.cid))),
+            html.Div(className='col-9', children=_am_topics(DATA_FETCHER.load_am(am.cid))),
         ],
         className='row',
     )
