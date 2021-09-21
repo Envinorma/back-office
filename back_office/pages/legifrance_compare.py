@@ -13,14 +13,14 @@ from back_office.components.diff import diff_component
 from back_office.helpers.diff import compute_am_diff
 from back_office.helpers.legifrance import NoConsolidationError, extract_legifrance_am
 from back_office.routing import Page
+from back_office.utils import generate_id
 
-_PREFIX = __file__.split('/')[-1].replace('.py', '').replace('_', '-')
-_DATE_BEFORE = f'{_PREFIX}-before-date'
-_DATE_AFTER = f'{_PREFIX}-after-date'
-_AM_ID = f'{_PREFIX}-am-id'
-_FORM_OUTPUT = f'{_PREFIX}-form-output'
-_SUBMIT = f'{_PREFIX}-submit'
-_DIFF = f'{_PREFIX}-diff'
+_DATE_BEFORE = generate_id(__file__, 'before-date')
+_DATE_AFTER = generate_id(__file__, 'after-date')
+_AM_ID = generate_id(__file__, 'am-id')
+_FORM_OUTPUT = generate_id(__file__, 'form-output')
+_SUBMIT = generate_id(__file__, 'submit')
+_DIFF = generate_id(__file__, 'diff')
 
 
 class _FormError(Exception):

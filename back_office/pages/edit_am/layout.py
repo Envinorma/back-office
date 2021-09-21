@@ -22,10 +22,17 @@ def _title_component(am_id: str, am_metadata: AMMetadata) -> Component:
 
 def _buttons() -> Component:
     btn_class = 'btn btn-secondary btn-light'
+    body = dbc.ModalBody(html.P('Les modifications actuelles seront perdues. Procéder quand même ?'))
+    footer = dbc.ModalFooter(
+        html.Button('Confirmer l\'opération', id=ids.AIDA_LEGIFRANCE_CONFIRM, className='btn btn-primary')
+    )
+    modal = dbc.Modal([body, footer], id=ids.AIDA_LEGIFRANCE_MODAL)
     return html.Div(
         [
             html.Button('Remplacer par la version Légifrance', id=ids.FETCH_LEGIFRANCE, className=f'{btn_class} mr-2'),
             html.Button('Remplacer par la version AIDA', id=ids.FETCH_AIDA, className=btn_class),
+            modal,
+            dcc.Store(id=ids.FROM_LEGIFRANCE_OR_AIDA, data=''),
         ],
         className='mb-3 mt-3',
     )
@@ -55,8 +62,8 @@ def _am_component(am: Optional[ArreteMinisteriel]) -> Component:
 
 
 def _diff_modal() -> Tuple[Component, Component]:
-    text = 'Vérifier les différences'
-    modal_components = [dbc.ModalHeader(text), dbc.ModalBody(html.Div('', id=ids.DIFF_BODY))]
+    text = 'Vérifier les modifications.'
+    modal_components = [dbc.ModalHeader(text), dbc.ModalBody(dbc.Spinner('', id=ids.DIFF_BODY))]
     modal = dbc.Modal(modal_components, id=ids.DIFF_MODAL, size='xl')
     trigger_button = html.Button(text, id=ids.DIFF_BUTTON, className='btn btn-light save-button mr-2 button-shadow')
     return trigger_button, modal
@@ -85,8 +92,8 @@ def _save() -> Component:
     return html.Div([diff_trigger_button, diff_modal, save_trigger_button, save_modal], className='save-zone')
 
 
-def _aida_output() -> Component:
-    return html.Div('', id=ids.AIDA_OUTPUT, className='aida-output')
+def _aida_legifrance_output() -> Component:
+    return html.Div('', id=ids.AIDA_LEGIFRANCE_OUTPUT, className='aida-output')
 
 
 def _hidden_btn() -> Component:
@@ -96,7 +103,7 @@ def _hidden_btn() -> Component:
 def _page_content(am_id: str, am: Optional[ArreteMinisteriel]) -> Component:
     am_id_store = dcc.Store(id=ids.AM_ID, data=am_id)
     component = _am_component(am)
-    return html.Div([component, _save(), _aida_output(), _save_output(), am_id_store, _hidden_btn()])
+    return html.Div([component, _save(), _aida_legifrance_output(), _save_output(), am_id_store, _hidden_btn()])
 
 
 def layout(am_id: str) -> Component:

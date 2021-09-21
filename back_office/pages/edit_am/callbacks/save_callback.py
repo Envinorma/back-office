@@ -134,12 +134,7 @@ def _extract_form_value_and_save_text(am_id: str, text_area_content: str) -> Com
         return component
     if lost_topics:
         return alert('Enregistrement réussi. ' + _lost_topics_message(lost_topics), 'warning')
-    return html.Div(
-        [
-            success_component('Enregistrement réussi.'),
-            dcc.Location(id='redirect-save-callback', pathname=f'/{Endpoint.AM}/{am_id}'),
-        ]
-    )
+    return success_component('Enregistrement réussi.')
 
 
 def add_callbacks(app: Dash) -> None:

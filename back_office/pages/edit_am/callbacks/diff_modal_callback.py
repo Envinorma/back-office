@@ -1,7 +1,7 @@
 import traceback
 from typing import List, Optional
 
-from dash import Dash, Input, Output, State
+from dash import Dash, Input, Output, State, html
 from dash.development.base_component import Component
 from envinorma.models.arrete_ministeriel import ArreteMinisteriel
 from envinorma.models.text_elements import EnrichedString
@@ -36,7 +36,12 @@ def _diff(am_id: str, form_am_value: Optional[str]) -> Component:
         previous_lines = _previous_lines(am_id)
         new_lines = _new_lines(am_id, form_am_value)
         diff = text_differences(previous_lines, new_lines)
-        return diff_component(diff, 'Version précédente', 'Nouvelle version')
+        return html.Div(
+            [
+                html.P('Comparaison entre la version enregistrée et la version modifiée '),
+                diff_component(diff, 'Version précédente', 'Nouvelle version'),
+            ]
+        )
     except TextAreaHandlingError as exc:
         return error_component(str(exc))
     except Exception:

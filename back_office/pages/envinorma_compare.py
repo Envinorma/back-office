@@ -13,11 +13,10 @@ from back_office.helpers.aida import extract_aida_am
 from back_office.helpers.diff import compute_am_diff
 from back_office.helpers.legifrance import extract_legifrance_am
 from back_office.routing import Endpoint, Page
-from back_office.utils import DATA_FETCHER, ensure_not_none
+from back_office.utils import DATA_FETCHER, ensure_not_none, generate_id
 
-_PREFIX = __file__.split('/')[-1].replace('.py', '').replace('_', '-')
-_ARGS = _PREFIX + '-args'
-_SPINNER = _PREFIX + '-spinner'
+_ARGS = generate_id(__file__, 'args')
+_SPINNER = generate_id(__file__, 'spinner')
 
 
 class CompareWith(Enum):
