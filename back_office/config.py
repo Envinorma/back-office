@@ -3,13 +3,14 @@ import os
 from configparser import ConfigParser
 from enum import Enum
 from functools import lru_cache
+from pathlib import Path
 from typing import Optional
 
 
 def _config_filename() -> str:
-    filename = __file__.replace('back_office/config.py', 'config.ini')
-    assert 'config.ini' in filename
-    return filename
+    file_ = Path(__file__).parent.parent / 'config.ini'
+    assert file_.exists()
+    return str(file_)
 
 
 @lru_cache

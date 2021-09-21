@@ -58,7 +58,7 @@ def _diff_modal() -> Tuple[Component, Component]:
     text = 'Vérifier les différences'
     modal_components = [dbc.ModalHeader(text), dbc.ModalBody(html.Div('', id=ids.DIFF_BODY))]
     modal = dbc.Modal(modal_components, id=ids.DIFF_MODAL, size='xl')
-    trigger_button = html.Button(text, id=ids.DIFF_BUTTON, className='btn btn-light save-button mr-2')
+    trigger_button = html.Button(text, id=ids.DIFF_BUTTON, className='btn btn-light save-button mr-2 button-shadow')
     return trigger_button, modal
 
 
@@ -69,7 +69,9 @@ def _save_modal() -> Tuple[Component, Component]:
         dbc.ModalFooter(html.Button('Valider', id=ids.SAVE_BUTTON, className='btn btn-primary')),
     ]
     modal = dbc.Modal(modal_components, id=ids.SAVE_MODAL, size='xl')
-    trigger_button = html.Button('Enregistrer', id=ids.PRESAVE_BUTTON, className='btn btn-primary save-button')
+    trigger_button = html.Button(
+        'Enregistrer', id=ids.PRESAVE_BUTTON, className='btn btn-primary save-button button-shadow'
+    )
     return trigger_button, modal
 
 

@@ -1,8 +1,8 @@
 import json
-import os
 import traceback
 from enum import Enum
 from functools import lru_cache
+from pathlib import Path
 from typing import Any, Dict, List, Optional, TypeVar, Union
 
 from envinorma.data_fetcher import DataFetcher
@@ -14,10 +14,8 @@ DATA_FETCHER = DataFetcher(PSQL_DSN)
 
 @lru_cache
 def _load_am_id_occurences() -> Dict[str, int]:
-    relative_filename = 'data/am_id_to_nb_classements.json'
-    filename = __file__.replace('back_office/utils.py', relative_filename)
-    assert relative_filename in filename
-    assert os.path.exists(filename)
+    filename = Path(__file__).parent.parent / 'data' / 'am_id_to_nb_classements.json'
+    assert filename.exists()
     return json.load(open(filename))
 
 
@@ -56,7 +54,7 @@ class RouteParsingError(Exception):
 
 
 def generate_id(filename: str, suffix: str) -> str:
-    prefix = filename.split('/')[-1].replace('.py', '').replace('_', '-')
+    prefix = Path(filename).name.replace('.py', '').replace('_', '-').replace('.', '-')
     return prefix + '-' + suffix
 
 

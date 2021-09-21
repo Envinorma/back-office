@@ -271,7 +271,7 @@ def _metadata_form(am_metadata: Optional[AMMetadata]) -> Component:
             _am_state(am_metadata),
             _reason_deleted(am_metadata),
             _am_source(am_metadata),
-            html.Div(id=ids.FORM_OUTPUT),
+            dbc.Spinner(html.Div(), id=ids.FORM_OUTPUT),
             _buttons(am_metadata.cid if am_metadata else ''),
         ]
     )

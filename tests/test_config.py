@@ -1,8 +1,9 @@
 import os
 from configparser import ConfigParser
+from pathlib import Path
 
-_CONFIG_FILE = __file__.replace('tests/test_config.py', 'config.ini')
-_CONFIG_TEMPLATE_FILE = __file__.replace('tests/test_config.py', 'config_template.ini')
+_CONFIG_FILE = Path(__file__).parent.parent / 'config.ini'
+_CONFIG_TEMPLATE_FILE = Path(__file__).parent.parent / 'config_template.ini'
 
 
 def assert_no_missing_parameter_in_template():

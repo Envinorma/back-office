@@ -1,7 +1,6 @@
 from datetime import date
 from typing import List, Optional
 
-import dash_bootstrap_components as dbc
 from dash import dcc, html
 from dash.development.base_component import Component
 from envinorma.models import (
@@ -16,6 +15,7 @@ from envinorma.models import (
 from envinorma.models.arrete_ministeriel import ArreteMinisteriel
 from envinorma.models.text_elements import EnrichedString
 
+from back_office.components import error_component, success_component
 from back_office.helpers.login import get_current_user
 from back_office.helpers.slack import send_slack_notification
 from back_office.pages.edit_parameter_element.form_handling import FormHandlingError
@@ -58,7 +58,8 @@ def _extract_title_date(title: Optional[str]) -> date:
     except ValueError:
         raise FormHandlingError(
             'Mauvais format de titre. Format attendu : "Arrêté du jj/mm/yy '
-            'relatif..." ou "Arrêté du jj/mm/yy fixant..."'
+            'relatif..." ou "Arrêté du jj/mm/yy fixant..."\nExemple : Arrêté du 27/12/13 relatif '
+            'aux prescriptions générales [...].'
         )
 
 
@@ -219,13 +220,13 @@ def handle_form(
         DATA_FETCHER.upsert_am_metadata(new_am_metadata)
         _slack(new_am_metadata)
     except FormHandlingError as exc:
-        return dbc.Alert(f'Erreur dans le formulaire :\n{exc}', color='danger')
+        return error_component(f'Erreur dans le formulaire :\n{exc}')
     except Exception as exc:
-        return dbc.Alert(f'Erreur inattendue :\n{exc}', color='danger')
+        return error_component(f'Erreur inattendue :\n{exc}')
     redirect_target = f'/{Endpoint.AM}/{new_am_metadata.cid}'
     return html.Div(
         [
-            dbc.Alert('Enregistrement réussi.', color='success'),
+            success_component('Enregistrement réussi.'),
             dcc.Location(href=redirect_target, id=ids.SUCCESS_REDIRECT),
         ]
     )
