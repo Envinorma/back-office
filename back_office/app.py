@@ -1,5 +1,4 @@
 from typing import Any, Dict, Mapping, Tuple
-from urllib.parse import quote_plus
 
 from dash import Input, Output, dcc, html
 from dash.development.base_component import Component
@@ -8,6 +7,7 @@ from flask_login import LoginManager
 from werkzeug.exceptions import NotFound
 
 from back_office.app_init import app
+from back_office.components import login_redirect
 from back_office.components.header import header
 from back_office.config import LOGIN_SECRET_KEY
 from back_office.helpers.login import UNIQUE_USER, get_current_user
@@ -77,8 +77,7 @@ def router(pathname: str) -> Component:
     except NotFound:
         return html.H3('404 error: Unknown path {}'.format(pathname))
     if page.login_required and not get_current_user().is_authenticated:
-        origin = quote_plus(pathname)
-        return dcc.Location(pathname=f'/{Endpoint.LOGIN}/{origin}', id='login-redirect')
+        return login_redirect(pathname)
     return page.layout(**kwargs)
 
 

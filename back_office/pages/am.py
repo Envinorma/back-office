@@ -12,4 +12,4 @@ def _add_callbacks(app: Dash) -> None:
     pass
 
 
-PAGE = Page(_page, _add_callbacks, True)
+PAGE = Page(_page, _add_callbacks, False)

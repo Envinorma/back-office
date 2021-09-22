@@ -5,7 +5,7 @@ from dash import Dash, dcc, html
 from dash.development.base_component import Component
 from envinorma.models import AMMetadata, AMState, Classement
 
-from back_office.components import ExtendedComponent
+from back_office.components import ExtendedComponent, login_redirect
 from back_office.components.am_side_nav import page_with_sidebar
 from back_office.components.edit_metadata.edit_metadata import edit_metadata
 from back_office.helpers.login import get_current_user
@@ -82,9 +82,16 @@ def _edit_page(am_id: str) -> Component:
     return html.Div([button, html.Hr(), html.Div(edit_metadata(False, am_id))])
 
 
+def _protected_edit(am_id: str) -> Component:
+    if get_current_user().is_authenticated:
+        return _edit_page(am_id)
+    href = f'/{Endpoint.AM}/{am_id}/{Endpoint.AM_METADATA}/edit'
+    return login_redirect(href)
+
+
 def _page(am_id: str, edit: bool = False) -> Component:
     if edit:
-        component = _edit_page(am_id)
+        component = _protected_edit(am_id)
     else:
         am = DATA_FETCHER.load_am_metadata(am_id)
         if not am:
@@ -98,4 +105,4 @@ def _add_callbacks(app: Dash) -> None:
     pass
 
 
-PAGE = Page(_page, _add_callbacks, True)
+PAGE = Page(_page, _add_callbacks, False)
