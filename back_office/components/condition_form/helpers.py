@@ -21,13 +21,13 @@ from envinorma.parametrization import (
 _AUTORISATION_DATE_FR = 'Date d\'autorisation'
 _DECLARATION_DATE_FR = 'Date de déclaration'
 _ENREGISTREMENT_DATE_FR = 'Date d\'enregistrement'
-_INSTALLATION_DATE_FR = 'Date de mise en service'
+INSTALLATION_DATE_FR = 'Date de mise en service'
 CONDITION_VARIABLES = {
     'Régime': ParameterEnum.REGIME,
     _AUTORISATION_DATE_FR: ParameterEnum.DATE_AUTORISATION,
     _DECLARATION_DATE_FR: ParameterEnum.DATE_DECLARATION,
     _ENREGISTREMENT_DATE_FR: ParameterEnum.DATE_ENREGISTREMENT,
-    _INSTALLATION_DATE_FR: ParameterEnum.DATE_INSTALLATION,
+    INSTALLATION_DATE_FR: ParameterEnum.DATE_INSTALLATION,
     'Alinéa': ParameterEnum.ALINEA,
     'Rubrique': ParameterEnum.RUBRIQUE,
     'Quantité associée à la rubrique': ParameterEnum.RUBRIQUE_QUANTITY,

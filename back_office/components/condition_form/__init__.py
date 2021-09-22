@@ -22,7 +22,7 @@ from envinorma.parametrization import (
 
 from back_office.utils import generate_id
 
-from .helpers import CONDITION_VARIABLES, ConditionFormValues, FormHandlingError, build_condition
+from .helpers import CONDITION_VARIABLES, INSTALLATION_DATE_FR, ConditionFormValues, FormHandlingError, build_condition
 
 _CONDITION_VARIABLE_OPTIONS = [{'label': condition, 'value': condition} for condition in CONDITION_VARIABLES]
 _CONDITION_OPERATIONS = ['<', '=', '>=']
@@ -42,6 +42,7 @@ class _ConditionIds:
         self.ADD_CONDITION_BLOCK = generate_id(condition_id, 'ADD_CONDITION_BLOCK')
         self.CONDITION_MERGE = generate_id(condition_id, 'CONDITION_MERGE')
         self.CONDITION_BLOCKS = generate_id(condition_id, 'CONDITION_BLOCKS')
+        self.CONDITION_MERGE_AREA = generate_id(condition_id, 'CONDITION_MERGE_AREA')
 
     def delete_condition_button(self, rank: int) -> Dict[str, Any]:
         return {'id': f'{self.prefix}-delete_condition_button', 'rank': rank}
@@ -126,7 +127,7 @@ def _delete_button(rank: int, ids: _ConditionIds) -> Component:
 
 
 def _parameter_input(rank: int, default_condition: Optional[MonoCondition], ids: _ConditionIds) -> Component:
-    default_variable = ids.INSTALLATION_DATE_FR if not default_condition else _get_str_variable(default_condition)
+    default_variable = INSTALLATION_DATE_FR if not default_condition else _get_str_variable(default_condition)
     return dcc.Dropdown(
         id=ids.condition_parameter(rank),
         options=_CONDITION_VARIABLE_OPTIONS,
@@ -191,7 +192,7 @@ def _condition_blocks(default_conditions: Optional[List[MonoCondition]], ids: _C
 def _get_condition_tooltip() -> Component:
     return html.Div(
         [
-            'Liste de conditions ',
+            'Conditions ',
             dbc.Badge('?', id='param-edition-conditions-tooltip', pill=True),
             dbc.Tooltip(
                 ['Formats:', html.Br(), 'Régime: A, E, D ou NC.', html.Br(), 'Date: JJ/MM/AAAA'],
@@ -227,7 +228,7 @@ def _merge_input(default_merge: str, ids: _ConditionIds) -> Component:
     merge_dropdown = dcc.Dropdown(
         options=_MERGE_VALUES_OPTIONS, clearable=False, value=default_merge, id=ids.CONDITION_MERGE
     )
-    return html.Div(['Opération', merge_dropdown])
+    return html.Div(['Opération', merge_dropdown], id=ids.CONDITION_MERGE_AREA)
 
 
 def _condition_form(default_condition: Optional[Condition], ids: _ConditionIds) -> Component:
@@ -291,6 +292,17 @@ def _callbacks(ids: _ConditionIds) -> Callable[[Dash], None]:
             except FormHandlingError as exc:
                 return ('', 'danger', dbc.Alert(str(exc), color='danger'))
             return (json.dumps(condition.to_dict()), 'success', html.Div())
+
+        @app.callback(
+            Output(ids.CONDITION_MERGE_AREA, 'hidden'),
+            Input(ids.condition_parameter(cast(int, ALL)), 'value'),
+            Input(ids.condition_operation(cast(int, ALL)), 'value'),
+            Input(ids.condition_value(cast(int, ALL)), 'value'),
+        )
+        def _toggle_merge_operation(_, __, values):
+            if len(values) > 1:
+                return False
+            return True
 
     return _add_callbacks
 

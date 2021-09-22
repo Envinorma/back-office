@@ -2,7 +2,7 @@ import traceback
 from typing import List, Optional
 
 from bs4 import BeautifulSoup
-from dash import Dash, Input, Output, State, dcc, html
+from dash import Dash, Input, Output, State
 from dash.development.base_component import Component
 from dash.exceptions import PreventUpdate
 from envinorma.io.parse_html import extract_text_elements
@@ -12,7 +12,6 @@ from envinorma.models.text_elements import TextElement, Title
 from envinorma.structure import build_structured_text
 
 from back_office.components import alert, error_component, success_component
-from back_office.routing import Endpoint
 from back_office.utils import DATA_FETCHER
 
 from .. import ids
@@ -61,6 +60,7 @@ def _parse_table(element: TextElement) -> TextElement:
             raise TextAreaHandlingError(
                 f'{prefix}\nPlusieurs éléments ont été détectés, dont voici les types :\n{element_types}'
             )
+        return elements[0]
     return element
 
 

@@ -41,7 +41,7 @@ def _build_page(
     ]
     page = _get_main_component(am, operation, destination_id, loaded_parameter)
 
-    return html.Div([page, *hidden_components], className='parametrization_content')
+    return html.Div([page, *hidden_components], className='parametrization_content container mt-3')
 
 
 def _load_am(am_id: str) -> Optional[ArreteMinisteriel]:
@@ -64,7 +64,7 @@ def _get_parameter(parametrization: Parametrization, operation_id: AMOperation, 
     return id_to_parameter[parameter_id]
 
 
-def _router(am_id: str, operation: AMOperation, parameter_id: Optional[str] = None, copy: bool = False) -> Component:
+def _page(am_id: str, operation: AMOperation, parameter_id: Optional[str] = None, copy: bool = False) -> Component:
     try:
         am_metadata = DATA_FETCHER.load_am_metadata(am_id)
         if not am_metadata:
@@ -83,19 +83,19 @@ def _router(am_id: str, operation: AMOperation, parameter_id: Optional[str] = No
     return _build_page(am, operation, am_id, parameter_id, loaded_parameter)
 
 
-def _router_condition(am_id: str, parameter_id: Optional[str] = None, copy: bool = False):
-    return _router(am_id, AMOperation.ADD_CONDITION, parameter_id, copy)
+def _page_condition(am_id: str, parameter_id: Optional[str] = None, copy: bool = False):
+    return _page(am_id, AMOperation.ADD_CONDITION, parameter_id, copy)
 
 
-def _router_alternative_section(am_id: str, parameter_id: Optional[str] = None, copy: bool = False):
-    return _router(am_id, AMOperation.ADD_ALTERNATIVE_SECTION, parameter_id, copy)
+def _page_alternative_section(am_id: str, parameter_id: Optional[str] = None, copy: bool = False):
+    return _page(am_id, AMOperation.ADD_ALTERNATIVE_SECTION, parameter_id, copy)
 
 
-def _router_warning(am_id: str, parameter_id: Optional[str] = None, copy: bool = False):
-    return _router(am_id, AMOperation.ADD_WARNING, parameter_id, copy)
+def _page_warning(am_id: str, parameter_id: Optional[str] = None, copy: bool = False):
+    return _page(am_id, AMOperation.ADD_WARNING, parameter_id, copy)
 
 
-PAGE_CONDITION = Page(_router_condition, add_callbacks, True)
+PAGE_CONDITION = Page(_page_condition, add_callbacks, True)
 # replace lambda x: None when switching to new callbacks
-PAGE_ALTERNATIVE_SECTION = Page(_router_alternative_section, lambda x: None, True)
-PAGE_WARNING = Page(_router_warning, lambda x: None, True)
+PAGE_ALTERNATIVE_SECTION = Page(_page_alternative_section, lambda x: None, True)
+PAGE_WARNING = Page(_page_warning, lambda x: None, True)

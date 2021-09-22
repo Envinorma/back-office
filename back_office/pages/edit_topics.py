@@ -67,14 +67,13 @@ def _am_topics(am: ArreteMinisteriel) -> Component:
 
 
 def _link_to_am(am_id: str) -> Component:
-    return dcc.Link(html.Button("Consulter l'AM", className='btn btn-link'), href=f'/{Endpoint.AM}/{am_id}/1')
+    return dcc.Link(html.Button("< Retour à l'arrêté", className='btn btn-link'), href=f'/{Endpoint.AM}/{am_id}')
 
 
 def _am_topics_with_loader(am: ArreteMinisteriel) -> Component:
     return html.Div(
         [
             html.H5("Structure de l'AM à éditer."),
-            _link_to_am(am.id or ''),
             dbc.Spinner(_am_topics(am), id=_AM),
         ],
         className='col-9',
@@ -86,17 +85,14 @@ def _topics_dropdown() -> Component:
     values = [topic.value for topic in _TOPICS]
     options = [{'label': topic, 'value': topic} for topic in values]
     return html.Div(
-        html.Div(
-            [
-                html.H5('Thème à utiliser'),
-                dcc.Dropdown(_TOPICS_DROPDOWN, options, value=None, className='mb-3 mt-3'),
-                html.P('Cliquer sur les paragraphes auxquels associer le thème sélectionné.'),
-                html.Div(id=_TOPIC_EDITION_OUTPUT),
-            ],
-            style={'background-color': '#DDDDDD', 'border-radius': '5px'},
-            className='p-3',
-        ),
-        className='col-3',
+        [
+            html.H5('Thème à utiliser'),
+            dcc.Dropdown(_TOPICS_DROPDOWN, options, value=None, className='mb-3 mt-3'),
+            html.P('Cliquer sur les paragraphes auxquels associer le thème sélectionné.'),
+            html.Div(id=_TOPIC_EDITION_OUTPUT),
+        ],
+        style={'background-color': '#DDDDDD', 'border-radius': '5px'},
+        className='p-3',
     )
 
 
@@ -112,21 +108,21 @@ def _id_store(am: ArreteMinisteriel) -> Component:
     return html.Div([dcc.Store(data=_am_structure(am), id=_AM_STRUCTURE_STORE), dcc.Store(data=am.id, id=_AM_ID)])
 
 
-def _layout_if_logged(am_id: str) -> Component:
+def _first_column(am_id: str) -> Component:
+    return html.Div([_link_to_am(am_id), _topics_dropdown()], className='col-3')
+
+
+def _layout(am_id: str) -> Component:
     am = DATA_FETCHER.load_am(am_id)
     if not am:
         return html.Div('404')
     return html.Div(
         [
             html.H3(f'AM {am_id} - Edition des thèmes'),
-            html.Div([_topics_dropdown(), _am_topics_with_loader(am)], className='row mt-3'),
+            html.Div([_first_column(am_id), _am_topics_with_loader(am)], className='row mt-3'),
             _id_store(am),
         ]
     )
-
-
-def _layout(am_id: str) -> Component:
-    return _layout_if_logged(am_id)
 
 
 def _extract_trigger_keys(triggered: List[Dict[str, Any]]) -> Tuple[List[str], List[str]]:
@@ -212,7 +208,7 @@ def _callbacks(app: Dash) -> None:
         delete_topic_ids, set_topic_ids = _extract_trigger_keys(callback_context.triggered)
         if delete_topic_ids:
             am = _edit_am_topic(am_id, delete_topic_ids[0], None, True)
-            return success_component(f'Le thème a été supprimé.'), _am_topics(am)
+            return success_component('Le thème a été supprimé.'), _am_topics(am)
         target_section = _keep_deepest_id(set_topic_ids, am_structure)
         try:
             am = _edit_am_topic(am_id, target_section, dropdown_value, False)
@@ -222,4 +218,8 @@ def _callbacks(app: Dash) -> None:
         return success_component(f'Section correctement affectée au thème {dropdown_value}.'), _am_topics(am)
 
 
-PAGE = Page(_layout, _callbacks, True)
+def _page(am_id: str) -> Component:
+    return html.Div(_layout(am_id), className='container mt-3')
+
+
+PAGE = Page(_page, _callbacks, True)

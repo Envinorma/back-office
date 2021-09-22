@@ -1,5 +1,3 @@
-from typing import Optional
-
 from dash import dcc, html
 from dash.development.base_component import Component
 
@@ -7,29 +5,21 @@ from back_office.helpers.login import get_current_user
 from back_office.routing import Endpoint
 
 
-def _header_link(content: str, href: str, target: Optional[str] = None, hidden: bool = False) -> Component:
-    style = {'display': 'inline-block'}
-    return html.Span(
-        html.A(content, href=href, className='nav-link', style=style, target=target),
-        hidden=hidden,
-        className='main-header',
-    )
+def _header_link(content: str, href: str, hidden: bool = False, left: bool = False) -> Component:
+    base_class_name = 'btn btn-link header-link'
+    class_name = base_class_name + (' float-end' if left else '')
+    return html.Span(dcc.Link(content, href=href, className=class_name), hidden=hidden)
 
 
 def _nav() -> Component:
-    guide_url = 'https://envinorma.github.io/data/edit_am'
     user_not_auth = not get_current_user().is_authenticated
-    compare_url = f'/{Endpoint.LEGIFRANCE_COMPARE}/id/JORFTEXT000034429274/2020-01-20/2021-02-20'
     nav = html.Span(
         [
             _header_link('Liste des arrêtés', href='/'),
-            _header_link('Guide d\'enrichissement', href=guide_url, target='_blank'),
-            _header_link('Historique Légifrance', href=compare_url),
-            _header_link("S'identifier", href=f'/{Endpoint.LOGIN}', hidden=not user_not_auth),
             _header_link('Exportation des AMs', href=f'/{Endpoint.UPLOAD_AMS}', hidden=user_not_auth),
-            _header_link('Se déconnecter', href=f'/{Endpoint.LOGOUT}', hidden=user_not_auth),
+            _header_link("S'identifier", href=f'/{Endpoint.LOGIN}', hidden=not user_not_auth, left=True),
+            _header_link('Se déconnecter', href=f'/{Endpoint.LOGOUT}', hidden=user_not_auth, left=True),
         ],
-        style={'display': 'inline-block'},
     )
     return nav
 
@@ -43,7 +33,6 @@ def header() -> Component:
         'top': 0,
         'background-color': '#1D2026',
         'z-index': '10',
-        'margin-bottom': '10px',
     }
     img = html.Img(src=src, style={'width': '30px', 'display': 'inline-block'})
     return html.Div(html.Div([dcc.Link(img, href='/'), _nav()], className='container'), style=sticky_style)

@@ -112,7 +112,7 @@ def _parametrization(parametrization: Parametrization, am: ArreteMinisteriel) ->
     am_id = am.id or ''
     return html.Div(
         [
-            dcc.Link("< Retour à l'arrêté", href=f'/{Endpoint.AM}/{am_id}'),
+            dcc.Link("< Retour à l'arrêté", href=f'/{Endpoint.AM}/{am_id}/{Endpoint.PARAMETRIZATION}'),
             _new_parameter_element_buttons(am_id),
             _am_applicability_row(am),
             _lost_parameters(parametrization, am),
@@ -128,7 +128,7 @@ def _title_component(am_id: str, am_metadata: Optional[AMMetadata]) -> Component
     return html.H3(f'AM {cid}')
 
 
-def _page(am_id: str) -> Component:
+def _layout(am_id: str) -> Component:
     am_metadata = DATA_FETCHER.load_am_metadata(am_id)
     am = DATA_FETCHER.load_am(am_id)
     if not am:
@@ -142,11 +142,8 @@ def _add_callbacks(app: Dash) -> None:
     pass
 
 
-def _layout(am_id: str) -> Component:
-    am_metadata = DATA_FETCHER.load_am_metadata(am_id)
-    if not am_metadata:
-        return html.P(f'404 - Arrêté {am_id} inconnu')
-    return _page(am_id)
+def _page(am_id: str) -> Component:
+    return html.Div(_layout(am_id), className='container')
 
 
-PAGE: Page = Page(_layout, _add_callbacks, True)
+PAGE: Page = Page(_page, _add_callbacks, True)

@@ -3,17 +3,19 @@ from datetime import date
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 import dash_bootstrap_components as dbc
-from dash import ALL, Dash, Input, Output, State, dcc, html
+from dash import ALL, Dash, Input, Output, State, callback_context, dcc, html, no_update
 from dash.development.base_component import Component
 from dash.exceptions import PreventUpdate
 from envinorma.enriching import add_metadata
-from envinorma.models import AMMetadata, ArreteMinisteriel, Regime
+from envinorma.models import ArreteMinisteriel, Regime
 from envinorma.parametrization import Parameter, ParameterEnum, ParameterType, Parametrization
 from envinorma.parametrization.apply_parameter_values import AMWithApplicability, build_am_with_applicability
 from envinorma.utils import random_id
 
 from back_office.components import error_component
+from back_office.components.am_side_nav import page_with_sidebar
 from back_office.components.parametric_am import parametric_am_callbacks, parametric_am_component
+from back_office.routing import Page
 from back_office.utils import DATA_FETCHER, ensure_not_none
 
 _PREFIX = 'am-apply-params'
@@ -21,6 +23,8 @@ _AM = _PREFIX + '-am'
 _SUBMIT = _PREFIX + '-submit'
 _AM_ID = _PREFIX + '-am-id'
 _FORM_OUTPUT = _PREFIX + '-form-output'
+_FORM = _PREFIX + '-form'
+_DISPLAY_FORM_BUTTON = _PREFIX + '-display-form-button'
 
 
 def _store(parameter_id: Any) -> Dict[str, Any]:
@@ -34,16 +38,12 @@ def _input(parameter_id: Any) -> Dict[str, Any]:
 def _am_component(am: AMWithApplicability) -> Component:
     if not am.arrete.legifrance_url:
         am.arrete = add_metadata(am.arrete, ensure_not_none(DATA_FETCHER.load_am_metadata(am.arrete.id or '')))
-    return parametric_am_component(am, _PREFIX)
+    return parametric_am_component(am, _PREFIX, with_topics=False)
 
 
 def _am_component_with_toc(am: Optional[AMWithApplicability]) -> Component:
-    if not am:
-        warning = 'Choisir un jeu de paramètres pour afficher la version correspondante.'
-        component = dbc.Alert(warning, color='warning', className='mb-3 mt-3')
-    else:
-        component = _am_component(am)
-    return html.Div(component, id=_AM)
+    component = _am_component(am) if am else html.Div()
+    return html.Div(dbc.Spinner(component), id=_AM)
 
 
 def _extract_name(parameter: Parameter) -> str:
@@ -101,48 +101,47 @@ def _am_parameters(am: ArreteMinisteriel) -> Set[Parameter]:
     return set(am.applicability.condition_of_inapplicability.parameters())
 
 
-def _parametrization_form(am: ArreteMinisteriel, parametrization: Parametrization) -> Component:
-    parameters = parametrization.extract_parameters().union(_am_parameters(am))
-    output = html.Div(
-        id=_FORM_OUTPUT,
-        style={'margin-top': '10px', 'margin-bottom': '10px'},
-        className='col-12',
-        hidden=not parameters,
-    )
-    submit = html.Div(
-        html.Button('Valider', className='btn btn-primary', id=_SUBMIT),
-        className='col-12',
-        style={'margin-top': '10px', 'margin-bottom': '10px'},
-    )
+def _parameters(parameters: Set[Parameter]) -> Component:
     if not parameters:
-        components = [html.P('Pas de paramètres pour cet arrêté.')]
-    else:
-        sorted_parameters = sorted(list(parameters), key=lambda x: x.id)
-        components = [_build_parameter_input(parameter) for parameter in sorted_parameters]
+        return html.P('Pas de paramètres pour cet arrêté.')
+    sorted_parameters = sorted(list(parameters), key=lambda x: x.id)
+    warning = 'Choisir un jeu de paramètres pour afficher la version correspondante.'
+    component = dbc.Alert(warning, color='warning', className='mb-3 mt-3')
+    return html.Div([component, *[_build_parameter_input(parameter) for parameter in sorted_parameters]])
 
-    return html.Div([*components, output, submit], className='row g-3')
+
+def _parametrization_form(am: Optional[ArreteMinisteriel], parametrization: Parametrization) -> Component:
+    parameters = parametrization.extract_parameters().union(_am_parameters(am) if am else set())
+    submit = html.Div(html.Button('Valider', className='btn btn-primary', id=_SUBMIT), className='col-12 m-2')
+    output = html.Div('', id=_FORM_OUTPUT, className='m-2')
+    return html.Div([_parameters(parameters), output, submit], className='container')
 
 
-def _parametrization_component(am_id: str) -> Component:
-    parametrization = DATA_FETCHER.load_parametrization(am_id)
+def _parametrization_component(am_id: str, hidden: bool) -> Component:
+    parametrization = DATA_FETCHER.load_or_init_parametrization(am_id)
     am = DATA_FETCHER.load_am(am_id)
+    content = _parametrization_form(am, parametrization)
     if not am:
-        content = html.Div('Arrêté ministériel inexistent.')
-    elif not parametrization:
-        content = html.Div('Paramétrage non défini pour cet arrêté.')
-    else:
-        content = _parametrization_form(am, parametrization)
-    return html.Div([html.H2('Paramétrage'), content])
+        content = html.Div([html.Div('Arrêté ministériel non initialisé.'), html.Div(content, hidden=True)])
+    return html.Div([html.H2('Paramétrage'), content, html.Hr()], hidden=hidden, id=_FORM)
 
 
-def _form_header(am_id: str) -> Component:
-    return _parametrization_component(am_id)
+def _display_form_button() -> Component:
+    return html.Div(
+        [html.Button('Filtrer par paramètres', id=_DISPLAY_FORM_BUTTON, className='btn btn-primary float-end')],
+        className='pb-5',
+    )
 
 
-def _layout(am_metadata: AMMetadata) -> Component:
+def _main_component(am_id: str, hidden: bool) -> Component:
+    am_metadata = DATA_FETCHER.load_am_metadata(am_id)
+    if not am_metadata:
+        return html.Div('Arrêté ministériel inexistant.')
     return html.Div(
         [
-            _form_header(am_metadata.cid),
+            _display_form_button(),
+            html.Hr(className='mb-4'),
+            _parametrization_component(am_metadata.cid, hidden),
             html.Div(_am_component_with_toc(None)),
             dcc.Store(data=am_metadata.cid, id=_AM_ID),
         ]
@@ -192,23 +191,37 @@ def _extract_parameter_values(ids: List[str], values: List[Optional[str]]) -> Di
     return {key: value for key, value in values_with_none.items() if value is not None}
 
 
-def _callbacks(app: Dash, tab_id: str) -> None:
+def _display_trigger() -> bool:
+    if not callback_context.triggered:
+        return False
+    return _DISPLAY_FORM_BUTTON in callback_context.triggered[0]['prop_id']
+
+
+def _callbacks(app: Dash) -> None:
+    @app.callback(
+        Output(_FORM, 'hidden'),
+        Input(_DISPLAY_FORM_BUTTON, 'n_clicks'),
+        prevent_initial_call=True,
+    )
+    def _display_form(_):
+        return False
+
     @app.callback(
         Output(_AM, 'children'),
         Output(_FORM_OUTPUT, 'children'),
         Input(_SUBMIT, 'n_clicks'),
+        Input(_DISPLAY_FORM_BUTTON, 'n_clicks'),
         State(_store(ALL), 'data'),
         State(_input(ALL), 'value'),
         State(_AM_ID, 'data'),
-        prevent_initial_call=True,
     )
-    def _apply_parameters(_, parameter_ids, parameter_values, am_id):
+    def _apply_parameters(_, __, parameter_ids, parameter_values, am_id):
+        if _display_trigger():
+            return no_update, html.Div('')
         am = _load_am(am_id)
         if not am:
             raise PreventUpdate
-        parametrization = DATA_FETCHER.load_parametrization(am_id)
-        if not parametrization:
-            raise PreventUpdate
+        parametrization = DATA_FETCHER.load_or_init_parametrization(am_id)
         try:
             parameter_values = _extract_parameter_values(parameter_ids, parameter_values)
             am_with_applicability = build_am_with_applicability(am, parametrization, parameter_values)
@@ -221,4 +234,8 @@ def _callbacks(app: Dash, tab_id: str) -> None:
     parametric_am_callbacks(app, _PREFIX)
 
 
-TAB = ("Application d'un jeu de paramètres", _layout, _callbacks)
+def _layout(am_id: str) -> Component:
+    return page_with_sidebar(html.Div([_main_component(am_id, True), dcc.Store(data=am_id, id=_AM_ID)]), am_id)
+
+
+PAGE = Page(_layout, _callbacks, False)

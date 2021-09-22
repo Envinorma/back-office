@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Tuple, Union
 import dash_bootstrap_components as dbc
 from dash import ALL, Dash, Input, Output, State, callback_context, dcc, html
 from dash.development.base_component import Component
-from envinorma.models import AMMetadata, ArreteMinisteriel, StructuredText
+from envinorma.models import ArreteMinisteriel, StructuredText
 from envinorma.models.am_applicability import AMApplicability
 from envinorma.parametrization.models import (
     AlternativeSection,
@@ -17,7 +17,8 @@ from envinorma.parametrization.models import (
     Parametrization,
 )
 
-from back_office.routing import Endpoint
+from back_office.components.am_side_nav import page_with_sidebar
+from back_office.routing import Endpoint, Page
 from back_office.utils import DATA_FETCHER, generate_id
 
 
@@ -78,8 +79,7 @@ def _conditions_component(am_id: str, parametrization: Parametrization, am_appli
             html.H3('Paramétrage'),
             _edit_parameters_button(am_id),
             html.Div(condition_items if condition_items else 'Pas de paramètres.'),
-        ],
-        style={'height': '75vh', 'overflow-y': 'auto'},
+        ]
     )
 
 
@@ -138,17 +138,14 @@ def _am_summary(am: ArreteMinisteriel, parametrization: Parametrization) -> Comp
 
 
 def _am_summary_column(am: ArreteMinisteriel, parametrization: Parametrization) -> Component:
-    return html.Div(
-        _am_summary(am, parametrization),
-        style={'height': '75vh', 'overflow-y': 'auto', 'border-bottom': '2px gainsboro solid'},
-    )
+    return html.Div(_am_summary(am, parametrization))
 
 
-def _layout(am_metadata: AMMetadata) -> Component:
-    am = DATA_FETCHER.load_am(am_metadata.cid)
+def _layout(am_id: str) -> Component:
+    am = DATA_FETCHER.load_am(am_id)
     if not am:
         return html.Div('AM non initialisé.')
-    parametrization = DATA_FETCHER.load_or_init_parametrization(am_metadata.cid)
+    parametrization = DATA_FETCHER.load_or_init_parametrization(am_id)
     am_applicability = am.applicability if am.applicability else AMApplicability()
     return html.Div(
         [
@@ -159,11 +156,15 @@ def _layout(am_metadata: AMMetadata) -> Component:
     )
 
 
+def _page(am_id: str) -> Component:
+    return page_with_sidebar(_layout(am_id), am_id)
+
+
 def _extract_trigger_key(triggered: List[Dict[str, Any]]) -> str:
     return json.loads(triggered[0]['prop_id'].split('.')[0])['key']
 
 
-def _callbacks(app: Dash, tab_id: str) -> None:
+def _callbacks(app: Dash) -> None:
     @app.callback(
         Output(_condition_id(ALL), 'className'),
         Input(_condition_id(ALL), 'n_clicks'),
@@ -200,4 +201,4 @@ def _callbacks(app: Dash, tab_id: str) -> None:
         return new_class_names
 
 
-TAB = ('Paramétrage', _layout, _callbacks)
+PAGE = Page(_page, _callbacks, False)

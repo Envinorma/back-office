@@ -223,7 +223,7 @@ def handle_form(
         return error_component(f'Erreur dans le formulaire :\n{exc}')
     except Exception as exc:
         return error_component(f'Erreur inattendue :\n{exc}')
-    redirect_target = f'/{Endpoint.AM}/{new_am_metadata.cid}'
+    redirect_target = f'/{Endpoint.AM}/{new_am_metadata.cid}/{Endpoint.AM_METADATA}'
     return html.Div(
         [
             success_component('Enregistrement réussi.'),

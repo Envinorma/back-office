@@ -127,11 +127,11 @@ html {
   background-color: #beddff;
 }
 
-.main-header .nav-link {
+.header-link {
   color: #cccccc;
 }
 
-.main-header .nav-link:hover {
+.header-link:hover {
   color: white;
 }
 
@@ -165,4 +165,14 @@ html {
 }
 .section-title {
   font-weight: 500;
+}
+
+.am-nav {
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 45px;
+  height: calc(100vh - 45px);
+  background-color: #f8f9fa;
+  padding: 15px;
 }

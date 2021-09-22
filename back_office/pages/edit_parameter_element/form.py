@@ -39,25 +39,12 @@ def _main_title(operation: AMOperation, is_edition: bool, destination_id: Option
 
 
 def _go_back_button(am_id: str) -> Component:
-    return dcc.Link(
-        html.Button('Retour', className='btn btn-link center'), href=f'/{Endpoint.EDIT_PARAMETRIZATION}/{am_id}'
-    )
+    return dcc.Link('< Retour', className='btn btn-link', href=f'/{Endpoint.EDIT_PARAMETRIZATION}/{am_id}')
 
 
-def _buttons(am_id: str) -> Component:
-    return html.Div(
-        [
-            html.Button(
-                'Enregistrer',
-                id='submit-val-param-edition',
-                className='btn btn-primary',
-                style={'margin-right': '5px'},
-                n_clicks=0,
-            ),
-            _go_back_button(am_id),
-        ],
-        style={'margin-top': '10px', 'margin-bottom': '100px'},
-    )
+def _save_button(am_id: str) -> Component:
+    btn = html.Button('Enregistrer', id='submit-val-param-edition', className='btn btn-primary', n_clicks=0)
+    return html.Div([btn], style={'margin-top': '10px', 'margin-bottom': '100px'})
 
 
 def _get_delete_button(is_edition: bool) -> Component:
@@ -145,6 +132,7 @@ def _fields(
 ) -> Component:
     is_edition = destination_id is not None
     fields = [
+        _go_back_button(am.id or ''),
         _main_title(operation, is_edition=is_edition, destination_id=destination_id),
         _get_delete_button(is_edition=is_edition),
         _get_target_section_block(operation, text_title_options, loaded_parameter, am, is_edition=is_edition),
@@ -168,7 +156,7 @@ def _make_form(
             html.Div(id='param-edition-upsert-output', className='mt-2'),
             html.Div(id='param-edition-delete-output'),
             dcc.Store(id=ids.DROPDOWN_OPTIONS, data=json.dumps(text_title_options)),
-            _buttons(am_id),
+            _save_button(am_id),
         ]
     )
 

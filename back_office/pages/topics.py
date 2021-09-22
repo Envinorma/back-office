@@ -3,9 +3,10 @@ from typing import Optional
 import dash_bootstrap_components as dbc
 from dash import Dash, dcc, html
 from dash.development.base_component import Component
-from envinorma.models import AMMetadata, ArreteMinisteriel, StructuredText
+from envinorma.models import ArreteMinisteriel, StructuredText
 
-from back_office.routing import Endpoint
+from back_office.components.am_side_nav import page_with_sidebar
+from back_office.routing import Endpoint, Page
 from back_office.utils import DATA_FETCHER
 
 
@@ -42,33 +43,31 @@ def _edit_button(am_id: str) -> Component:
 
 
 def _edition(am_id: str) -> Component:
-    return html.Div(
-        [
-            html.H3('Thèmes'),
-            dbc.Alert(
-                'Pour toute suggestion de modification, veuillez en faire part '
-                "par email à l'adresse drieat-if.envinorma@developpement-durable.gouv.fr",
-                color='primary',
-            ),
-            _edit_button(am_id),
-        ],
-        style={'background-color': '#EEEEEE', 'border-radius': '5px'},
-        className='p-3',
+    address = html.Span('drieat-if.envinorma@developpement-durable.gouv.fr', style={'font-size': '0.8em'})
+    alert = dbc.Alert(
+        ['Pour toute suggestion de modification, veuillez en faire part par email à l\'adresse ', address],
+        color='primary',
+        className='mt-3',
     )
+    return html.Div([html.H3('Thèmes'), _edit_button(am_id), alert])
 
 
-def _layout(am: AMMetadata) -> Component:
+def _layout(am_id: str) -> Component:
     return html.Div(
         [
-            html.Div(_edition(am.cid), className='col-3'),
-            html.Div(className='col-9', children=_am_topics(DATA_FETCHER.load_am(am.cid))),
+            html.Div(_edition(am_id), className='col-3'),
+            html.Div(className='col-9', children=_am_topics(DATA_FETCHER.load_am(am_id))),
         ],
         className='row',
     )
 
 
-def _callbacks(app: Dash, tab_id: str) -> None:
+def _callbacks(app: Dash) -> None:
     ...
 
 
-TAB = ('Thèmes', _layout, _callbacks)
+def _page(am_id: str) -> Component:
+    return page_with_sidebar(_layout(am_id), am_id)
+
+
+PAGE = Page(_page, _callbacks, False)
