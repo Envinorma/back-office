@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import dash_bootstrap_components as dbc
 from dash import ALL, Dash, Input, Output, State, callback_context, dcc, html
@@ -8,11 +8,11 @@ from envinorma.models import Annotations, ArreteMinisteriel, StructuredText
 from envinorma.topics.patterns import TopicName
 from envinorma.topics.simple_topics import SIMPLE_ONTOLOGY
 
+from back_office.components import error_component, success_component
 from back_office.routing import Endpoint, Page
 from back_office.utils import DATA_FETCHER, ensure_not_none, generate_id
 
 _TOPICS = SIMPLE_ONTOLOGY.keys()
-_NO_TOPIC = 'no-topic'
 _AM_ID = generate_id(__file__, 'am-id')
 _AM = generate_id(__file__, 'am')
 _AM_STRUCTURE_STORE = generate_id(__file__, 'am-structure-store')
@@ -21,8 +21,12 @@ _TOPIC_EDITION_OUTPUT = generate_id(__file__, 'topic-edition-output')
 _Section = Union[ArreteMinisteriel, StructuredText]
 
 
-def _section_id(section_id: Any) -> Dict[str, Any]:
-    return {'type': generate_id(__file__, 'section-id'), 'key': section_id}
+def _set_topic_id(section_id: Any) -> Dict[str, Any]:
+    return {'type': generate_id(__file__, 'set-topic'), 'key': section_id}
+
+
+def _delete_topic_id(section_id: Any) -> Dict[str, Any]:
+    return {'type': generate_id(__file__, 'delete-topic'), 'key': section_id}
 
 
 def _topic_name(section: StructuredText) -> Optional[str]:
@@ -30,9 +34,19 @@ def _topic_name(section: StructuredText) -> Optional[str]:
     return topic.name if topic else None
 
 
+def _topic_badge(topic_name: str, section_id: str) -> Component:
+    style = {'font-size': '0.9em', 'padding': '2px'}
+    badge = html.Button(topic_name, className='btn btn-primary btn-sm m-1', style=style)
+    delete_style = {**style, 'color': '#dc3545'}
+    close_button = html.Button(
+        'supprimer', className='btn btn-link btn-sm m-1', id=_delete_topic_id(section_id), style=delete_style
+    )
+    return html.Span([badge, close_button])
+
+
 def _title(section: StructuredText) -> Component:
     topic_name = _topic_name(section)
-    badge = html.Span(topic_name, className='badge badge-primary') if topic_name else ''
+    badge = _topic_badge(topic_name, section.id) if topic_name else ''
     return html.Span([f'{section.title.text} ', badge], style={'font-size': '0.8em'})
 
 
@@ -43,7 +57,7 @@ def _section_topics(section: StructuredText, depth: int = 0) -> Component:
     return html.Div(
         [_title(section), *[_section_topics(sub, depth + 1) for sub in section.sections]],
         style={**common_style, **style},
-        id=_section_id(section.id),
+        id=_set_topic_id(section.id),
         className='section-topics' + additional_class_name,
     )
 
@@ -69,13 +83,13 @@ def _am_topics_with_loader(am: ArreteMinisteriel) -> Component:
 
 
 def _topics_dropdown() -> Component:
-    values = [_NO_TOPIC] + [topic.value for topic in _TOPICS]
+    values = [topic.value for topic in _TOPICS]
     options = [{'label': topic, 'value': topic} for topic in values]
     return html.Div(
         html.Div(
             [
                 html.H5('Thème à utiliser'),
-                dcc.Dropdown(_TOPICS_DROPDOWN, options, value=_NO_TOPIC, className='mb-3 mt-3'),
+                dcc.Dropdown(_TOPICS_DROPDOWN, options, value=None, className='mb-3 mt-3'),
                 html.P('Cliquer sur les paragraphes auxquels associer le thème sélectionné.'),
                 html.Div(id=_TOPIC_EDITION_OUTPUT),
             ],
@@ -115,8 +129,11 @@ def _layout(am_id: str) -> Component:
     return _layout_if_logged(am_id)
 
 
-def _extract_trigger_keys(triggered: List[Dict[str, Any]]) -> List[str]:
-    return [json.loads(trigger['prop_id'].split('.')[0])['key'] for trigger in triggered]
+def _extract_trigger_keys(triggered: List[Dict[str, Any]]) -> Tuple[List[str], List[str]]:
+    trigger_ids = [json.loads(trigger['prop_id'].split('.')[0]) for trigger in triggered]
+    delete_topic_ids = [id_['key'] for id_ in trigger_ids if 'delete-topic' in id_['type']]
+    set_topic_ids = [id_['key'] for id_ in trigger_ids if 'set-topic' in id_['type']]
+    return delete_topic_ids, set_topic_ids
 
 
 def _keep_deepest_id(section_ids: List[str], section_id_to_depth: Dict[str, int]) -> str:
@@ -147,27 +164,35 @@ def _check_edition_is_permitted(section: StructuredText, topic: Optional[TopicNa
 
 
 def _edit_section_topic(
-    section: StructuredText, target_section_id: str, topic: Optional[TopicName], ascendant_has_topic: bool = False
+    section: StructuredText,
+    target_section_id: str,
+    topic: Optional[TopicName],
+    delete_topic: bool,
+    ascendant_has_topic: bool = False,
 ) -> StructuredText:
     if section.id == target_section_id:
-        _check_edition_is_permitted(section, topic, ascendant_has_topic)
+        if not delete_topic:
+            _check_edition_is_permitted(section, topic, ascendant_has_topic)
         if not section.annotations:
             section.annotations = Annotations()
         section.annotations.topic = topic
     else:
         ascendant_has_topic = ascendant_has_topic or _has_topic(section)
         section.sections = [
-            _edit_section_topic(sub, target_section_id, topic, ascendant_has_topic) for sub in section.sections
+            _edit_section_topic(sub, target_section_id, topic, delete_topic, ascendant_has_topic)
+            for sub in section.sections
         ]
     return section
 
 
-def _edit_am_topic(am_id: str, target_section: str, topic_name: str) -> ArreteMinisteriel:
+def _edit_am_topic(am_id: str, target_section: str, topic_name: Optional[str], delete_topic: bool) -> ArreteMinisteriel:
     am = DATA_FETCHER.load_am(am_id)
     if not am:
         raise ValueError('Expecting AM.')
-    topic = TopicName(topic_name) if topic_name != _NO_TOPIC else None
-    am.sections = [_edit_section_topic(section, target_section, topic) for section in am.sections]
+    if not topic_name and not delete_topic:
+        raise _EditionError('Aucun thème n\'est sélectionné.')
+    topic = TopicName(topic_name) if topic_name else None
+    am.sections = [_edit_section_topic(section, target_section, topic, delete_topic) for section in am.sections]
     DATA_FETCHER.upsert_am(am_id, am)
     return am
 
@@ -176,21 +201,25 @@ def _callbacks(app: Dash) -> None:
     @app.callback(
         Output(_TOPIC_EDITION_OUTPUT, 'children'),
         Output(_AM, 'children'),
-        Input(_section_id(ALL), 'n_clicks'),
+        Input(_set_topic_id(ALL), 'n_clicks'),
+        Input(_delete_topic_id(ALL), 'n_clicks'),
         State(_TOPICS_DROPDOWN, 'value'),
         State(_AM_STRUCTURE_STORE, 'data'),
         State(_AM_ID, 'data'),
         prevent_initial_call=True,
     )
-    def _edit_topic(_, dropdown_value, am_structure, am_id):
-        section_ids = _extract_trigger_keys(callback_context.triggered)
-        target_section = _keep_deepest_id(section_ids, am_structure)
+    def _edit_topic(_, __, dropdown_value, am_structure, am_id):
+        delete_topic_ids, set_topic_ids = _extract_trigger_keys(callback_context.triggered)
+        if delete_topic_ids:
+            am = _edit_am_topic(am_id, delete_topic_ids[0], None, True)
+            return success_component(f'Le thème a été supprimé.'), _am_topics(am)
+        target_section = _keep_deepest_id(set_topic_ids, am_structure)
         try:
-            am = _edit_am_topic(am_id, target_section, dropdown_value)
+            am = _edit_am_topic(am_id, target_section, dropdown_value, False)
         except _EditionError as exc:
             am = ensure_not_none(DATA_FETCHER.load_am(am_id))
-            return dbc.Alert(str(exc), color='danger'), _am_topics(am)
-        return dbc.Alert(f'Section {target_section} affectée au thème {dropdown_value}.'), _am_topics(am)
+            return error_component(str(exc)), _am_topics(am)
+        return success_component(f'Section correctement affectée au thème {dropdown_value}.'), _am_topics(am)
 
 
 PAGE = Page(_layout, _callbacks, True)
