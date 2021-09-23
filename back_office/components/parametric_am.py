@@ -118,7 +118,7 @@ def _external_links(am: ArreteMinisteriel) -> Component:
 def _applicability_warnings(am: AMWithApplicability) -> Component:
     if not am:
         return html.Div()
-    color = 'danger' if not am.applicable else 'warning'
+    color = 'danger' if not am.applicable else 'primary'
     return html.Div([dbc.Alert(warning, color=color) for warning in am.warnings])
 
 

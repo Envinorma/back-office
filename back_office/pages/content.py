@@ -16,9 +16,9 @@ def _buttons(am_id: str) -> Component:
     href = f'/{Endpoint.EDIT_AM}/{am_id}'
     return html.Div(
         [
-            _link('Comparer avec la version Légifrance', f'/am_compare/{am_id}/legifrance'),
-            _link('Comparer avec la version AIDA', f'/am_compare/{am_id}/aida'),
-            _link('Comparer deux versions légifrance successives', f'/compare/id/{am_id}'),
+            _link('Comparer avec Légifrance', f'/am_compare/{am_id}/legifrance'),
+            _link('Comparer avec AIDA', f'/am_compare/{am_id}/aida'),
+            _link('Comparer deux versions légifrance', f'/compare/id/{am_id}'),
             dbc.Button('Éditer le contenu', color='primary float-end', href=href),
         ]
     )

@@ -5,7 +5,7 @@ from dash import Dash, Input, Output, State, html
 from dash.development.base_component import Component
 from envinorma.models.lost_topic import LostTopic
 
-from back_office.components import error_component, success_component, warning_component
+from back_office.components import error_component, primary_alert_component, success_component
 from back_office.utils import DATA_FETCHER
 
 from .. import ids
@@ -42,7 +42,7 @@ def _lost_topics_message(lost_topics: List[LostTopic]) -> str:
 def _topic_component(lost_topics: List[LostTopic]) -> Component:
     if not lost_topics:
         return success_component("Aucun thème associé aux sections ne sera perdu par la mise à jour de l'AM.")
-    return warning_component(_lost_topics_message(lost_topics))
+    return primary_alert_component(_lost_topics_message(lost_topics))
 
 
 def _stringify_lost_parameter(lost_parameter_titles: List[str]) -> str:
@@ -69,7 +69,7 @@ def _lost_parameters_message(lost_parameters: List[List[str]]) -> str:
 def _parameter_component(lost_parameter_titles: List[List[str]]) -> Component:
     if not lost_parameter_titles:
         return success_component("Aucun paramètre associé aux sections ne sera perdu par la mise à jour de l'AM.")
-    return warning_component(_lost_parameters_message(lost_parameter_titles))
+    return primary_alert_component(_lost_parameters_message(lost_parameter_titles))
 
 
 def _lost_topics_and_parameters(am_id: str, form_am_value: Optional[str]) -> Component:

@@ -6,6 +6,7 @@ from dash import dcc, html
 from dash.development.base_component import Component
 from envinorma.models import AMMetadata, AMState, Classement
 
+from back_office.components.upload_ams import upload_ams_callbacks, upload_ams_component
 from back_office.helpers.login import get_current_user
 from back_office.routing import Endpoint, Page
 from back_office.utils import AM_ID_TO_NB_CLASSEMENTS, DATA_FETCHER
@@ -130,21 +131,9 @@ def _title() -> Component:
 
 
 def _export_alert() -> Component:
-    user_not_auth = not get_current_user().is_authenticated
-    return html.Div(
-        dbc.Alert(
-            [
-                'Pour mettre à jour les AM sur l\'application Envinorma, les exporter sur OVH puis ',
-                html.A('suivre la documentation', href='https://envinorma.github.io/data/edit_am'),
-                '.',
-                html.Br(),
-                html.Br(),
-                dcc.Link('Exportation des AMs', href=f'/{Endpoint.UPLOAD_AMS}', className='btn btn-primary'),
-            ],
-            color='primary',
-        ),
-        hidden=user_not_auth,
-    )
+    if not get_current_user().is_authenticated:
+        return html.Div()
+    return dbc.Alert([upload_ams_component()], color='primary')
 
 
 def _header(state_counter: Dict[AMState, int]) -> Component:
@@ -173,4 +162,4 @@ def _layout() -> Component:
     return _index_component(id_to_metadata, AM_ID_TO_NB_CLASSEMENTS)
 
 
-PAGE = Page(_layout, None, False)
+PAGE = Page(_layout, upload_ams_callbacks, False)
