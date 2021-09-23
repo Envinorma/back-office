@@ -1,4 +1,3 @@
-from collections import Counter
 from typing import Dict, List, Optional, Tuple, TypeVar
 
 import dash_bootstrap_components as dbc
