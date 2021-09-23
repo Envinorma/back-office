@@ -2,6 +2,8 @@ from pathlib import Path
 
 import dash
 import dash_bootstrap_components as dbc
+import diskcache
+from dash.long_callback.managers.diskcache_manager import DiskcacheLongCallbackManager
 
 
 class SVGFaviconDash(dash.Dash):
@@ -35,6 +37,8 @@ class SVGFaviconDash(dash.Dash):
         )
 
 
+_CACHE = diskcache.Cache('/tmp')
+
 app = SVGFaviconDash(
     __name__,
     # For offline dev
@@ -44,6 +48,7 @@ app = SVGFaviconDash(
     # ],
     external_stylesheets=[dbc.themes.BOOTSTRAP, Path(__file__).parent.parent / 'assets/style.css'],
     suppress_callback_exceptions=True,
+    long_callback_manager=DiskcacheLongCallbackManager(_CACHE),
     title='Back office - Envinorma',
     update_title=None,
 )

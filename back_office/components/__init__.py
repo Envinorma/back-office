@@ -16,7 +16,7 @@ def replace_line_breaks(message: str) -> List[Union[str, Component]]:
     return [el for piece in message.split('\n') for el in [piece, html.Br()]]
 
 
-def alert(message: str, color: Literal['success', 'danger', 'warning']) -> Component:
+def alert(message: str, color: Literal['success', 'danger', 'warning', 'primary']) -> Component:
     return dbc.Alert(replace_line_breaks(message), color=color, className='mt-3 mb-3', dismissable=True)
 
 
@@ -30,6 +30,10 @@ def success_component(message: str) -> Component:
 
 def warning_component(message: str) -> Component:
     return alert(message, 'warning')
+
+
+def primary_alert_component(message: str) -> Component:
+    return alert(message, 'primary')
 
 
 class ButtonState(Enum):

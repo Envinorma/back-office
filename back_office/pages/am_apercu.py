@@ -106,7 +106,7 @@ def _parameters(parameters: Set[Parameter]) -> Component:
         return html.P('Pas de paramètres pour cet arrêté.')
     sorted_parameters = sorted(list(parameters), key=lambda x: x.id)
     warning = 'Choisir un jeu de paramètres pour afficher la version correspondante.'
-    component = dbc.Alert(warning, color='warning', className='mb-3 mt-3')
+    component = dbc.Alert(warning, color='primary', className='mb-3 mt-3')
     return html.Div([component, *[_build_parameter_input(parameter) for parameter in sorted_parameters]])
 
 
@@ -126,14 +126,16 @@ def _parametrization_component(am_id: str, hidden: bool) -> Component:
     return html.Div([html.H3('Paramétrage'), content, html.Hr()], hidden=hidden, id=_FORM)
 
 
+_VISIBLE = {'visibility': 'visible'}
+_HIDDEN = {'visibility': 'hidden'}
+
+
 def _display_form_button() -> Component:
-    return html.Div(
-        [
-            html.Button('< Retour', id=_HIDE_FORM_BUTTON, className='btn btn-link float-start', hidden=True),
-            html.Button('Filtrer par paramètres', id=_DISPLAY_FORM_BUTTON, className='btn btn-primary'),
-        ],
-        style={'text-align': 'right', 'flex': True},
+    back = html.Button('< Retour', id=_HIDE_FORM_BUTTON, className='btn btn-link', style=_HIDDEN)
+    show = html.Button(
+        'Filtrer par paramètres', id=_DISPLAY_FORM_BUTTON, className='btn btn-primary float-end', style=_VISIBLE
     )
+    return html.Div([back, show])
 
 
 def _main_component(am_id: str, hidden: bool) -> Component:
@@ -200,18 +202,26 @@ def _display_trigger() -> bool:
     return _DISPLAY_FORM_BUTTON in callback_context.triggered[0]['prop_id']
 
 
+def _toggle_style(style: Dict[str, str]) -> Dict[str, str]:
+    if style == _VISIBLE:
+        return _HIDDEN
+    return _VISIBLE
+
+
 def _callbacks(app: Dash) -> None:
     @app.callback(
         Output(_FORM, 'hidden'),
-        Output(_HIDE_FORM_BUTTON, 'hidden'),
+        Output(_HIDE_FORM_BUTTON, 'style'),
+        Output(_DISPLAY_FORM_BUTTON, 'style'),
         Input(_DISPLAY_FORM_BUTTON, 'n_clicks'),
         Input(_HIDE_FORM_BUTTON, 'n_clicks'),
         State(_FORM, 'hidden'),
-        State(_HIDE_FORM_BUTTON, 'hidden'),
+        State(_HIDE_FORM_BUTTON, 'style'),
+        State(_DISPLAY_FORM_BUTTON, 'style'),
         prevent_initial_call=True,
     )
-    def _display_form(_, __, hidden, hidden_):
-        return not hidden, not hidden_
+    def _display_form(_, __, hidden, style, style_):
+        return not hidden, _toggle_style(style), _toggle_style(style_)
 
     @app.callback(
         Output(_AM, 'children'),

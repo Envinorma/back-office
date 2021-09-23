@@ -113,7 +113,9 @@ def _id_store(am: ArreteMinisteriel) -> Component:
 
 
 def _am_modal(am: ArreteMinisteriel) -> Component:
-    modal = dbc.Modal(dbc.ModalBody(am_with_summary_component(am, first_level=3)), id=_AM_MODAL, size='xl')
+    body = dbc.ModalBody(am_with_summary_component(am, first_level=3))
+    header = dbc.ModalHeader()
+    modal = dbc.Modal([header, body], id=_AM_MODAL, size='xl')
     trigger = html.Button('Consulter l\'AM', className='btn btn-primary mt-3', id=_AM_MODAL_TRIGGER)
     return html.Div([trigger, modal])
 

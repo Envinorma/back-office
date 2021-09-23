@@ -241,7 +241,7 @@ def _warning(am_metadata: Optional[AMMetadata]) -> Component:
         return html.Div()
     return dbc.Alert(
         'Cet arrêté existe déjà. L\'opération engendrera une modification de celui-ci.',
-        color='warning',
+        color='primary',
         className='mt-2',
     )
 

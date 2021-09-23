@@ -29,9 +29,7 @@ from back_office.pages.logout import PAGE as logout_page
 from back_office.pages.new_am import PAGE as new_am_page
 from back_office.pages.parametrization import PAGE as am_parametrization_page
 from back_office.pages.regulation_engine import PAGE as regulation_engine_page
-from back_office.pages.topic_detector import PAGE as topic_detector_page
 from back_office.pages.topics import PAGE as am_topics_page
-from back_office.pages.upload_ams import PAGE as upload_ams_page
 from back_office.routing import ROUTER, Endpoint, Page
 from back_office.utils import ensure_not_none
 
@@ -51,8 +49,6 @@ _ENDPOINT_TO_PAGE: Dict[Endpoint, Page] = {
     Endpoint.PARAMETRIZATION: am_parametrization_page,
     Endpoint.TOPICS: am_topics_page,
     Endpoint.REGULATION_ENGINE: regulation_engine_page,
-    Endpoint.TOPIC_DETECTOR: topic_detector_page,
-    Endpoint.UPLOAD_AMS: upload_ams_page,
     Endpoint.ADD_ALTERNATIVE_SECTION: alternative_section_page,
     Endpoint.ADD_INAPPLICABILITY: condition_page,
     Endpoint.ADD_WARNING: warning_page,
@@ -104,4 +100,4 @@ app.layout = html.Div([dcc.Location(id='url', refresh=False), html.Div(id='page-
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=True, dev_tools_hot_reload=False)

@@ -22,9 +22,7 @@ class Endpoint(Enum):
     LOGIN = 'login'
     LOGOUT = 'logout'
     EDIT_TOPICS = 'edit_topics'
-    UPLOAD_AMS = 'upload_ams'
     REGULATION_ENGINE = 'regulation_engine'
-    TOPIC_DETECTOR = 'topic_detector'
     ADD_WARNING = 'add_warning'
     ADD_INAPPLICABILITY = 'add_inapplicability'
     ADD_ALTERNATIVE_SECTION = 'add_alternative_section'
@@ -50,11 +48,9 @@ _ENDPOINT_TO_ROUTES: Dict[Endpoint, List[str]] = {
     Endpoint.LOGOUT: ['/{}'],
     Endpoint.DELETE_AM: ['/{}/<am_id>'],
     Endpoint.NEW_AM: ['/{}', '/{}/<am_id>'],
-    Endpoint.UPLOAD_AMS: ['/{}'],
     Endpoint.EDIT_TOPICS: ['/{}/<am_id>'],
     Endpoint.EDIT_AM: ['/{}/<am_id>'],
     Endpoint.REGULATION_ENGINE: ['/{}'],
-    Endpoint.TOPIC_DETECTOR: ['/{}'],
     Endpoint.ADD_WARNING: ['/{}/<am_id>', '/{}/<am_id>/<parameter_id>', '/{}/<am_id>/<parameter_id>/<copy>'],
     Endpoint.ADD_INAPPLICABILITY: ['/{}/<am_id>', '/{}/<am_id>/<parameter_id>', '/{}/<am_id>/<parameter_id>/<copy>'],
     Endpoint.ADD_ALTERNATIVE_SECTION: [

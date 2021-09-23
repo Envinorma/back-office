@@ -18,11 +18,11 @@ _TABS = [
 
 
 def _alert(message) -> Component:
-    return dbc.Alert(message, color='warning', className='mt-2 mb-3')
+    return dbc.Alert(message, color='primary', className='mt-2 mb-3', style={'font-size': '0.8em'})
 
 
 def _call_to_action(am_id: str) -> Component:
-    return dcc.Link('Choisir le status "En vigueur"', href=Routing.metadata_path(am_id, True))
+    return dcc.Link('Choisir le statut "En vigueur"', href=Routing.metadata_path(am_id, True))
 
 
 def _warning(am_metadata: AMMetadata) -> Component:
