@@ -9,6 +9,7 @@ from envinorma.topics.patterns import TopicName
 from envinorma.topics.simple_topics import SIMPLE_ONTOLOGY
 
 from back_office.components import error_component, success_component
+from back_office.components.am_component import am_with_summary_component
 from back_office.routing import Page, Routing
 from back_office.utils import DATA_FETCHER, ensure_not_none, generate_id
 
@@ -18,6 +19,9 @@ _AM = generate_id(__file__, 'am')
 _AM_STRUCTURE_STORE = generate_id(__file__, 'am-structure-store')
 _TOPICS_DROPDOWN = generate_id(__file__, 'topics-dropdown')
 _TOPIC_EDITION_OUTPUT = generate_id(__file__, 'topic-edition-output')
+_AM_MODAL = generate_id(__file__, 'am-modal')
+_AM_MODAL_TRIGGER = generate_id(__file__, 'am-modal-trigger')
+
 _Section = Union[ArreteMinisteriel, StructuredText]
 
 
@@ -108,8 +112,14 @@ def _id_store(am: ArreteMinisteriel) -> Component:
     return html.Div([dcc.Store(data=_am_structure(am), id=_AM_STRUCTURE_STORE), dcc.Store(data=am.id, id=_AM_ID)])
 
 
-def _first_column(am_id: str) -> Component:
-    return html.Div([_link_to_am(am_id), _topics_dropdown()], className='col-3')
+def _am_modal(am: ArreteMinisteriel) -> Component:
+    modal = dbc.Modal(dbc.ModalBody(am_with_summary_component(am, first_level=3)), id=_AM_MODAL, size='xl')
+    trigger = html.Button('Consulter l\'AM', className='btn btn-primary mt-3', id=_AM_MODAL_TRIGGER)
+    return html.Div([trigger, modal])
+
+
+def _first_column(am_id: str, am: ArreteMinisteriel) -> Component:
+    return html.Div([_link_to_am(am_id), _topics_dropdown(), _am_modal(am)], className='col-3')
 
 
 def _layout(am_id: str) -> Component:
@@ -119,7 +129,7 @@ def _layout(am_id: str) -> Component:
     return html.Div(
         [
             html.H3(f'AM {am_id} - Edition des thèmes'),
-            html.Div([_first_column(am_id), _am_topics_with_loader(am)], className='row mt-3'),
+            html.Div([_first_column(am_id, am), _am_topics_with_loader(am)], className='row mt-3'),
             _id_store(am),
         ]
     )
@@ -194,6 +204,14 @@ def _edit_am_topic(am_id: str, target_section: str, topic_name: Optional[str], d
 
 
 def _callbacks(app: Dash) -> None:
+    @app.callback(
+        Output(_AM_MODAL, 'is_open'),
+        Input(_AM_MODAL_TRIGGER, 'n_clicks'),
+        prevent_initial_call=True,
+    )
+    def toggle_am(_):
+        return True
+
     @app.callback(
         Output(_TOPIC_EDITION_OUTPUT, 'children'),
         Output(_AM, 'children'),
