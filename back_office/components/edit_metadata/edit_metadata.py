@@ -12,7 +12,7 @@ from back_office.utils import DATA_FETCHER
 from . import ids
 from .handle_form import handle_form, is_legifrance_id_valid
 
-_REGIME_OPTIONS = [{'label': regime.value, 'value': regime.value} for regime in Regime]
+_REGIME_OPTIONS = [{'label': regime, 'value': regime} for regime in 'AED']
 _AM_STATE_OPTIONS = [{'label': el.value, 'value': el.value} for el in AMState]
 _AM_SOURCE_OPTIONS = [{'label': el.value, 'value': el.value} for el in AMSource]
 

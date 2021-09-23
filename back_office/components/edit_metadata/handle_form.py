@@ -20,7 +20,7 @@ from back_office.helpers.login import get_current_user
 from back_office.helpers.slack import send_slack_notification
 from back_office.pages.edit_parameter_element.form_handling import FormHandlingError
 from back_office.routing import Routing
-from back_office.utils import DATA_FETCHER
+from back_office.utils import DATA_FETCHER, ensure_not_none
 
 from . import ids
 
@@ -184,6 +184,15 @@ def _extract_am_metadata(
     )
 
 
+def _init_am_if_needed(am_id: Optional[str], title: Optional[str], date_of_signature: date) -> None:
+    am_id = ensure_not_none(am_id)
+    am = DATA_FETCHER.load_am(am_id)
+    if am:
+        return
+    am = ArreteMinisteriel(EnrichedString(title or ''), [], [], date_of_signature, id=am_id)
+    DATA_FETCHER.upsert_am(am_id, am)
+
+
 def handle_form(
     am_id: Optional[str],
     title: Optional[str],
@@ -215,8 +224,7 @@ def handle_form(
             regimes,
             alineas,
         )
-        am = ArreteMinisteriel(EnrichedString(title or ''), [], [], new_am_metadata.date_of_signature, id=am_id)
-        DATA_FETCHER.upsert_am(am_id or '', am)
+        _init_am_if_needed(am_id, title, new_am_metadata.date_of_signature)
         DATA_FETCHER.upsert_am_metadata(new_am_metadata)
         _slack(new_am_metadata)
     except FormHandlingError as exc:
