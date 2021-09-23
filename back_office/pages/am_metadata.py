@@ -67,7 +67,7 @@ def _edit_metadata_button(am_id: str) -> Component:
 
 
 def _edition(am_id: str) -> Component:
-    return html.Div([html.Div(_edit_metadata_button(am_id), className='float-end')], className='pb-5')
+    return html.Div([html.Div(_edit_metadata_button(am_id))], style={'text-align': 'right'})
 
 
 def _layout(am: AMMetadata) -> Component:

@@ -84,6 +84,10 @@ class Routing:
         return f'/{Endpoint.AM}/{am_id}'
 
     @staticmethod
+    def topics_path(am_id: str) -> str:
+        return f'/{Endpoint.AM}/{am_id}/{Endpoint.TOPICS}'
+
+    @staticmethod
     def metadata_path(am_id: str, edit: bool = False) -> str:
         prefix = f'/{Endpoint.AM}/{am_id}/{Endpoint.AM_METADATA}'
         if edit:

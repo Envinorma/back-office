@@ -25,6 +25,7 @@ _AM_ID = _PREFIX + '-am-id'
 _FORM_OUTPUT = _PREFIX + '-form-output'
 _FORM = _PREFIX + '-form'
 _DISPLAY_FORM_BUTTON = _PREFIX + '-display-form-button'
+_HIDE_FORM_BUTTON = _PREFIX + '-hide-form-button'
 
 
 def _store(parameter_id: Any) -> Dict[str, Any]:
@@ -90,8 +91,7 @@ def _build_parameter_input(parameter: Parameter) -> Component:
             html.Label(parameter_name, htmlFor=(id_ := random_id())),
             _build_input(id_, parameter.type),
             dcc.Store(data=parameter.id, id=_store(parameter.id)),
-        ],
-        className='col-md-12',
+        ]
     )
 
 
@@ -112,9 +112,9 @@ def _parameters(parameters: Set[Parameter]) -> Component:
 
 def _parametrization_form(am: Optional[ArreteMinisteriel], parametrization: Parametrization) -> Component:
     parameters = parametrization.extract_parameters().union(_am_parameters(am) if am else set())
-    submit = html.Div(html.Button('Valider', className='btn btn-primary', id=_SUBMIT), className='col-12 m-2')
+    submit = html.Div(html.Button('Valider', className='btn btn-primary', id=_SUBMIT), className='m-2')
     output = html.Div('', id=_FORM_OUTPUT, className='m-2')
-    return html.Div([_parameters(parameters), output, submit], className='container')
+    return html.Div([_parameters(parameters), output, submit])
 
 
 def _parametrization_component(am_id: str, hidden: bool) -> Component:
@@ -128,8 +128,11 @@ def _parametrization_component(am_id: str, hidden: bool) -> Component:
 
 def _display_form_button() -> Component:
     return html.Div(
-        [html.Button('Filtrer par paramètres', id=_DISPLAY_FORM_BUTTON, className='btn btn-primary float-end')],
-        className='pb-5',
+        [
+            html.Button('< Retour', id=_HIDE_FORM_BUTTON, className='btn btn-link float-start', hidden=True),
+            html.Button('Filtrer par paramètres', id=_DISPLAY_FORM_BUTTON, className='btn btn-primary'),
+        ],
+        style={'text-align': 'right', 'flex': True},
     )
 
 
@@ -200,11 +203,15 @@ def _display_trigger() -> bool:
 def _callbacks(app: Dash) -> None:
     @app.callback(
         Output(_FORM, 'hidden'),
+        Output(_HIDE_FORM_BUTTON, 'hidden'),
         Input(_DISPLAY_FORM_BUTTON, 'n_clicks'),
+        Input(_HIDE_FORM_BUTTON, 'n_clicks'),
+        State(_FORM, 'hidden'),
+        State(_HIDE_FORM_BUTTON, 'hidden'),
         prevent_initial_call=True,
     )
-    def _display_form(_):
-        return False
+    def _display_form(_, __, hidden, hidden_):
+        return not hidden, not hidden_
 
     @app.callback(
         Output(_AM, 'children'),

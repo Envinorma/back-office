@@ -9,7 +9,7 @@ from envinorma.topics.patterns import TopicName
 from envinorma.topics.simple_topics import SIMPLE_ONTOLOGY
 
 from back_office.components import error_component, success_component
-from back_office.routing import Endpoint, Page
+from back_office.routing import Page, Routing
 from back_office.utils import DATA_FETCHER, ensure_not_none, generate_id
 
 _TOPICS = SIMPLE_ONTOLOGY.keys()
@@ -67,7 +67,7 @@ def _am_topics(am: ArreteMinisteriel) -> Component:
 
 
 def _link_to_am(am_id: str) -> Component:
-    return dcc.Link(html.Button("< Retour à l'arrêté", className='btn btn-link'), href=f'/{Endpoint.AM}/{am_id}')
+    return dcc.Link(html.Button('< Retour', className='btn btn-link'), href=Routing.topics_path(am_id))
 
 
 def _am_topics_with_loader(am: ArreteMinisteriel) -> Component:
@@ -87,7 +87,7 @@ def _topics_dropdown() -> Component:
     return html.Div(
         [
             html.H5('Thème à utiliser'),
-            dcc.Dropdown(_TOPICS_DROPDOWN, options, value=None, className='mb-3 mt-3'),
+            dcc.Dropdown(_TOPICS_DROPDOWN, options, value=values[0], className='mb-3 mt-3', clearable=False),
             html.P('Cliquer sur les paragraphes auxquels associer le thème sélectionné.'),
             html.Div(id=_TOPIC_EDITION_OUTPUT),
         ],

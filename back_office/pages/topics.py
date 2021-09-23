@@ -36,30 +36,32 @@ def _am_topics(am: Optional[ArreteMinisteriel]) -> Component:
 
 
 def _edit_button(am_id: str) -> Component:
-
-    return dcc.Link(
-        html.Button('Éditer les thèmes', className='btn btn-primary'), href=f'/{Endpoint.EDIT_TOPICS}/{am_id}'
-    )
+    return dcc.Link('Éditer les thèmes', className='btn btn-primary', href=f'/{Endpoint.EDIT_TOPICS}/{am_id}')
 
 
-def _edition(am_id: str) -> Component:
+def _edit(am_id: str) -> Component:
+    return html.Div([_edit_button(am_id)], style={'text-align': 'right'})
+
+
+def _left_col() -> Component:
     address = html.Span('drieat-if.envinorma@developpement-durable.gouv.fr', style={'font-size': '0.8em'})
     alert = dbc.Alert(
         ['Pour toute suggestion de modification, veuillez en faire part par email à l\'adresse ', address],
         color='primary',
         className='mt-3',
     )
-    return html.Div([html.H3('Thèmes'), _edit_button(am_id), alert])
+    return html.Div([html.H3('Thèmes'), alert])
 
 
 def _layout(am_id: str) -> Component:
-    return html.Div(
+    row = html.Div(
         [
-            html.Div(_edition(am_id), className='col-3'),
+            html.Div(_left_col(), className='col-3'),
             html.Div(className='col-9', children=_am_topics(DATA_FETCHER.load_am(am_id))),
         ],
         className='row',
     )
+    return html.Div([_edit(am_id), html.Hr(), row])
 
 
 def _callbacks(app: Dash) -> None:
