@@ -1,23 +1,23 @@
 from typing import List, Optional, cast
 
 import dash_bootstrap_components as dbc
-from dash import ALL, MATCH, Dash, Input, Output, State, dcc, html, no_update
+from dash import ALL, MATCH, Input, Output, State, callback, dcc, html, no_update
 from dash.development.base_component import Component
 from envinorma.models import AMMetadata, AMSource, AMState, Classement, Regime
 from envinorma.utils import AIDA_URL
 
-from back_office.routing import Endpoint, Page
+from back_office.routing import Endpoint
 from back_office.utils import DATA_FETCHER
 
 from . import ids
-from .am_creation_form_handling import handle_form, is_legifrance_id_valid
+from .handle_form import handle_form, is_legifrance_id_valid
 
 _REGIME_OPTIONS = [{'label': regime.value, 'value': regime.value} for regime in Regime]
 _AM_STATE_OPTIONS = [{'label': el.value, 'value': el.value} for el in AMState]
 _AM_SOURCE_OPTIONS = [{'label': el.value, 'value': el.value} for el in AMSource]
 
 
-def _legifrance_id_form(am_id: Optional[str]) -> Component:
+def _legifrance_id_form(am_id: Optional[str], new_am: bool) -> Component:
     input_ = html.Div(
         [
             dcc.Input(
@@ -36,9 +36,11 @@ def _legifrance_id_form(am_id: Optional[str]) -> Component:
             ),
             dcc.Link(
                 html.Button(
-                    'Éditer l\'identifiant Légifrance', className='btn btn-outline-primary', hidden=am_id is None
+                    'Éditer l\'identifiant Légifrance',
+                    className='btn btn-outline-primary',
+                    hidden=not new_am or am_id is None,
                 ),
-                href=f'/{Endpoint.AM_METADATA}',
+                href=f'/{Endpoint.NEW_AM}',
             ),
         ],
         className='input-group',
@@ -243,18 +245,7 @@ def _warning(am_metadata: Optional[AMMetadata]) -> Component:
 
 
 def _submit_button() -> Component:
-    return html.Button('Valider', className='btn btn-primary', id=ids.SUBMIT_BUTTON)
-
-
-def _cancel_button(am_id: str) -> Component:
-    hidden = not am_id
-    return dcc.Link(
-        html.Button('Annuler', className='btn btn-link ml-2', hidden=hidden), href=f'/{Endpoint.AM}/{am_id}'
-    )
-
-
-def _buttons(am_id: str) -> Component:
-    return html.Div([_submit_button(), _cancel_button(am_id)], className='mb-5')
+    return html.Button('Valider', className='btn btn-primary mb-5', id=ids.SUBMIT_BUTTON)
 
 
 def _metadata_form(am_metadata: Optional[AMMetadata]) -> Component:
@@ -272,7 +263,7 @@ def _metadata_form(am_metadata: Optional[AMMetadata]) -> Component:
             _reason_deleted(am_metadata),
             _am_source(am_metadata),
             dbc.Spinner(html.Div(), id=ids.FORM_OUTPUT),
-            _buttons(am_metadata.cid if am_metadata else ''),
+            _submit_button(),
         ]
     )
 
@@ -283,118 +274,122 @@ def _metadata_row(am_id: Optional[str], metadata: Optional[AMMetadata]) -> Compo
     return _metadata_form(metadata)
 
 
-def _form(am_id: Optional[str], metadata: Optional[AMMetadata]) -> Component:
-    return html.Div([_legifrance_id_form(am_id), _metadata_row(am_id, metadata), dcc.Store(data=am_id, id=ids.AM_ID)])
-
-
-def _page(am_id: Optional[str] = None) -> Component:
-    metadata = DATA_FETCHER.load_am_metadata(am_id) if am_id else None
-    title = 'Nouvel arrêté ministériel.' if not metadata else f"Modification de l'arrêté ministériel {am_id}."
-    return html.Div([html.H2(title), _form(am_id, metadata)])
-
-
-def _add_callbacks(app: Dash) -> None:
-    @app.callback(Output(ids.REASON_DELETED_DIV, 'hidden'), Input(ids.AM_STATE, 'value'))
-    def set_reason_deleted_visibility(am_state: Optional[str]) -> bool:
-        return am_state != AMState.DELETED.value
-
-    @app.callback(Output(ids.NOR_DIV, 'hidden'), Input(ids.NOR_EXISTS, 'value'))
-    def set_nor_visibility(checked) -> bool:
-        return not checked
-
-    @app.callback(Output(ids.REASON_DELETED, 'value'), Input(ids.AM_STATE, 'value'))
-    def clear_reason_deleted(am_state: Optional[str]):
-        if am_state != AMState.DELETED.value:
-            return ''
-        return no_update
-
-    @app.callback(
-        Output(ids.SUBMIT_LEGIFRANCE_OUTPUT, 'children'),
-        Input(ids.SUBMIT_LEGIFRANCE_ID, 'n_clicks'),
-        State(ids.LEGIFRANCE_ID, 'value'),
-        prevent_initial_call=True,
+def _form(am_id: Optional[str], metadata: Optional[AMMetadata], new_am: bool) -> Component:
+    return html.Div(
+        [_legifrance_id_form(am_id, new_am), _metadata_row(am_id, metadata), dcc.Store(data=am_id, id=ids.AM_ID)]
     )
-    def refresh_page(_, legifrance_id: Optional[str]) -> Component:
-        legifrance_id = legifrance_id or ''
-        if not is_legifrance_id_valid(legifrance_id):
-            return dbc.Alert(
-                'L\'identifiant Legifrance est invalide : il doit contenir 20 caractères.',
-                color='danger',
-                className='mt-2 mb-3',
-                dismissable=True,
-            )
-        return dcc.Location(pathname=f'/{Endpoint.AM_METADATA}/{legifrance_id}', id=ids.REFRESH_REDIRECT)
 
-    @app.callback(
-        Output(ids.classement_row_id(cast(int, MATCH)), 'children'),
-        Input(ids.delete_classement_button_id(cast(int, MATCH)), 'n_clicks'),
-        prevent_initial_call=True,
-    )
-    def delete_section(_):
-        return html.Div()
 
-    @app.callback(
-        Output(ids.CLASSEMENTS, 'children'),
-        Input(ids.ADD_CLASSEMENT_FORM, 'n_clicks'),
-        State(ids.CLASSEMENTS, 'children'),
-        State(ids.classement_row_id(cast(int, ALL)), 'id'),
-        prevent_initial_call=True,
-    )
-    def add_block(_, children, ids):
-        new_rank = (max([cast(int, id_['rank']) for id_ in ids]) + 1) if ids else 0
-        new_block = _classement_row(None, rank=new_rank)
-        return children + [new_block]
+@callback(Output(ids.REASON_DELETED_DIV, 'hidden'), Input(ids.AM_STATE, 'value'))
+def set_reason_deleted_visibility(am_state: Optional[str]) -> bool:
+    return am_state != AMState.DELETED.value
 
-    @app.callback(
-        Output(ids.FORM_OUTPUT, 'children'),
-        Input(ids.SUBMIT_BUTTON, 'n_clicks'),
-        State(ids.AM_ID, 'data'),
-        State(ids.TITLE, 'value'),
-        State(ids.NICKNAME, 'value'),
-        State(ids.IS_TRANSVERSE_CHECKBOX, 'value'),
-        State(ids.AIDA_PAGE, 'value'),
-        State(ids.AM_STATE, 'value'),
-        State(ids.AM_SOURCE, 'value'),
-        State(ids.NOR_EXISTS, 'value'),
-        State(ids.NOR_ID, 'value'),
-        State(ids.REASON_DELETED, 'value'),
-        State(ids.rubrique_input_id(cast(int, ALL)), 'value'),
-        State(ids.regime_id(cast(int, ALL)), 'value'),
-        State(ids.alinea_input_id(cast(int, ALL)), 'value'),
-        prevent_initial_call=True,
-    )
-    def _handle_form(
-        _,
-        am_id: Optional[str],
-        title: Optional[str],
-        nickname: Optional[str],
-        is_transverse: bool,
-        aida_page: Optional[str],
-        am_state: Optional[str],
-        am_source: Optional[str],
-        nor_exists: bool,
-        nor_id: Optional[str],
-        reason_deleted: Optional[str],
-        rubriques: List[Optional[str]],
-        regimes: List[Optional[str]],
-        alineas: List[Optional[str]],
-    ):
 
-        return handle_form(
-            am_id,
-            title,
-            nickname,
-            is_transverse,
-            aida_page,
-            am_state,
-            am_source,
-            nor_exists,
-            nor_id,
-            reason_deleted,
-            rubriques,
-            regimes,
-            alineas,
+@callback(Output(ids.NOR_DIV, 'hidden'), Input(ids.NOR_EXISTS, 'value'))
+def set_nor_visibility(checked) -> bool:
+    return not checked
+
+
+@callback(Output(ids.REASON_DELETED, 'value'), Input(ids.AM_STATE, 'value'))
+def clear_reason_deleted(am_state: Optional[str]):
+    if am_state != AMState.DELETED.value:
+        return ''
+    return no_update
+
+
+@callback(
+    Output(ids.SUBMIT_LEGIFRANCE_OUTPUT, 'children'),
+    Input(ids.SUBMIT_LEGIFRANCE_ID, 'n_clicks'),
+    State(ids.LEGIFRANCE_ID, 'value'),
+    prevent_initial_call=True,
+)
+def refresh_page(_, legifrance_id: Optional[str]) -> Component:
+    legifrance_id = legifrance_id or ''
+    if not is_legifrance_id_valid(legifrance_id):
+        return dbc.Alert(
+            'L\'identifiant Legifrance est invalide : il doit contenir 20 caractères.',
+            color='danger',
+            className='mt-2 mb-3',
+            dismissable=True,
         )
+    return dcc.Location(pathname=f'/{Endpoint.NEW_AM}/{legifrance_id}', id=ids.REFRESH_REDIRECT)
 
 
-PAGE = Page(_page, _add_callbacks, True)
+@callback(
+    Output(ids.classement_row_id(cast(int, MATCH)), 'children'),
+    Input(ids.delete_classement_button_id(cast(int, MATCH)), 'n_clicks'),
+    prevent_initial_call=True,
+)
+def delete_section(_):
+    return html.Div()
+
+
+@callback(
+    Output(ids.CLASSEMENTS, 'children'),
+    Input(ids.ADD_CLASSEMENT_FORM, 'n_clicks'),
+    State(ids.CLASSEMENTS, 'children'),
+    State(ids.classement_row_id(cast(int, ALL)), 'id'),
+    prevent_initial_call=True,
+)
+def add_block(_, children, ids):
+    new_rank = (max([cast(int, id_['rank']) for id_ in ids]) + 1) if ids else 0
+    new_block = _classement_row(None, rank=new_rank)
+    return children + [new_block]
+
+
+@callback(
+    Output(ids.FORM_OUTPUT, 'children'),
+    Input(ids.SUBMIT_BUTTON, 'n_clicks'),
+    State(ids.AM_ID, 'data'),
+    State(ids.TITLE, 'value'),
+    State(ids.NICKNAME, 'value'),
+    State(ids.IS_TRANSVERSE_CHECKBOX, 'value'),
+    State(ids.AIDA_PAGE, 'value'),
+    State(ids.AM_STATE, 'value'),
+    State(ids.AM_SOURCE, 'value'),
+    State(ids.NOR_EXISTS, 'value'),
+    State(ids.NOR_ID, 'value'),
+    State(ids.REASON_DELETED, 'value'),
+    State(ids.rubrique_input_id(cast(int, ALL)), 'value'),
+    State(ids.regime_id(cast(int, ALL)), 'value'),
+    State(ids.alinea_input_id(cast(int, ALL)), 'value'),
+    prevent_initial_call=True,
+)
+def _handle_form(
+    _,
+    am_id: Optional[str],
+    title: Optional[str],
+    nickname: Optional[str],
+    is_transverse: bool,
+    aida_page: Optional[str],
+    am_state: Optional[str],
+    am_source: Optional[str],
+    nor_exists: bool,
+    nor_id: Optional[str],
+    reason_deleted: Optional[str],
+    rubriques: List[Optional[str]],
+    regimes: List[Optional[str]],
+    alineas: List[Optional[str]],
+):
+
+    return handle_form(
+        am_id,
+        title,
+        nickname,
+        is_transverse,
+        aida_page,
+        am_state,
+        am_source,
+        nor_exists,
+        nor_id,
+        reason_deleted,
+        rubriques,
+        regimes,
+        alineas,
+    )
+
+
+def edit_metadata(new_am: bool, am_id: Optional[str] = None) -> Component:
+    metadata = DATA_FETCHER.load_am_metadata(am_id) if am_id else None
+    title = 'Nouvel arrêté ministériel.' if new_am else f"Modification de l'arrêté ministériel {am_id}."
+    return html.Div([html.H2(title), _form(am_id, metadata, new_am)])

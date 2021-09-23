@@ -1,10 +1,13 @@
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set, Union
+from urllib.parse import quote_plus
 
 import dash_bootstrap_components as dbc
 from dash import dcc, html
 from dash.development.base_component import Component
 from typing_extensions import Literal
+
+from back_office.routing import Endpoint
 
 from .table import ExtendedComponent  # noqa: F401
 
@@ -89,3 +92,8 @@ def surline_text(str_: str, positions_to_surline: Set[int], style: Dict[str, Any
     else:
         components.append(current_word)
     return html.Span(components)
+
+
+def login_redirect(pathname: str) -> Component:
+    origin = quote_plus(pathname)
+    return dcc.Location(pathname=f'/{Endpoint.LOGIN}/{origin}', id='login-redirect')

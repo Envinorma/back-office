@@ -86,11 +86,12 @@ def _layout(am_id: str, compare_with: str, normalize: str = '') -> Component:
     toggle_href = prefix if normalize else f'{prefix}/normalize'
     return html.Div(
         [
-            dcc.Link("< Retour à l'arrêté", href=f'/{Endpoint.AM}/{am_id}'),
+            dcc.Link("< Retour à l'arrêté", href=f'/{Endpoint.AM}/{am_id}/{Endpoint.AM_CONTENT}'),
             dcc.Link(toggle_wording, href=toggle_href, className='btn btn-primary ml-3'),
             dbc.Spinner(children=html.Div(), id=_SPINNER),
             dcc.Store(data=[am_id, compare_with, normalize], id=_ARGS),
-        ]
+        ],
+        className='container mt-3',
     )
 
 

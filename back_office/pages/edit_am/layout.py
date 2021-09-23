@@ -16,7 +16,7 @@ from .components import text_area_value
 def _title_component(am_id: str, am_metadata: AMMetadata) -> Component:
     human_am_id = (am_metadata.nor or am_metadata.cid) if am_metadata else am_id
     title = html.H3(f'Édition de l\'AM {human_am_id}')
-    am_backlink = html.P(dcc.Link('< Retour', href=f'/{Endpoint.AM}/{am_id}'))
+    am_backlink = html.P(dcc.Link('< Retour', href=f'/{Endpoint.AM}/{am_id}/{Endpoint.AM_CONTENT}'))
     return html.Div([title, am_backlink])
 
 
@@ -111,4 +111,6 @@ def layout(am_id: str) -> Component:
     if not am_metadata:
         return html.P(f'404 - Arrêté {am_id} inconnu')
     am = DATA_FETCHER.load_am(am_id)
-    return html.Div([_title_component(am_id, am_metadata), _buttons(), _page_content(am_id, am)])
+    return html.Div(
+        [_title_component(am_id, am_metadata), _buttons(), _page_content(am_id, am)], className='container mt-3'
+    )

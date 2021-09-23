@@ -9,14 +9,16 @@ from werkzeug.routing import Map, MapAdapter, Rule
 class Endpoint(Enum):
     INDEX = ''
     AM = 'am'
-    AM_OLD = 'am_old'
     AM_COMPARE = 'am_compare'
     LEGIFRANCE_COMPARE = 'compare'
-    EDIT_PARAMETRIZATION = 'edit_parametrization'
     EDIT_AM = 'edit_am'
-    EDIT_AM_CONTENT = 'edit_am_content'
     DELETE_AM = 'delete_am'
+    NEW_AM = 'new_am'
     AM_METADATA = 'am_metadata'
+    AM_APERCU = 'apercu'
+    AM_CONTENT = 'content'
+    PARAMETRIZATION = 'parametrization'
+    TOPICS = 'topics'
     LOGIN = 'login'
     LOGOUT = 'logout'
     EDIT_TOPICS = 'edit_topics'
@@ -38,22 +40,28 @@ class Endpoint(Enum):
 _ENDPOINT_TO_ROUTES: Dict[Endpoint, List[str]] = {
     Endpoint.INDEX: ['/{}'],
     Endpoint.LEGIFRANCE_COMPARE: ['/{}', '/{}/id/<am_id>', '/{}/id/<am_id>/<date_before>/<date_after>'],
-    Endpoint.AM: ['/{}/<am_id>', '/{}/<am_id>/<tab>'],
+    Endpoint.AM_METADATA: [f'/{Endpoint.AM}/<am_id>' + '/{}', f'/{Endpoint.AM}/<am_id>/{"{}"}/<edit>'],
+    Endpoint.AM_APERCU: [f'/{Endpoint.AM}/<am_id>'],
+    Endpoint.AM_CONTENT: [f'/{Endpoint.AM}/<am_id>' + '/{}'],
+    Endpoint.PARAMETRIZATION: [f'/{Endpoint.AM}/<am_id>' + '/{}'],
+    Endpoint.TOPICS: [f'/{Endpoint.AM}/<am_id>' + '/{}'],
     Endpoint.AM_COMPARE: ['/{}/<am_id>/<compare_with>', '/{}/<am_id>/<compare_with>/<normalize>'],
     Endpoint.LOGIN: ['/{}', '/{}/<origin>'],
     Endpoint.LOGOUT: ['/{}'],
     Endpoint.DELETE_AM: ['/{}/<am_id>'],
-    Endpoint.AM_METADATA: ['/{}', '/{}/<am_id>'],
+    Endpoint.NEW_AM: ['/{}', '/{}/<am_id>'],
     Endpoint.UPLOAD_AMS: ['/{}'],
     Endpoint.EDIT_TOPICS: ['/{}/<am_id>'],
-    Endpoint.EDIT_PARAMETRIZATION: ['/{}/<am_id>'],
     Endpoint.EDIT_AM: ['/{}/<am_id>'],
-    Endpoint.EDIT_AM_CONTENT: ['/{}/<am_id>', '/{}/<am_id>/<with_buttons>'],
     Endpoint.REGULATION_ENGINE: ['/{}'],
     Endpoint.TOPIC_DETECTOR: ['/{}'],
-    Endpoint.ADD_WARNING: ['/{}/<am_id>', '/{}/<am_id>/<parameter_id>', '/{}/<am_id>/<parameter_id>/copy'],
-    Endpoint.ADD_INAPPLICABILITY: ['/{}/<am_id>', '/{}/<am_id>/<parameter_id>', '/{}/<am_id>/<parameter_id>/copy'],
-    Endpoint.ADD_ALTERNATIVE_SECTION: ['/{}/<am_id>', '/{}/<am_id>/<parameter_id>', '/{}/<am_id>/<parameter_id>/copy'],
+    Endpoint.ADD_WARNING: ['/{}/<am_id>', '/{}/<am_id>/<parameter_id>', '/{}/<am_id>/<parameter_id>/<copy>'],
+    Endpoint.ADD_INAPPLICABILITY: ['/{}/<am_id>', '/{}/<am_id>/<parameter_id>', '/{}/<am_id>/<parameter_id>/<copy>'],
+    Endpoint.ADD_ALTERNATIVE_SECTION: [
+        '/{}/<am_id>',
+        '/{}/<am_id>/<parameter_id>',
+        '/{}/<am_id>/<parameter_id>/<copy>',
+    ],
     Endpoint.AM_APPLICABILITY: ['/{}/<am_id>'],
 }
 
@@ -64,6 +72,23 @@ ROUTER: MapAdapter = Map(
         for route in routes
     ]
 ).bind('')
+
+
+class Routing:
+    @staticmethod
+    def parametrization_path(am_id: str) -> str:
+        return f'/{Endpoint.AM}/{am_id}/{Endpoint.PARAMETRIZATION}'
+
+    @staticmethod
+    def apercu_path(am_id: str) -> str:
+        return f'/{Endpoint.AM}/{am_id}'
+
+    @staticmethod
+    def metadata_path(am_id: str, edit: bool = False) -> str:
+        prefix = f'/{Endpoint.AM}/{am_id}/{Endpoint.AM_METADATA}'
+        if edit:
+            return f'{prefix}/edit'
+        return prefix
 
 
 @dataclass

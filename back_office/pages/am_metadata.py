@@ -5,9 +5,12 @@ from dash import Dash, dcc, html
 from dash.development.base_component import Component
 from envinorma.models import AMMetadata, AMState, Classement
 
-from back_office.components import ExtendedComponent
+from back_office.components import ExtendedComponent, login_redirect
+from back_office.components.am_side_nav import page_with_sidebar
+from back_office.components.edit_metadata.edit_metadata import edit_metadata
 from back_office.helpers.login import get_current_user
-from back_office.routing import Endpoint
+from back_office.routing import Page, Routing
+from back_office.utils import DATA_FETCHER
 
 
 def _get_str_classement(classement: Classement) -> str:
@@ -59,44 +62,44 @@ def _alert() -> Component:
 
 
 def _edit_metadata_button(am_id: str) -> Component:
-    return dcc.Link(dbc.Button('Modifier les metadonnées', color='primary'), href=f'/{Endpoint.AM_METADATA}/{am_id}')
-
-
-def _edit_content_button(am_id: str) -> Component:
-    button_wording = "Éditer le contenu de l'arrêté"
-    return dcc.Link(dbc.Button(button_wording, color='primary'), href=f'/{Endpoint.EDIT_AM}/{am_id}')
-
-
-def _delete_button(am_id: str) -> Component:
-    return dcc.Link(dbc.Button("Supprimer l'arrêté", color='danger'), href=f'/{Endpoint.DELETE_AM}/{am_id}')
+    href = Routing.metadata_path(am_id, edit=True)
+    return dcc.Link(dbc.Button('Modifier les metadonnées', color='primary'), href=href)
 
 
 def _edition(am_id: str) -> Component:
-    return html.Div(
-        [
-            html.H3('Édition'),
-            _alert(),
-            html.Div(_edit_metadata_button(am_id), className='pb-2'),
-            html.Div(_edit_content_button(am_id), className='pb-2'),
-            html.Div(_delete_button(am_id), className='pb-2'),
-        ],
-        style={'background-color': '#EEEEEE', 'border-radius': '5px'},
-        className='p-3',
-    )
+    return html.Div([html.Div(_edit_metadata_button(am_id), className='float-end')], className='pb-5')
 
 
 def _layout(am: AMMetadata) -> Component:
-    return html.Div(
-        [
-            html.Div(className='col-8', children=_metadata(am)),
-            html.Div(className='col-4', children=_edition(am.cid)),
-        ],
-        className='row',
-    )
+    return html.Div([_edition(am.cid), html.Hr(className='mb-4'), _alert(), _metadata(am)])
 
 
-def _callbacks(app: Dash, tab_id: str) -> None:
-    ...
+def _edit_page(am_id: str) -> Component:
+    button = dcc.Link('< Retour aux metadonnées', className='btn btn-link', href=Routing.metadata_path(am_id))
+    return html.Div([button, html.Hr(), html.Div(edit_metadata(False, am_id))])
 
 
-TAB = ('Metadonnées', _layout, _callbacks)
+def _protected_edit(am_id: str) -> Component:
+    if get_current_user().is_authenticated:
+        return _edit_page(am_id)
+    href = Routing.metadata_path(am_id, edit=True)
+    return login_redirect(href)
+
+
+def _page(am_id: str, edit: bool = False) -> Component:
+    if edit:
+        component = _protected_edit(am_id)
+    else:
+        am = DATA_FETCHER.load_am_metadata(am_id)
+        if not am:
+            component = html.Div('404 - AM not found')
+        else:
+            component = _layout(am)
+    return page_with_sidebar(component, am_id)
+
+
+def _add_callbacks(app: Dash) -> None:
+    pass
+
+
+PAGE = Page(_page, _add_callbacks, False)

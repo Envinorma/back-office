@@ -1,6 +1,5 @@
 from dataclasses import replace
 from typing import Optional
-from urllib.parse import quote_plus
 
 import dash
 import dash_bootstrap_components as dbc
@@ -8,7 +7,6 @@ from dash import Input, Output, State, dcc, html
 from dash.development.base_component import Component
 from envinorma.models import DELETE_REASON_MIN_NB_CHARS, AMMetadata, AMState
 
-from back_office.helpers.login import get_current_user
 from back_office.pages.edit_parameter_element.form_handling import FormHandlingError
 from back_office.routing import Endpoint, Page
 from back_office.utils import DATA_FETCHER, generate_id
@@ -34,18 +32,21 @@ def _delete_form(am_id: str) -> Component:
     )
 
 
-def _page_if_logged(am_id: str) -> Component:
+def _back(am_id: str) -> Component:
+    return dcc.Link('< Retour à l\'arrêté', href=f'/{Endpoint.AM}/{am_id}', className='btn btn-link mt-2 mb-2')
+
+
+def _container(am_id: str) -> Component:
     am_metadata = DATA_FETCHER.load_am_metadata(am_id)
     if not am_metadata:
         return html.H1('Arrêté introuvable.')
-    return html.Div([html.H2(f'Suppression de l\'arrêté {am_id}'), html.P(am_metadata.title), _delete_form(am_id)])
+    return html.Div(
+        [html.H2(f'Suppression de l\'arrêté {am_id}'), _back(am_id), html.P(am_metadata.title), _delete_form(am_id)]
+    )
 
 
 def _page(am_id: str) -> Component:
-    if not get_current_user().is_authenticated:
-        origin = quote_plus(f'/{Endpoint.DELETE_AM}/{am_id}')
-        return dcc.Location(pathname=f'/{Endpoint.LOGIN}/{origin}', id='login-redirect')
-    return _page_if_logged(am_id)
+    return html.Div(_container(am_id), className='container mt-3')
 
 
 def _get_and_check_am(am_id: str) -> AMMetadata:

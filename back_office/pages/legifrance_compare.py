@@ -12,7 +12,7 @@ from back_office.components import error_component
 from back_office.components.diff import diff_component
 from back_office.helpers.diff import compute_am_diff
 from back_office.helpers.legifrance import NoConsolidationError, extract_legifrance_am
-from back_office.routing import Page
+from back_office.routing import Endpoint, Page
 from back_office.utils import generate_id
 
 _DATE_BEFORE = generate_id(__file__, 'before-date')
@@ -115,15 +115,24 @@ def _callbacks(app: Dash) -> None:
             return error_component(f'Erreur inattendue:\n{traceback.format_exc()}'), html.Div()
 
 
+def _go_back(am_id: Optional[str]) -> Component:
+    if not am_id:
+        return html.Div()
+    href = f'/{Endpoint.AM}/{am_id}/{Endpoint.AM_CONTENT}'
+    return dcc.Link('< Retour', href=href, className='btn btn-link')
+
+
 def _layout(
     am_id: Optional[str] = None, date_before: Optional[str] = None, date_after: Optional[str] = None
 ) -> Component:
     return html.Div(
         [
+            _go_back(am_id),
             html.H3('Comparer deux versions d\'un arrêté.'),
             _form(am_id, date_before, date_after),
             dbc.Spinner(html.Div(id=_DIFF)),
-        ]
+        ],
+        className='container mt-3',
     )
 
 

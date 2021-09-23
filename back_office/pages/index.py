@@ -6,7 +6,6 @@ from dash import dcc, html
 from dash.development.base_component import Component
 from envinorma.models import AMMetadata, AMState, Classement
 
-from back_office.components import replace_line_breaks
 from back_office.routing import Endpoint, Page
 from back_office.utils import AM_ID_TO_NB_CLASSEMENTS, DATA_FETCHER
 
@@ -81,23 +80,19 @@ def _build_am_table(metadata: Dict[str, AMMetadata], occs: Dict[str, int]) -> Co
 
 
 def _build_recap(state_counter: Dict[AMState, int]) -> Component:
+    deleted = state_counter[AMState.DELETED] + state_counter[AMState.ABROGE]
     txts = [
-        f'{state_counter[AMState.VIGUEUR]} arrêté(s) en vigueur\n',
+        f'{state_counter[AMState.VIGUEUR]} arrêté(s) en vigueur',
         f'{state_counter[AMState.EN_CREATION]} arrêté(s) en cours de création',
+        f'{deleted} arrêté(s) supprimés',
     ]
-    cols = [
-        html.Div(
-            html.Div(html.Div(replace_line_breaks(txt), className='card-body'), className='card text-center'),
-            className='col-3',
-        )
-        for txt in txts
-    ]
-    return html.Div(cols, className='row', style={'margin-top': '20px'})
+    cols = [html.Div(dbc.Card(dbc.CardBody(txt)), className='col-4') for txt in txts]
+    return html.Div(cols, className='row mt-3')
 
 
 def _add_am_button() -> Component:
     return html.Div(
-        dcc.Link(html.Button('+ Créer un arrêté', className='btn btn-link'), href=f'/{Endpoint.AM_METADATA}'),
+        dcc.Link(html.Button('+ Créer un arrêté', className='btn btn-link'), href=f'/{Endpoint.NEW_AM}'),
         style={'text-align': 'right'},
     )
 
@@ -145,7 +140,8 @@ def _index_component(id_to_am_metadata: Dict[str, AMMetadata], id_to_occurrences
             html.H3('Arrêtés ministériels en vigueur.', className='mt-5'),
             _inforced_am_row(id_to_am_metadata, id_to_occurrences),
             _deleted_am_row(id_to_am_metadata),
-        ]
+        ],
+        className='container mt-3',
     )
 
 

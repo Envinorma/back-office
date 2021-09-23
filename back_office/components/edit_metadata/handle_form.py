@@ -19,7 +19,7 @@ from back_office.components import error_component, success_component
 from back_office.helpers.login import get_current_user
 from back_office.helpers.slack import send_slack_notification
 from back_office.pages.edit_parameter_element.form_handling import FormHandlingError
-from back_office.routing import Endpoint
+from back_office.routing import Routing
 from back_office.utils import DATA_FETCHER
 
 from . import ids
@@ -223,7 +223,7 @@ def handle_form(
         return error_component(f'Erreur dans le formulaire :\n{exc}')
     except Exception as exc:
         return error_component(f'Erreur inattendue :\n{exc}')
-    redirect_target = f'/{Endpoint.AM}/{new_am_metadata.cid}'
+    redirect_target = Routing.metadata_path(new_am_metadata.cid)
     return html.Div(
         [
             success_component('Enregistrement réussi.'),

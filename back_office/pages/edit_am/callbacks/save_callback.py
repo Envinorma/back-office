@@ -2,7 +2,7 @@ import traceback
 from typing import List, Optional
 
 from bs4 import BeautifulSoup
-from dash import Dash, Input, Output, State, dcc, html
+from dash import Dash, Input, Output, State
 from dash.development.base_component import Component
 from dash.exceptions import PreventUpdate
 from envinorma.io.parse_html import extract_text_elements
@@ -12,7 +12,7 @@ from envinorma.models.text_elements import TextElement, Title
 from envinorma.structure import build_structured_text
 
 from back_office.components import alert, error_component, success_component
-from back_office.routing import Endpoint
+from back_office.helpers.parse_table import parse_table
 from back_office.utils import DATA_FETCHER
 
 from .. import ids
@@ -48,20 +48,10 @@ def _remove_hashtags_from_elements(elements: List[TextElement]) -> List[TextElem
 
 
 def _parse_table(element: TextElement) -> TextElement:
-    if isinstance(element, str) and '<table>' in element:
-        prefix = f"Erreur lors de l'extraction du tableau dans la ligne suivante :\n{element}"
-        try:
-            elements = extract_text_elements(BeautifulSoup(element, 'html.parser'))
-        except Exception:
-            raise TextAreaHandlingError(f'{prefix}\n\nErreur complète:\n\n{traceback.format_exc()}')
-        if len(elements) == 0:
-            raise TextAreaHandlingError(f'{prefix}\nAucun élément n\'a été détecté.')
-        if len(elements) > 1:
-            element_types = ', '.join([el.__class__.__name__ for el in elements])
-            raise TextAreaHandlingError(
-                f'{prefix}\nPlusieurs éléments ont été détectés, dont voici les types :\n{element_types}'
-            )
-    return element
+    try:
+        return parse_table(element)
+    except ValueError as exc:
+        raise TextAreaHandlingError(str(exc))
 
 
 def _parse_tables(elements: List[TextElement]) -> List[TextElement]:

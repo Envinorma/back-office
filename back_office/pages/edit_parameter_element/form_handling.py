@@ -5,9 +5,10 @@ from typing import Dict, List, Optional
 
 from envinorma.models import ArreteMinisteriel, StructuredText
 from envinorma.models.condition import load_condition
-from envinorma.models.text_elements import EnrichedString
+from envinorma.models.text_elements import EnrichedString, Table
 from envinorma.parametrization import AlternativeSection, AMWarning, Condition, InapplicableSection, ParameterElement
 
+from back_office.helpers.parse_table import parse_table
 from back_office.pages.edit_parameter_element.target_sections_form import TargetSectionFormValues
 from back_office.utils import DATA_FETCHER, AMOperation, ensure_not_none
 
@@ -35,8 +36,20 @@ class _Modification:
     propagate_in_subsection: Optional[bool]
 
 
+def _parse_table(element: str) -> EnrichedString:
+    try:
+        result = parse_table(element)
+    except ValueError as exc:
+        raise FormHandlingError(str(exc))
+    if isinstance(result, Table):
+        return EnrichedString('', table=result)
+    if isinstance(result, str):
+        return EnrichedString(result)
+    raise ValueError(f'Impossible de parser {element}')
+
+
 def _extract_alineas(text: str) -> List[EnrichedString]:
-    return [EnrichedString(line) for line in text.split('\n')]
+    return [_parse_table(line) for line in text.split('\n')]
 
 
 _MIN_NB_CHARS = 1

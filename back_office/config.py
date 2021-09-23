@@ -9,7 +9,6 @@ from typing import Optional
 
 def _config_filename() -> str:
     file_ = Path(__file__).parent.parent / 'config.ini'
-    assert file_.exists()
     return str(file_)
 
 

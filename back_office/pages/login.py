@@ -85,4 +85,8 @@ def _callbacks(app: Dash):
         return no_update, ''
 
 
-PAGE = Page(_layout, _callbacks, False)
+def _page(origin: Optional[str] = None) -> Component:
+    return html.Div(_layout(origin), className='container mt-3')
+
+
+PAGE = Page(_page, _callbacks, False)

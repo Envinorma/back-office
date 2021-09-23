@@ -114,7 +114,10 @@ def _extract_title_and_content(text: StructuredText, level: int = 0) -> Tuple[st
     title = text.title.text
     contents: List[str] = []
     for alinea in text.outer_alineas:
-        contents.append(alinea.text)
+        if alinea.table:
+            contents.append(alinea.table.to_html())
+        else:
+            contents.append(alinea.text)
     for section in text.sections:
         section_title, section_content = _extract_title_and_content(section, level + 1)
         contents.append('#' * (level + 1) + ' ' + section_title)

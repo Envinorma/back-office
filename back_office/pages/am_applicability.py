@@ -11,7 +11,7 @@ from envinorma.models.condition import load_condition
 
 from back_office.components import error_component, success_component
 from back_office.components.condition_form import callbacks, condition_form
-from back_office.routing import Endpoint, Page
+from back_office.routing import Page, Routing
 from back_office.utils import DATA_FETCHER, generate_id
 
 _PREFIX = __file__
@@ -81,16 +81,8 @@ def _submit_button() -> Component:
     return html.Button('Valider', className='btn btn-primary', id=_Ids.SUBMIT_BUTTON)
 
 
-def _cancel_button(am_id: str) -> Component:
-    hidden = not am_id
-    return dcc.Link(
-        html.Button('Annuler', className='btn btn-link ml-2', hidden=hidden),
-        href=f'/{Endpoint.EDIT_PARAMETRIZATION}/{am_id}',
-    )
-
-
-def _buttons(am_id: str) -> Component:
-    return html.Div([_submit_button(), _cancel_button(am_id)], className='mb-5')
+def _buttons() -> Component:
+    return html.Div(_submit_button(), className='mb-5')
 
 
 def _checkbox(checked: bool) -> Component:
@@ -116,9 +108,17 @@ def _form(am_id: str, applicability: AMApplicability) -> Component:
             _warnings_form(applicability.warnings),
             _condition_form(applicability.condition_of_inapplicability),
             html.Div(id=_Ids.FORM_OUTPUT),
-            _buttons(am_id),
+            _buttons(),
             dcc.Store(data=am_id, id=_Ids.AM_ID),
         ]
+    )
+
+
+def _cancel_button(am_id: Optional[str]) -> Component:
+    hidden = not am_id
+    return dcc.Link(
+        html.Button('< Retour', className='btn btn-link', hidden=hidden),
+        href=Routing.parametrization_path(am_id or ''),
     )
 
 
@@ -126,8 +126,9 @@ def _page(am_id: str) -> Component:
     am = DATA_FETCHER.load_am(am_id)
     if not am:
         return html.Div('AM introuvable')
-    title = f'Editer les paramètres d\'application de l\'arrêté ministériel {am_id}.'
-    return html.Div([html.H2(title), _form(am_id, am.applicability)])
+    btn = _cancel_button(am_id)
+    title = html.H3(f'Editer les paramètres d\'application de l\'arrêté ministériel {am_id}.')
+    return html.Div([btn, title, _form(am_id, am.applicability)], className='container mt-3')
 
 
 def _applicability(warnings: List[str], use_condition: bool, condition_str: Optional[str]) -> AMApplicability:
@@ -147,7 +148,7 @@ def _handle_form(warnings: List[str], use_condition: bool, condition: Optional[s
         DATA_FETCHER.upsert_am(am_id, am)
     except _FormHandlingError as exc:
         return error_component(f"Erreur dans le formulaire : {exc}")
-    redirect = dcc.Location(id='am-applicability-redirect', href=f'/{Endpoint.EDIT_PARAMETRIZATION}/{am_id}')
+    redirect = dcc.Location(id='am-applicability-redirect', href=Routing.parametrization_path(am_id))
     return html.Div([success_component('Enregistré avec succès.'), redirect])
 
 

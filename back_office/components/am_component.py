@@ -101,5 +101,9 @@ def summary_and_content(content: Component, summary: Component, height: int = 75
     )
 
 
-def am_with_summary_component(am: ArreteMinisteriel, height: int = 75, first_level: int = 1) -> Component:
-    return summary_and_content(am_component(am, [], first_level), summary_component(am.to_text(), True), height)
+def am_with_summary_component(
+    am: ArreteMinisteriel, height: int = 75, first_level: int = 1, with_topics: bool = False
+) -> Component:
+    return summary_and_content(
+        am_component(am, [], first_level), summary_component(am.to_text(), False, with_topics=with_topics), height
+    )
