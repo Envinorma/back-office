@@ -23,10 +23,7 @@ def _new_parameter_element_buttons(am_id: str) -> Component:
         ('Nouvelle section alternative', f'/{Endpoint.ADD_ALTERNATIVE_SECTION}/{am_id}'),
         ('Nouvel avertissement', f'/{Endpoint.ADD_WARNING}/{am_id}'),
     ]
-    return html.Div(
-        [dcc.Link(button_text, className='btn btn-link mr-2', href=href) for button_text, href in hrefs],
-        className='mb-3 mt-3',
-    )
+    return html.Div([dcc.Link(button_text, className='btn btn-link mr-2', href=href) for button_text, href in hrefs])
 
 
 T = TypeVar('T')

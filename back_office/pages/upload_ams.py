@@ -2,7 +2,7 @@ import traceback
 from typing import List
 
 import dash_bootstrap_components as dbc
-from dash import Dash, Input, Output, html
+from dash import Dash, Input, Output, dcc, html
 from dash.development.base_component import Component
 
 from back_office.helpers.upload_ams import upload_ams
@@ -14,8 +14,10 @@ _EXPORT_OUTPUT = generate_id('upload-ams', 'export-output')
 
 
 def _layout() -> Component:
+    back = dcc.Link('< Retour', className='btn btn-link', href='/')
     return html.Div(
         [
+            back,
             html.H3('Exporter la base des arrêtés ministériels'),
             html.P('Cliquer sur le bouton ci-dessous pour exporter les AM dans OVH (environ 2 minutes)'),
             html.Button('Exporter', id=_BUTTON, className='btn btn-primary mb-3'),

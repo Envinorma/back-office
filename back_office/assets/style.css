@@ -41,11 +41,6 @@
   width: 100%;
 }
 
-h2 {
-  color: #212529;
-  font-weight: 100;
-}
-
 .am_title a {
   text-decoration: none;
   color: #212529;
@@ -175,4 +170,5 @@ html {
   height: calc(100vh - 45px);
   background-color: #f8f9fa;
   padding: 15px;
+  word-wrap: break-word;
 }

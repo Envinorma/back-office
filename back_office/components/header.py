@@ -8,7 +8,8 @@ from back_office.routing import Endpoint
 def _header_link(content: str, href: str, hidden: bool = False, left: bool = False) -> Component:
     base_class_name = 'btn btn-link header-link'
     class_name = base_class_name + (' float-end' if left else '')
-    return html.Span(dcc.Link(content, href=href, className=class_name), hidden=hidden)
+    extra_kwargs = {'target': '_blank'} if href.startswith('https://') else {}
+    return html.Span(dcc.Link(content, href=href, className=class_name, refresh=True, **extra_kwargs), hidden=hidden)
 
 
 def _nav() -> Component:
@@ -16,9 +17,9 @@ def _nav() -> Component:
     nav = html.Span(
         [
             _header_link('Liste des arrêtés', href='/'),
-            _header_link('Exportation des AMs', href=f'/{Endpoint.UPLOAD_AMS}', hidden=user_not_auth),
             _header_link("S'identifier", href=f'/{Endpoint.LOGIN}', hidden=not user_not_auth, left=True),
             _header_link('Se déconnecter', href=f'/{Endpoint.LOGOUT}', hidden=user_not_auth, left=True),
+            _header_link("Aide", href='https://envinorma.github.io/data/edit_am', left=True),
         ],
     )
     return nav

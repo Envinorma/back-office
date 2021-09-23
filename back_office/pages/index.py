@@ -6,6 +6,7 @@ from dash import dcc, html
 from dash.development.base_component import Component
 from envinorma.models import AMMetadata, AMState, Classement
 
+from back_office.helpers.login import get_current_user
 from back_office.routing import Endpoint, Page
 from back_office.utils import AM_ID_TO_NB_CLASSEMENTS, DATA_FETCHER
 
@@ -57,7 +58,7 @@ def _th_with_tooltip(content: str, tooltip_content: str) -> Component:
     )
 
 
-def _get_header() -> Component:
+def _table_header() -> Component:
     return html.Tr(
         [
             _th('#'),
@@ -73,7 +74,7 @@ def _get_header() -> Component:
 
 
 def _build_am_table(metadata: Dict[str, AMMetadata], occs: Dict[str, int]) -> Component:
-    header = _get_header()
+    header = _table_header()
     sorted_ids = sorted(metadata, key=lambda x: (not metadata[x].is_transverse, occs.get(x, 0)), reverse=True)
     rows = [_get_row(rank, metadata[am_id], occs.get(am_id, 0)) for rank, am_id in enumerate(sorted_ids)]
     return html.Table([html.Thead(header), html.Tbody(rows)], className='table table-sm')
@@ -87,14 +88,7 @@ def _build_recap(state_counter: Dict[AMState, int]) -> Component:
         f'{deleted} arrêté(s) supprimés',
     ]
     cols = [html.Div(dbc.Card(dbc.CardBody(txt)), className='col-4') for txt in txts]
-    return html.Div(cols, className='row mt-3')
-
-
-def _add_am_button() -> Component:
-    return html.Div(
-        dcc.Link(html.Button('+ Créer un arrêté', className='btn btn-link'), href=f'/{Endpoint.NEW_AM}'),
-        style={'text-align': 'right'},
-    )
+    return html.Div(cols, className='row mt-4 mb-4')
 
 
 def _inforced_am_row(id_to_am_metadata: Dict[str, AMMetadata], id_to_occurrences: Dict[str, int]) -> Component:
@@ -126,14 +120,43 @@ def _deleted_am_row(id_to_am_metadata: Dict[str, AMMetadata]) -> Component:
     )
 
 
+def _new_am_button() -> Component:
+    return dcc.Link('+ Créer un arrêté', className='btn btn-primary float-end', href=f'/{Endpoint.NEW_AM}')
+
+
+def _title() -> Component:
+    style = {'display': 'inline-block'}
+    return html.Div([html.H2('Arrêtés ministériels.', style=style), _new_am_button()])
+
+
+def _export_alert() -> Component:
+    user_not_auth = not get_current_user().is_authenticated
+    return html.Div(
+        dbc.Alert(
+            [
+                'Pour mettre à jour les AM sur l\'application Envinorma, les exporter sur OVH puis ',
+                html.A('suivre la documentation', href='https://envinorma.github.io/data/edit_am'),
+                '.',
+                html.Br(),
+                html.Br(),
+                dcc.Link('Exportation des AMs', href=f'/{Endpoint.UPLOAD_AMS}', className='btn btn-primary'),
+            ],
+            color='primary',
+        ),
+        hidden=user_not_auth,
+    )
+
+
+def _header(state_counter: Dict[AMState, int]) -> Component:
+    return html.Div([_title(), html.Hr(), _export_alert(), _build_recap(state_counter)])
+
+
 def _index_component(id_to_am_metadata: Dict[str, AMMetadata], id_to_occurrences: Dict[str, int]) -> Component:
     states = Counter([md.state for md in id_to_am_metadata.values()])
     sentence = 'Ces arrêtés doivent être déclarés en vigueur une fois les thèmes et le paramétrage définis.'
     return html.Div(
         [
-            html.H2('Arrêtés ministériels.'),
-            _build_recap(states),
-            _add_am_button(),
+            _header(states),
             html.H3('Arrêtés ministériels en cours de création.', className='mt-2'),
             html.P(sentence),
             _in_creation_am_row(id_to_am_metadata, id_to_occurrences),

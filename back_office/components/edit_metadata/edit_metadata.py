@@ -17,41 +17,43 @@ _AM_STATE_OPTIONS = [{'label': el.value, 'value': el.value} for el in AMState]
 _AM_SOURCE_OPTIONS = [{'label': el.value, 'value': el.value} for el in AMSource]
 
 
+def _legifrance_input(am_id: Optional[str]) -> Component:
+    return dcc.Input(
+        value=am_id or '',
+        placeholder='ex: JORFTEXT000012345678',
+        id=ids.LEGIFRANCE_ID,
+        className='form-control',
+        disabled=am_id is not None,
+        style={'display': 'flex'},
+    )
+
+
+def _create_button(am_id: Optional[str]) -> Component:
+    return html.Button(
+        'Créer un nouvel AM', className='btn btn-primary', id=ids.SUBMIT_LEGIFRANCE_ID, hidden=am_id is not None
+    )
+
+
+def _fake_hint(am_id: Optional[str], new_am: bool) -> Component:
+    if not new_am or am_id is not None:
+        return html.Div()
+    return dbc.Alert(
+        'Pour créer un AM à des fins de test, choisir un ID commençant par "FAKE".', color='info', className='mt-2'
+    )
+
+
+def _edit_button(am_id: Optional[str], new_am: bool) -> Component:
+    text = 'Éditer l\'identifiant Légifrance'
+    hidden = not new_am or am_id is None
+    return dcc.Link(html.Button(text, className='btn btn-outline-primary', hidden=hidden), href=f'/{Endpoint.NEW_AM}')
+
+
 def _legifrance_id_form(am_id: Optional[str], new_am: bool) -> Component:
+    label = html.Label('Identifiant Légifrance', className='form-label')
     input_ = html.Div(
-        [
-            dcc.Input(
-                value=am_id or '',
-                placeholder='ex: JORFTEXT000012345678',
-                id=ids.LEGIFRANCE_ID,
-                className='form-control',
-                disabled=am_id is not None,
-                style={'display': 'flex'},
-            ),
-            html.Button(
-                'Créer un nouvel AM',
-                className='btn btn-primary',
-                id=ids.SUBMIT_LEGIFRANCE_ID,
-                hidden=am_id is not None,
-            ),
-            dcc.Link(
-                html.Button(
-                    'Éditer l\'identifiant Légifrance',
-                    className='btn btn-outline-primary',
-                    hidden=not new_am or am_id is None,
-                ),
-                href=f'/{Endpoint.NEW_AM}',
-            ),
-        ],
-        className='input-group',
+        [_legifrance_input(am_id), _create_button(am_id), _edit_button(am_id, new_am)], className='input-group'
     )
-    return html.Div(
-        [
-            html.Label('Identifiant Légifrance', className='form-label'),
-            input_,
-            html.Div(id=ids.SUBMIT_LEGIFRANCE_OUTPUT),
-        ]
-    )
+    return html.Div([label, input_, _fake_hint(am_id, new_am), html.Div(id=ids.SUBMIT_LEGIFRANCE_OUTPUT)])
 
 
 def _nor_form(am_metadata: Optional[AMMetadata]) -> Component:

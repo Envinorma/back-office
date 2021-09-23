@@ -12,7 +12,7 @@ def _link(text: str, href: str) -> Component:
     return dcc.Link(text, className='btn btn-link', href=href)
 
 
-def _diff_component(am_id: str) -> Component:
+def _buttons(am_id: str) -> Component:
     href = f'/{Endpoint.EDIT_AM}/{am_id}'
     return html.Div(
         [
@@ -35,7 +35,7 @@ def _component(am_id: str) -> Component:
     am = DATA_FETCHER.load_am_metadata(am_id)
     if not am:
         return html.P('AM introuvable')
-    return html.Div([_diff_component(am_id), html.Hr(), _am(am_id)])
+    return html.Div([_buttons(am_id), html.Hr(), _am(am_id)])
 
 
 def _page(am_id: str) -> Component:
