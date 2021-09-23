@@ -9,11 +9,11 @@ from back_office.routing import Endpoint
 from back_office.utils import DATA_FETCHER
 
 _TABS = [
-    (Endpoint.AM_APERCU, 'Aperçu'),
-    (Endpoint.AM_METADATA, 'Métadonnées'),
-    (Endpoint.AM_CONTENT, 'Contenu'),
-    (Endpoint.PARAMETRIZATION, 'Paramétrage'),
-    (Endpoint.TOPICS, 'Thèmes'),
+    ('', 'Aperçu'),
+    (f'/{Endpoint.AM_METADATA}', 'Métadonnées'),
+    (f'/{Endpoint.AM_CONTENT}', 'Contenu'),
+    (f'/{Endpoint.PARAMETRIZATION}', 'Paramétrage'),
+    (f'/{Endpoint.TOPICS}', 'Thèmes'),
 ]
 
 
@@ -41,7 +41,10 @@ def _warning(am_metadata: AMMetadata) -> Component:
 
 def _tabs(am: AMMetadata) -> List[Component]:
     am_id = am.cid
-    return [dbc.NavLink(label, href=f'/{Endpoint.AM}/{am_id}/{href}', active='partial') for href, label in _TABS]
+    return [
+        dbc.NavLink(label, href=f'/{Endpoint.AM}/{am_id}{href}', active='partial' if href else 'exact')
+        for href, label in _TABS
+    ]
 
 
 def _sidebar(am: AMMetadata, am_id: str) -> Component:
@@ -65,5 +68,5 @@ def page_with_sidebar(component: Component, am_id: str) -> Component:
     if not am:
         return html.Div('404')
     sidebar = _sidebar(am, am_id)
-    content = html.Div(html.Div(component, className='container'), className='col-10 pt-3')
+    content = html.Div(html.Div(component, className='container-fluid'), className='col-10 pt-3')
     return html.Div(html.Div([sidebar, content], className='row'), className='container-fluid')

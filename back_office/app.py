@@ -11,7 +11,6 @@ from back_office.components import login_redirect
 from back_office.components.header import header
 from back_office.config import LOGIN_SECRET_KEY
 from back_office.helpers.login import UNIQUE_USER, get_current_user
-from back_office.pages.am import PAGE as am_page
 from back_office.pages.am_apercu import PAGE as am_apercu_page
 from back_office.pages.am_applicability import PAGE as am_applicability_page
 from back_office.pages.am_metadata import PAGE as am_metadata_page
@@ -21,7 +20,6 @@ from back_office.pages.edit_am import PAGE as edit_am_page
 from back_office.pages.edit_parameter_element import PAGE_ALTERNATIVE_SECTION as alternative_section_page
 from back_office.pages.edit_parameter_element import PAGE_CONDITION as condition_page
 from back_office.pages.edit_parameter_element import PAGE_WARNING as warning_page
-from back_office.pages.edit_parametrization import PAGE as edit_parametrization_page
 from back_office.pages.edit_topics import PAGE as edit_topics_page
 from back_office.pages.envinorma_compare import PAGE as envinorma_compare_page
 from back_office.pages.index import PAGE as index_page
@@ -38,10 +36,8 @@ from back_office.routing import ROUTER, Endpoint, Page
 from back_office.utils import ensure_not_none
 
 _ENDPOINT_TO_PAGE: Dict[Endpoint, Page] = {
-    Endpoint.AM: am_page,
     Endpoint.LEGIFRANCE_COMPARE: legifrance_compare_page,
     Endpoint.EDIT_AM: edit_am_page,
-    Endpoint.EDIT_PARAMETRIZATION: edit_parametrization_page,
     Endpoint.EDIT_TOPICS: edit_topics_page,
     Endpoint.AM_COMPARE: envinorma_compare_page,
     Endpoint.LOGIN: login_page,

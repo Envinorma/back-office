@@ -9,7 +9,7 @@ from back_office.components import ExtendedComponent, login_redirect
 from back_office.components.am_side_nav import page_with_sidebar
 from back_office.components.edit_metadata.edit_metadata import edit_metadata
 from back_office.helpers.login import get_current_user
-from back_office.routing import Endpoint, Page
+from back_office.routing import Page, Routing
 from back_office.utils import DATA_FETCHER
 
 
@@ -62,7 +62,7 @@ def _alert() -> Component:
 
 
 def _edit_metadata_button(am_id: str) -> Component:
-    href = f'/{Endpoint.AM}/{am_id}/{Endpoint.AM_METADATA}/edit'
+    href = Routing.metadata_path(am_id, edit=True)
     return dcc.Link(dbc.Button('Modifier les metadonnées', color='primary'), href=href)
 
 
@@ -75,17 +75,14 @@ def _layout(am: AMMetadata) -> Component:
 
 
 def _edit_page(am_id: str) -> Component:
-    button = dcc.Link(
-        html.Button('< Retour aux metadonnées', className='btn btn-link'),
-        href=f'/{Endpoint.AM}/{am_id}/{Endpoint.AM_METADATA}',
-    )
+    button = dcc.Link('< Retour aux metadonnées', className='btn btn-link', href=Routing.metadata_path(am_id))
     return html.Div([button, html.Hr(), html.Div(edit_metadata(False, am_id))])
 
 
 def _protected_edit(am_id: str) -> Component:
     if get_current_user().is_authenticated:
         return _edit_page(am_id)
-    href = f'/{Endpoint.AM}/{am_id}/{Endpoint.AM_METADATA}/edit'
+    href = Routing.metadata_path(am_id, edit=True)
     return login_redirect(href)
 
 

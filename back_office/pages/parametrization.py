@@ -1,204 +1,194 @@
-import json
-import random
-import string
 from collections import Counter
-from typing import Any, Dict, List, Tuple, Union
+from typing import Dict, List, Optional, Tuple, TypeVar
 
 import dash_bootstrap_components as dbc
-from dash import ALL, Dash, Input, Output, State, callback_context, dcc, html
+from dash import Dash, dcc, html
 from dash.development.base_component import Component
-from envinorma.models import ArreteMinisteriel, StructuredText
-from envinorma.models.am_applicability import AMApplicability
-from envinorma.parametrization.models import (
-    AlternativeSection,
-    AMWarning,
-    Condition,
-    InapplicableSection,
-    Parametrization,
-)
+from envinorma.models import AMApplicability, ArreteMinisteriel, StructuredText
+from envinorma.models.condition import Condition
+from envinorma.parametrization import ParameterElement, Parametrization
 
+from back_office.components import error_component
 from back_office.components.am_side_nav import page_with_sidebar
+from back_office.components.parametrization_components import condition_str, parameter_component
 from back_office.routing import Endpoint, Page
 from back_office.utils import DATA_FETCHER, generate_id
 
-
-def _condition_id(condition_id: Any) -> Dict[str, Any]:
-    return {'type': generate_id(__file__, 'condition-id'), 'key': condition_id}
-
-
-def _badge_id(badge_id: Any) -> Dict[str, Any]:
-    return {'type': generate_id(__file__, 'badge-id'), 'key': badge_id}
+_PREFIX = 'edit-parametrization'
+_AM_ID = generate_id(_PREFIX, 'am-id')
 
 
-def _random_id(size: int = 12) -> str:
-    return ''.join([random.choice(string.ascii_letters) for _ in range(size)])  # noqa: S311
-
-
-def _toggler_component(condition_name: str, condition_hash: str) -> Component:
+def _new_parameter_element_buttons(am_id: str) -> Component:
+    hrefs = [
+        ('Nouvelle inapplicabilité', f'/{Endpoint.ADD_INAPPLICABILITY}/{am_id}'),
+        ('Nouvelle section alternative', f'/{Endpoint.ADD_ALTERNATIVE_SECTION}/{am_id}'),
+        ('Nouvel avertissement', f'/{Endpoint.ADD_WARNING}/{am_id}'),
+    ]
     return html.Div(
-        condition_name,
-        className='alert alert-secondary font-size-sm condition-block',
-        style={'font-size': '0.8em'},
-        id=_condition_id(condition_hash),
+        [dcc.Link(button_text, className='btn btn-link mr-2', href=href) for button_text, href in hrefs],
+        className='mb-3 mt-3',
     )
 
 
-_ConditionOrWarning = Union[Condition, str]
+T = TypeVar('T')
+U = TypeVar('U')
 
 
-def _condition_component(condition_or_warning: _ConditionOrWarning) -> Component:
-    if isinstance(condition_or_warning, str):
-        return _toggler_component(f'Warning: {condition_or_warning}', str(hash(condition_or_warning)))
-    return _toggler_component(condition_or_warning.to_str(), str(hash(condition_or_warning)))
+def _group(pairs: List[Tuple[T, U]]) -> Dict[T, List[U]]:
+    return {key: [value for key_, value in pairs if key_ == key] for key, _ in pairs}
 
 
-def _extract_conditions_with_occurrences(
-    parametrization: Parametrization, am_applicability: AMApplicability
-) -> List[Tuple[_ConditionOrWarning, int]]:
-    warnings = [warning.text for warnings_ in parametrization.id_to_warnings.values() for warning in warnings_]
-    condition_or_warnings = [*parametrization.extract_conditions(), *warnings, *am_applicability.warnings]
-    if am_applicability.condition_of_inapplicability:
-        condition_or_warnings.append(am_applicability.condition_of_inapplicability)
-    return Counter(condition_or_warnings).most_common()
+def _condition_component(
+    condition: Condition, section_ids: List[str], section_id_to_section: Dict[str, StructuredText]
+) -> Component:
+    hrefs = [(section_id_to_section[id_].title.text, f'#{id_}') for id_ in section_ids if id_ in section_id_to_section]
+    lis: List[Component] = [html.Li(html.A(title, href=href)) for title, href in hrefs]
+    lost = [id_ for id_ in section_ids if id_ not in section_id_to_section]
+    if lost:
+        lis.append(html.Li(f'{len(lost)} paramètre(s) perdu(s)'))
+    return html.Div([html.H6(condition_str(condition)), html.Ul(lis)])
 
 
-def _edit_parameters_button(am_id: str) -> Component:
-    button_wording = 'Éditer le paramétrage'
-    return dcc.Link(
-        dbc.Button(button_wording, color='primary', className='m-2'), href=f'/{Endpoint.EDIT_PARAMETRIZATION}/{am_id}'
+def _parameters_recap(parametrization: Parametrization, sections: List[StructuredText]) -> Component:
+    section_id_to_section = {s.id: s for s in sections}
+    elements = [*parametrization.alternative_sections, *parametrization.inapplicable_sections]
+    condition_to_section_id = _group([(el.condition, el.section_id) for el in elements])
+    conditions = [
+        _condition_component(condition, section_ids, section_id_to_section)
+        for condition, section_ids in sorted(condition_to_section_id.items(), key=lambda x: len(x[1]), reverse=True)
+    ]
+    return html.Div([html.H4('Liste des conditions'), html.Div(conditions)])
+
+
+def _lost_parameters_elements(
+    parametrization: Parametrization, sections: List[StructuredText], orphan_titles: Dict[str, List[str]]
+) -> List[Tuple[Optional[List[str]], ParameterElement]]:
+    section_ids = {section.id for section in sections}
+    return [(orphan_titles.get(p.section_id), p) for p in parametrization.elements() if p.section_id not in section_ids]
+
+
+def _lost_parameter_component(
+    rank: int, am_id: str, lost_parameter: Tuple[Optional[List[str]], ParameterElement]
+) -> Component:
+    titles, parameter = lost_parameter
+    title_str = 'inconnus' if not titles else ' > '.join(titles)
+    return html.Div(
+        [
+            html.H6(f'Paramètre perdu #{rank}'),
+            html.P(f'Titres de la section précédemment visée : {title_str}'),
+            parameter_component(am_id, parameter, None, 'danger'),
+        ]
     )
 
 
-def _conditions_component(am_id: str, parametrization: Parametrization, am_applicability: AMApplicability) -> Component:
-    conditions_with_occurrences = _extract_conditions_with_occurrences(parametrization, am_applicability)
-    condition_items = [
-        _condition_component(condition) for condition, _ in sorted(conditions_with_occurrences, key=lambda x: -x[-1])
+def _explanation(number: int) -> str:
+    if number == 1:
+        return (
+            'Le paramètre suivant a été dissocié lors de la dernière édition du contenu de l\'arrêté. '
+            'Veuillez le supprimer ou le réaffecter.'
+        )
+    return (
+        'Les paramètres suivants ont été dissociés lors de la dernière édition du contenu de l\'arrêté. '
+        'Veuillez les supprimer ou les réaffecter.'
+    )
+
+
+def _lost_parameters(parametrization: Parametrization, am: ArreteMinisteriel) -> Component:
+    lost_parameters = _lost_parameters_elements(parametrization, am.descendent_sections(), am.orphan_titles or {})
+    if not lost_parameters:
+        return html.Div()
+    parameters = [_lost_parameter_component(rank + 1, am.id or '', p) for rank, p in enumerate(lost_parameters)]
+    title = html.H4('Paramètres perdus', className='text-danger')
+    explaination = error_component(_explanation(len(lost_parameters)))
+    return html.Div([title, explaination, *parameters, html.Hr()])
+
+
+def _am_applicability(am_id: str, am_applicability: AMApplicability) -> Component:
+    warnings = [html.P(warning) for warning in am_applicability.warnings or ['Aucun avertissement']]
+    condition_ = am_applicability.condition_of_inapplicability
+    condition = html.P(
+        [html.Strong('Cas d\'inapplicabilité : '), condition_str(condition_)]
+        if condition_
+        else 'Aucune condition d\'inapplicabilité.'
+    )
+    edit = html.Button('Éditer', className='btn btn-primary ml-2')
+    return html.Div(
+        [
+            html.H6('Avertissements'),
+            *warnings,
+            condition,
+            dcc.Link(edit, href=f'/{Endpoint.AM_APPLICABILITY}/{am_id}'),
+        ]
+    )
+
+
+def _section_parameters_summary(am_id: str, section: StructuredText, param: Parametrization) -> Component:
+    border = {'border-left': '3px solid #007bffdd', 'padding-left': '10px'}
+    parameters = [
+        *(param.id_to_inapplicabilities.get(section.id) or []),
+        *(param.id_to_alternative_sections.get(section.id) or []),
+        *(param.id_to_warnings.get(section.id) or []),
     ]
     return html.Div(
         [
-            html.H3('Paramétrage'),
-            _edit_parameters_button(am_id),
-            html.Div(condition_items if condition_items else 'Pas de paramètres.'),
-        ]
-    )
-
-
-def _condition_badge(condition_id: str, operation: str) -> Component:
-    id_ = _badge_id(_random_id())
-    return html.Span(operation, id=id_, className='badge badge-secondary ml-1', **{'data-condition-id': condition_id})
-
-
-def _condition_badges(
-    inapplicabilities: List[InapplicableSection], alternatives: List[AlternativeSection], warnings: List[AMWarning]
-) -> Component:
-    badges_1 = [_condition_badge(str(hash(inap.condition)), 'inapplicable') for inap in inapplicabilities]
-    badges_2 = [_condition_badge(str(hash(alt.condition)), 'section modifiée') for alt in alternatives]
-    badges_3 = [_condition_badge(str(hash(warning.text)), 'warning') for warning in warnings]
-    return html.Span(badges_1 + badges_2 + badges_3)
-
-
-def _title_with_badges(title: str, badges: Component) -> Component:
-    return html.Span([f'{title} ', badges], style={'font-size': '0.8em'})
-
-
-def _title(title: str, section_id: str, parametrization: Parametrization) -> Component:
-    badges = _condition_badges(
-        parametrization.id_to_inapplicabilities.get(section_id) or [],
-        parametrization.id_to_alternative_sections.get(section_id) or [],
-        parametrization.id_to_warnings.get(section_id) or [],
-    )
-    return _title_with_badges(title, badges)
-
-
-def _title_whole_am(applicability: AMApplicability) -> Component:
-    badges = [_condition_badge(str(hash(warning)), 'warning') for warning in applicability.warnings]
-    if applicability.condition_of_inapplicability:
-        badges.append(_condition_badge(str(hash(applicability.condition_of_inapplicability)), 'inapplicable'))
-    return _title_with_badges('ARRÊTÉ', html.Span(badges))
-
-
-def _section_summary(section: StructuredText, parametrization: Parametrization) -> Component:
-    common_style = {'border-left': '3px solid #007bff', 'padding-left': '25px'}
-    return html.Div(
-        [
-            _title(section.title.text, section.id, parametrization),
-            *[_section_summary(sub, parametrization) for sub in section.sections],
+            html.P(section.title.text, className='section-title', id=section.id),
+            html.Div([parameter_component(am_id, p, section) for p in parameters])
+            if parameters
+            else html.P('Aucun paramètre.'),
+            *[_section_parameters_summary(am_id, section, param) for section in section.sections],
         ],
-        style=common_style,
+        style=border,
     )
 
 
-def _am_summary(am: ArreteMinisteriel, parametrization: Parametrization) -> Component:
+def _am_applicability_row(am: ArreteMinisteriel) -> Component:
     return html.Div(
         [
-            _title_whole_am(am.applicability),
-            *[_section_summary(section, parametrization) for section in am.sections],
+            html.H4('Paramètres concernants l\'arrêté en entier'),
+            _am_applicability(am.id or '', am.applicability or AMApplicability()),
+            html.Hr(),
         ]
     )
 
 
-def _am_summary_column(am: ArreteMinisteriel, parametrization: Parametrization) -> Component:
-    return html.Div(_am_summary(am, parametrization))
+def _buttons(am_id: str) -> Component:
+    return html.Div([_new_parameter_element_buttons(am_id), html.Hr()])
+
+
+def _parametrization(parametrization: Parametrization, am: ArreteMinisteriel) -> Component:
+    am_id = am.id or ''
+    first_col = dbc.Col(
+        [
+            _lost_parameters(parametrization, am),
+            _am_applicability_row(am),
+            _parameters_recap(parametrization, am.descendent_sections()),
+        ],
+        width=4,
+    )
+    second_col = dbc.Col(
+        [
+            html.H4('Paramètres'),
+            *[_section_parameters_summary(am_id, section, parametrization) for section in am.sections],
+        ]
+    )
+    return dbc.Row([first_col, second_col])
 
 
 def _layout(am_id: str) -> Component:
     am = DATA_FETCHER.load_am(am_id)
     if not am:
-        return html.Div('AM non initialisé.')
+        return html.H3('AM non initialisé.')
     parametrization = DATA_FETCHER.load_or_init_parametrization(am_id)
-    am_applicability = am.applicability if am.applicability else AMApplicability()
-    return html.Div(
-        [
-            html.Div(_conditions_component(am.id or '', parametrization, am_applicability), className='col-4'),
-            html.Div(_am_summary_column(am, parametrization), className='col-8'),
-        ],
-        className='row',
-    )
+    body = _parametrization(parametrization, am)
+    return html.Div([_buttons(am_id), body, dcc.Store(data=am_id, id=_AM_ID)])
 
 
 def _page(am_id: str) -> Component:
     return page_with_sidebar(_layout(am_id), am_id)
 
 
-def _extract_trigger_key(triggered: List[Dict[str, Any]]) -> str:
-    return json.loads(triggered[0]['prop_id'].split('.')[0])['key']
-
-
 def _callbacks(app: Dash) -> None:
-    @app.callback(
-        Output(_condition_id(ALL), 'className'),
-        Input(_condition_id(ALL), 'n_clicks'),
-        State(_condition_id(ALL), 'className'),
-        State(_condition_id(ALL), 'id'),
-        prevent_initial_call=True,
-    )
-    def _toggle_buttons(_, class_names: List[str], condition_ids: List[Dict]):
-        triggered = _extract_trigger_key(callback_context.triggered)
-        keys = [cd['key'] for cd in condition_ids]
-        new_class_names = [
-            class_name.replace('alert-secondary', 'alert-primary')
-            if condition_id == triggered
-            else class_name.replace('alert-primary', 'alert-secondary')
-            for class_name, condition_id in zip(class_names, keys)
-        ]
-        return new_class_names
-
-    @app.callback(
-        Output(_badge_id(ALL), 'className'),
-        Input(_condition_id(ALL), 'n_clicks'),
-        State(_badge_id(ALL), 'className'),
-        State(_badge_id(ALL), 'data-condition-id'),
-        prevent_initial_call=True,
-    )
-    def _toggle_badges(_, class_names: List[str], condition_ids: List[str]):
-        triggered = _extract_trigger_key(callback_context.triggered)
-        new_class_names = [
-            class_name.replace('badge-secondary', 'badge-primary')
-            if condition_id == triggered
-            else class_name.replace('badge-primary', 'badge-secondary')
-            for class_name, condition_id in zip(class_names, condition_ids)
-        ]
-        return new_class_names
+    ...
 
 
 PAGE = Page(_page, _callbacks, False)

@@ -11,7 +11,6 @@ class Endpoint(Enum):
     AM = 'am'
     AM_COMPARE = 'am_compare'
     LEGIFRANCE_COMPARE = 'compare'
-    EDIT_PARAMETRIZATION = 'edit_parametrization'
     EDIT_AM = 'edit_am'
     DELETE_AM = 'delete_am'
     NEW_AM = 'new_am'
@@ -41,9 +40,8 @@ class Endpoint(Enum):
 _ENDPOINT_TO_ROUTES: Dict[Endpoint, List[str]] = {
     Endpoint.INDEX: ['/{}'],
     Endpoint.LEGIFRANCE_COMPARE: ['/{}', '/{}/id/<am_id>', '/{}/id/<am_id>/<date_before>/<date_after>'],
-    Endpoint.AM: ['/{}/<am_id>', '/{}/<am_id>'],
     Endpoint.AM_METADATA: [f'/{Endpoint.AM}/<am_id>' + '/{}', f'/{Endpoint.AM}/<am_id>/{"{}"}/<edit>'],
-    Endpoint.AM_APERCU: [f'/{Endpoint.AM}/<am_id>' + '/{}'],
+    Endpoint.AM_APERCU: [f'/{Endpoint.AM}/<am_id>'],
     Endpoint.AM_CONTENT: [f'/{Endpoint.AM}/<am_id>' + '/{}'],
     Endpoint.PARAMETRIZATION: [f'/{Endpoint.AM}/<am_id>' + '/{}'],
     Endpoint.TOPICS: [f'/{Endpoint.AM}/<am_id>' + '/{}'],
@@ -54,13 +52,16 @@ _ENDPOINT_TO_ROUTES: Dict[Endpoint, List[str]] = {
     Endpoint.NEW_AM: ['/{}', '/{}/<am_id>'],
     Endpoint.UPLOAD_AMS: ['/{}'],
     Endpoint.EDIT_TOPICS: ['/{}/<am_id>'],
-    Endpoint.EDIT_PARAMETRIZATION: ['/{}/<am_id>'],
     Endpoint.EDIT_AM: ['/{}/<am_id>'],
     Endpoint.REGULATION_ENGINE: ['/{}'],
     Endpoint.TOPIC_DETECTOR: ['/{}'],
-    Endpoint.ADD_WARNING: ['/{}/<am_id>', '/{}/<am_id>/<parameter_id>', '/{}/<am_id>/<parameter_id>/copy'],
-    Endpoint.ADD_INAPPLICABILITY: ['/{}/<am_id>', '/{}/<am_id>/<parameter_id>', '/{}/<am_id>/<parameter_id>/copy'],
-    Endpoint.ADD_ALTERNATIVE_SECTION: ['/{}/<am_id>', '/{}/<am_id>/<parameter_id>', '/{}/<am_id>/<parameter_id>/copy'],
+    Endpoint.ADD_WARNING: ['/{}/<am_id>', '/{}/<am_id>/<parameter_id>', '/{}/<am_id>/<parameter_id>/<copy>'],
+    Endpoint.ADD_INAPPLICABILITY: ['/{}/<am_id>', '/{}/<am_id>/<parameter_id>', '/{}/<am_id>/<parameter_id>/<copy>'],
+    Endpoint.ADD_ALTERNATIVE_SECTION: [
+        '/{}/<am_id>',
+        '/{}/<am_id>/<parameter_id>',
+        '/{}/<am_id>/<parameter_id>/<copy>',
+    ],
     Endpoint.AM_APPLICABILITY: ['/{}/<am_id>'],
 }
 
@@ -71,6 +72,23 @@ ROUTER: MapAdapter = Map(
         for route in routes
     ]
 ).bind('')
+
+
+class Routing:
+    @staticmethod
+    def parametrization_path(am_id: str) -> str:
+        return f'/{Endpoint.AM}/{am_id}/{Endpoint.PARAMETRIZATION}'
+
+    @staticmethod
+    def apercu_path(am_id: str) -> str:
+        return f'/{Endpoint.AM}/{am_id}'
+
+    @staticmethod
+    def metadata_path(am_id: str, edit: bool = False) -> str:
+        prefix = f'/{Endpoint.AM}/{am_id}/{Endpoint.AM_METADATA}'
+        if edit:
+            return f'{prefix}/edit'
+        return prefix
 
 
 @dataclass

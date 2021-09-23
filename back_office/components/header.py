@@ -35,4 +35,4 @@ def header() -> Component:
         'z-index': '10',
     }
     img = html.Img(src=src, style={'width': '30px', 'display': 'inline-block'})
-    return html.Div(html.Div([dcc.Link(img, href='/'), _nav()], className='container'), style=sticky_style)
+    return html.Div(html.Div([dcc.Link(img, href='/'), _nav()], className='container-fluid'), style=sticky_style)

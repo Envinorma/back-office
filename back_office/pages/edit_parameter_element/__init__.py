@@ -40,7 +40,6 @@ def _build_page(
         dcc.Store(data=destination_id, id=page_ids.PARAMETER_ID),
     ]
     page = _get_main_component(am, operation, destination_id, loaded_parameter)
-
     return html.Div([page, *hidden_components], className='parametrization_content container mt-3')
 
 
@@ -84,15 +83,15 @@ def _page(am_id: str, operation: AMOperation, parameter_id: Optional[str] = None
 
 
 def _page_condition(am_id: str, parameter_id: Optional[str] = None, copy: bool = False):
-    return _page(am_id, AMOperation.ADD_CONDITION, parameter_id, copy)
+    return _page(am_id, AMOperation.ADD_CONDITION, parameter_id, copy=copy)
 
 
 def _page_alternative_section(am_id: str, parameter_id: Optional[str] = None, copy: bool = False):
-    return _page(am_id, AMOperation.ADD_ALTERNATIVE_SECTION, parameter_id, copy)
+    return _page(am_id, AMOperation.ADD_ALTERNATIVE_SECTION, parameter_id, copy=copy)
 
 
 def _page_warning(am_id: str, parameter_id: Optional[str] = None, copy: bool = False):
-    return _page(am_id, AMOperation.ADD_WARNING, parameter_id, copy)
+    return _page(am_id, AMOperation.ADD_WARNING, parameter_id, copy=copy)
 
 
 PAGE_CONDITION = Page(_page_condition, add_callbacks, True)

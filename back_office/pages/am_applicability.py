@@ -11,7 +11,7 @@ from envinorma.models.condition import load_condition
 
 from back_office.components import error_component, success_component
 from back_office.components.condition_form import callbacks, condition_form
-from back_office.routing import Endpoint, Page
+from back_office.routing import Page, Routing
 from back_office.utils import DATA_FETCHER, generate_id
 
 _PREFIX = __file__
@@ -118,7 +118,7 @@ def _cancel_button(am_id: Optional[str]) -> Component:
     hidden = not am_id
     return dcc.Link(
         html.Button('< Retour', className='btn btn-link', hidden=hidden),
-        href=f'/{Endpoint.EDIT_PARAMETRIZATION}/{am_id}',
+        href=Routing.parametrization_path(am_id or ''),
     )
 
 
@@ -148,7 +148,7 @@ def _handle_form(warnings: List[str], use_condition: bool, condition: Optional[s
         DATA_FETCHER.upsert_am(am_id, am)
     except _FormHandlingError as exc:
         return error_component(f"Erreur dans le formulaire : {exc}")
-    redirect = dcc.Location(id='am-applicability-redirect', href=f'/{Endpoint.EDIT_PARAMETRIZATION}/{am_id}')
+    redirect = dcc.Location(id='am-applicability-redirect', href=Routing.parametrization_path(am_id))
     return html.Div([success_component('Enregistré avec succès.'), redirect])
 
 

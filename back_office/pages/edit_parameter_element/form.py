@@ -12,7 +12,7 @@ from envinorma.parametrization.exceptions import ParametrizationError
 from back_office.components.condition_form import callbacks as condition_form_callbacks
 from back_office.components.condition_form import condition_form
 from back_office.helpers.texts import get_truncated_str
-from back_office.routing import Endpoint
+from back_office.routing import Routing
 from back_office.utils import DATA_FETCHER, AMOperation
 
 from . import page_ids as ids
@@ -39,7 +39,7 @@ def _main_title(operation: AMOperation, is_edition: bool, destination_id: Option
 
 
 def _go_back_button(am_id: str) -> Component:
-    return dcc.Link('< Retour', className='btn btn-link', href=f'/{Endpoint.EDIT_PARAMETRIZATION}/{am_id}')
+    return dcc.Link('< Retour', className='btn btn-link', href=Routing.parametrization_path(am_id))
 
 
 def _save_button(am_id: str) -> Component:
@@ -213,7 +213,7 @@ def _handle_submit(
     return html.Div(
         [
             dbc.Alert('Enregistrement réussi.', color='success'),
-            dcc.Location(pathname=f'/{Endpoint.EDIT_PARAMETRIZATION}/{am_id}', id='param-edition-success-redirect'),
+            dcc.Location(pathname=Routing.parametrization_path(am_id), id='param-edition-success-redirect'),
         ]
     )
 
@@ -239,7 +239,7 @@ def _handle_delete(n_clicks: int, operation_str: str, am_id: str, parameter_id: 
     return html.Div(
         [
             dbc.Alert('Suppression réussie.', color='success'),
-            dcc.Location(pathname=f'/{Endpoint.EDIT_PARAMETRIZATION}/{am_id}', id='param-edition-success-redirect'),
+            dcc.Location(pathname=Routing.parametrization_path(am_id), id='param-edition-success-redirect'),
         ]
     )
 
