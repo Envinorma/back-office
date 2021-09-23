@@ -19,7 +19,7 @@ def _nav() -> Component:
             _header_link('Liste des arrêtés', href='/'),
             _header_link("S'identifier", href=f'/{Endpoint.LOGIN}', hidden=not user_not_auth, left=True),
             _header_link('Se déconnecter', href=f'/{Endpoint.LOGOUT}', hidden=user_not_auth, left=True),
-            _header_link("Aide", href='https://envinorma.github.io/data/back_office', left=True),
+            _header_link("Aide", href='https://envinorma.github.io/back_office', left=True),
         ],
     )
     return nav
