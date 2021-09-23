@@ -1,6 +1,5 @@
 import json
 from datetime import date, datetime
-from time import sleep
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 
 import dash_bootstrap_components as dbc
