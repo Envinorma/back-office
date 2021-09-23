@@ -24,7 +24,7 @@ def _buttons() -> Component:
 def _explanation() -> Component:
     sentences = [
         'Pour mettre à jour les AM sur l’application Envinorma, exporter les AM dans OVH (environ 2 minutes). Puis ',
-        html.A('suivre la documentation', href='https://envinorma.github.io/data/edit_am'),
+        html.A('suivre la documentation', href='https://envinorma.github.io/data/am'),
         '. Seuls les arrêtés ministériels en vigueur sont exportés.',
     ]
     return html.P(sentences)
