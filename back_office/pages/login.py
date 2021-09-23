@@ -42,7 +42,7 @@ _INFO_TEXT = (
 def _layout(origin: Optional[str] = None) -> Component:
     col = [
         html.Div(id=_LOGIN_URL),
-        html.H2('Connexion'),
+        html.H3('Connexion'),
         dbc.Alert(_INFO_TEXT, dismissable=True),
         html.Div(id=_LOGIN_ALERT),
         dcc.Store(id=_ORIGIN, data=origin),

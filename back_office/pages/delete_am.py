@@ -41,7 +41,7 @@ def _container(am_id: str) -> Component:
     if not am_metadata:
         return html.H1('Arrêté introuvable.')
     return html.Div(
-        [html.H2(f'Suppression de l\'arrêté {am_id}'), _back(am_id), html.P(am_metadata.title), _delete_form(am_id)]
+        [_back(am_id), html.H3(f'Suppression de l\'arrêté {am_id}'), html.P(am_metadata.title), _delete_form(am_id)]
     )
 
 

@@ -392,4 +392,4 @@ def _handle_form(
 def edit_metadata(new_am: bool, am_id: Optional[str] = None) -> Component:
     metadata = DATA_FETCHER.load_am_metadata(am_id) if am_id else None
     title = 'Nouvel arrêté ministériel.' if new_am else f"Modification de l'arrêté ministériel {am_id}."
-    return html.Div([html.H2(title), _form(am_id, metadata, new_am)])
+    return html.Div([html.H3(title), _form(am_id, metadata, new_am)])

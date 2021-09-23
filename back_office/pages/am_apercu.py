@@ -123,7 +123,7 @@ def _parametrization_component(am_id: str, hidden: bool) -> Component:
     content = _parametrization_form(am, parametrization)
     if not am:
         content = html.Div([html.Div('Arrêté ministériel non initialisé.'), html.Div(content, hidden=True)])
-    return html.Div([html.H2('Paramétrage'), content, html.Hr()], hidden=hidden, id=_FORM)
+    return html.Div([html.H3('Paramétrage'), content, html.Hr()], hidden=hidden, id=_FORM)
 
 
 def _display_form_button() -> Component:
