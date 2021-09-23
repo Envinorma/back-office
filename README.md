@@ -14,7 +14,7 @@ Back office du projet Envinorma. Permet la gestion de la base de données des ar
 - Initialiser les tables à partir du backup le plus récent contenu dans `backups/` :
 
 ```sh
-pg_restore -d DATABASE_NAME 2021-09-01-15-56.dump
+pg_restore -d DATABASE_NAME 2021-09-23-18-18.dump
 ```
 
 ## 2. Cloner ce dépôt
