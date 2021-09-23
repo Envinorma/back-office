@@ -291,7 +291,6 @@ def _callbacks(ids: _ConditionIds) -> Callable[[Dash], None]:
             try:
                 condition = build_condition(condition_form_values)
             except FormHandlingError as exc:
-                sleep(2)
                 return ('', 'danger', dbc.Alert(str(exc), color='danger'))
             return (json.dumps(condition.to_dict()), 'success', html.Div())
 
