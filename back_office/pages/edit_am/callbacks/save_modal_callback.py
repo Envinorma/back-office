@@ -57,11 +57,11 @@ def _lost_parameters_message(lost_parameters: List[List[str]]) -> str:
     lost_parameters_str = _stringify_lost_parameters(lost_parameters)
     if len(lost_parameters) > 1:
         return (
-            f'{len(lost_parameters)} paramètres n\'ont pas pu être réaffectés :\n{lost_parameters_str}\n '
+            f'{len(lost_parameters)} paramètres n\'ont pas pu être réaffectés :\n{lost_parameters_str}\n\n '
             'Pensez à mettre à jour le paramétrage si vous validez l\'enregistrement.'
         )
     return (
-        f'Le paramètre suivant n\'a pas pu être réaffecté :\n{lost_parameters_str}. '
+        f'Le paramètre suivant n\'a pas pu être réaffecté :\n{lost_parameters_str}.\n\n '
         'Pensez à mettre à jour le paramétrage si vous validez l\'enregistrement.'
     )
 

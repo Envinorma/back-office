@@ -20,7 +20,8 @@ def _layout() -> Component:
             html.P('Cliquer sur le bouton ci-dessous pour exporter les AM dans OVH (environ 2 minutes)'),
             html.Button('Exporter', id=_BUTTON, className='btn btn-primary mb-3'),
             html.Div(dbc.Spinner(html.Div(), id=_EXPORT_OUTPUT)),
-        ]
+        ],
+        className='container mt-3',
     )
 
 
