@@ -57,8 +57,8 @@ def _extract_title_date(title: Optional[str]) -> date:
         return extract_date_of_signature(title or '')
     except ValueError:
         raise FormHandlingError(
-            'Mauvais format de titre. Format attendu : "Arrêté du jj/mm/yy '
-            'relatif..." ou "Arrêté du jj/mm/yy fixant..."\nExemple : Arrêté du 27/12/13 relatif '
+            'Mauvais format de titre. Format attendu : "Arrêté du jj/mm/aa '
+            'relatif..." ou "Arrêté du jj/mm/aa fixant..."\nExemple : Arrêté du 27/12/13 relatif '
             'aux prescriptions générales [...].'
         )
 

@@ -51,12 +51,23 @@ def _edit_button(am_id: Optional[str], new_am: bool) -> Component:
     return dcc.Link(html.Button(text, className='btn btn-outline-primary', hidden=hidden), href=f'/{Endpoint.NEW_AM}')
 
 
+def _help(new_am: bool) -> Component:
+    if not new_am:
+        return html.Div()
+    return dbc.FormText(
+        'Celui-ci peut être retrouvé dans l\'URL Légifrance de l\'arrêté. Il commence par LEGITEXT ou JORFTEXT. '
+        'Par exemple, pour l\'arrêté consultable sur l\'URL https://www.legifrance.gouv.fr/jorf/id/'
+        'JORFTEXT000034429274, l\'identifiant Légifrance est JORFTEXT000034429274.'
+    )
+
+
 def _legifrance_id_form(am_id: Optional[str], new_am: bool) -> Component:
     label = html.Label('Identifiant Légifrance', className='form-label')
     input_ = html.Div(
         [_legifrance_input(am_id), _create_button(am_id), _edit_button(am_id, new_am)], className='input-group'
     )
-    return html.Div([label, input_, _fake_hint(am_id, new_am), html.Div(id=ids.SUBMIT_LEGIFRANCE_OUTPUT)])
+    output = html.Div(id=ids.SUBMIT_LEGIFRANCE_OUTPUT)
+    return html.Div([label, input_, _help(new_am), _fake_hint(am_id, new_am), output])
 
 
 def _nor_form(am_metadata: Optional[AMMetadata]) -> Component:
@@ -92,7 +103,7 @@ def _title(am_metadata: Optional[AMMetadata]) -> Component:
                 id=ids.TITLE,
                 className='form-control',
             ),
-            dbc.FormText('Format attendu : "Arrêté du jj/mm/yy relatif..." ou "Arrêté du jj/mm/yy fixant..."'),
+            dbc.FormText('Format attendu : "Arrêté du jj/mm/aa relatif..." ou "Arrêté du jj/mm/aa fixant..."'),
         ],
         className='mb-3',
     )

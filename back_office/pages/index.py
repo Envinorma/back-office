@@ -33,7 +33,7 @@ def _is_transverse_cell(is_transverse: bool) -> Component:
     return html.Td('☑️' if is_transverse else '')
 
 
-def _get_row(rank: int, am: AMMetadata, occurrences: int) -> Component:
+def _get_row(rank: int, am: AMMetadata) -> Component:
     rows = [
         _normal_td(rank),
         _normal_td(dcc.Link(am.cid, href=f'/{Endpoint.AM}/{am.cid}')),
@@ -42,7 +42,6 @@ def _get_row(rank: int, am: AMMetadata, occurrences: int) -> Component:
         _is_transverse_cell(am.is_transverse),
         _normal_td(_am_descriptor(am)),
         _normal_td(am.source.value),
-        _normal_td(occurrences),
     ]
     style = {'text-decoration': 'line-through'} if am.state not in (AMState.VIGUEUR, AMState.EN_CREATION) else {}
     return html.Tr(rows, style=style)
@@ -69,7 +68,6 @@ def _table_header() -> Component:
             _th_with_tooltip('Tr.', 'Transverse'),
             _th('Classements'),
             _th('Source'),
-            _th('Occs.'),
         ]
     )
 
@@ -77,7 +75,7 @@ def _table_header() -> Component:
 def _build_am_table(metadata: Dict[str, AMMetadata], occs: Dict[str, int]) -> Component:
     header = _table_header()
     sorted_ids = sorted(metadata, key=lambda x: (not metadata[x].is_transverse, occs.get(x, 0)), reverse=True)
-    rows = [_get_row(rank, metadata[am_id], occs.get(am_id, 0)) for rank, am_id in enumerate(sorted_ids)]
+    rows = [_get_row(rank, metadata[am_id]) for rank, am_id in enumerate(sorted_ids)]
     return html.Table([html.Thead(header), html.Tbody(rows)], className='table table-sm')
 
 

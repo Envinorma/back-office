@@ -24,11 +24,9 @@ from .target_sections_form import target_section_form
 
 def _title(operation: AMOperation, is_edition: bool, destination_id: Optional[str]) -> str:
     if operation == AMOperation.ADD_CONDITION:
-        return (
-            f'Condition de non-application #{destination_id}' if is_edition else 'Nouvelle condition de non-application'
-        )
+        return f'Inapplicabilité #{destination_id}' if is_edition else 'Nouvelle inapplicabilité'
     if operation == AMOperation.ADD_ALTERNATIVE_SECTION:
-        return f'Paragraphe alternatif #{destination_id}' if is_edition else 'Nouveau paragraphe alternatif'
+        return f'Section alternative #{destination_id}' if is_edition else 'Nouvelle section alternative'
     if operation == AMOperation.ADD_WARNING:
         return f'Avertissement #{destination_id}' if is_edition else 'Nouvel avertissement'
     raise NotImplementedError(f'Unhandled operation {operation}')
