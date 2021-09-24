@@ -189,15 +189,26 @@ def _condition_blocks(default_conditions: Optional[List[MonoCondition]], ids: _C
     return html.Div(condition_blocks, id=ids.CONDITION_BLOCKS)
 
 
+def _tooltip_content() -> Component:
+    return html.Div(
+        [
+            html.P('Formats :'),
+            html.P('- Date : JJ/MM/AAAA'),
+            html.P('- Régime : A, E ou D'),
+            html.P(
+                '- Alinéa : utiliser exactement la même valeur que les alinéas utilisés dans envinorma '
+                '(pour consulter les alinéas sur envinorma, il suffit de créer un nouveau classement)'
+            ),
+        ]
+    )
+
+
 def _get_condition_tooltip() -> Component:
     return html.Div(
         [
             'Conditions ',
             dbc.Badge('?', id='param-edition-conditions-tooltip', pill=True),
-            dbc.Tooltip(
-                ['Formats:', html.Br(), 'Régime: A, E, D ou NC.', html.Br(), 'Date: JJ/MM/AAAA'],
-                target='param-edition-conditions-tooltip',
-            ),
+            dbc.Tooltip([_tooltip_content()], target='param-edition-conditions-tooltip'),
         ]
     )
 

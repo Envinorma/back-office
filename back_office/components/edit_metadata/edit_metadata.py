@@ -38,7 +38,10 @@ def _fake_hint(am_id: Optional[str], new_am: bool) -> Component:
     if not new_am or am_id is not None:
         return html.Div()
     return dbc.Alert(
-        'Pour créer un AM à des fins de test, choisir un ID commençant par "FAKE".', color='info', className='mt-2'
+        'Pour créer un AM à des fins de test, choisir un identifiant commençant par "FAKE", '
+        'comme par exemple FAKE_JORFTEXT000000464327.',
+        color='info',
+        className='mt-2',
     )
 
 
@@ -172,6 +175,16 @@ def _classement_row(classement: Optional[Classement], rank: int) -> Component:
     return html.Div(classement_elements, style={'display': 'flex'}, id=ids.classement_row_id(rank), className='mb-3')
 
 
+def _alinea_help() -> str:
+    return (
+        'Les alinéas de classements ne doivent être renseignés que si l\'arrêté ne s\'applique pas à tous les alinéas '
+        'de classement associés au couple Rubrique-Régime ce qui est un cas relativement rare. Si un alinéa doit '
+        'être renseigné, alors il faut s\'assurer qu\'il est exactement de la même forme que celui de la nomenclature '
+        'sur envinorma (pour consulter les alinéas sur envinorma, il suffit de créer un nouveau classement dans '
+        'une installation fictive).'
+    )
+
+
 def _classements_form(am_metadata: Optional[AMMetadata]) -> Component:
     classements = am_metadata.classements if am_metadata else [None]
     return html.Div(
@@ -181,6 +194,7 @@ def _classements_form(am_metadata: Optional[AMMetadata]) -> Component:
                 [_classement_row(classement, rank) for rank, classement in enumerate(classements)],
                 id=ids.CLASSEMENTS,
             ),
+            dbc.FormText(_alinea_help()),
             html.Button('+ nouveau classement', id=ids.ADD_CLASSEMENT_FORM, className='btn btn-secondary btn-sm mt-1'),
         ],
         className='mb-3',
